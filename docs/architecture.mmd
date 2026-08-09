@@ -1,0 +1,55 @@
+flowchart TB
+    subgraph sources["Sources — verbatim, never edited"]
+        prompt["original-prompt.md<br/>domain coverage"]
+        brief["design-brief.md<br/>system requirements"]
+        spec["health-fitness-nutrition<br/>-standards-spec.md<br/>derived, numbered 1-42"]
+    end
+
+    subgraph reviewed["Human-reviewed inventories — never regenerated"]
+        seriesInv["standards-source<br/>-inventory.json<br/>42 standards"]
+        ruleInv["rule-inventory.json<br/>59 rules, kinds, counts"]
+    end
+
+    subgraph content["Content"]
+        stds["standards/<br/>42 documents"]
+        cat["rules/<br/>6 catalog files"]
+        proh["PROHIBITIONS.md<br/>index, checked"]
+    end
+
+    subgraph guards["Guards — CI runs these first"]
+        inv["inventory.mjs"]
+        rul["rules.mjs"]
+        fid["fidelity.mjs"]
+        dia["diagrams.mjs"]
+    end
+
+    subgraph engine["Evaluation"]
+        catalog["catalog.mjs<br/>identity + metadata"]
+        detect["standards.mjs<br/>8 detectors, 21 rules"]
+        screen["screenIntegrity<br/>manipulation check"]
+        comply["compliance.mjs<br/>verdict"]
+    end
+
+    subgraph target["Adopting project"]
+        policy["project-policy.yml<br/>applicability, exceptions,<br/>attestations"]
+        artifacts["artifacts/<br/>records and plans"]
+    end
+
+    prompt --> spec
+    brief --> spec
+    spec -->|"Source: item N"| stds
+    spec -->|"verbatim check"| fid
+    seriesInv -->|"compare"| inv
+    ruleInv -->|"compare"| rul
+    stds --> inv
+    cat --> rul
+    cat --> fid
+    cat --> proh
+    cat --> catalog
+    artifacts -->|"scan"| detect
+    policy -->|"schema + YAML"| screen
+    detect -->|"findings"| screen
+    screen -->|"clean"| comply
+    screen -->|"manipulated"| blocked["BLOCKED_BY_INVARIANT<br/>exit 3"]
+    catalog --> comply
+    comply --> verdict["COMPLIANT / NON_COMPLIANT<br/>/ NOT_EVALUATED<br/>exit 0 / 1 / 4"]
