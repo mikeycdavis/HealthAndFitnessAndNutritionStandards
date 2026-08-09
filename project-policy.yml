@@ -1,0 +1,354 @@
+# Project policy for the HealthAndFitnessAndNutritionStandards repository itself.
+#
+# This is the first adopting project, and therefore the pattern every other project will copy —
+# including its mistakes. Three rules govern what may appear here:
+#
+#   * Rule ids are canonical only (ADR 0001). The schema rejects any other spelling.
+#   * `applicability` and `exceptions` are different mechanisms and never substitute for each other.
+#       not-applicable = the behavior cannot occur within the evaluated scope.
+#       exception      = the rule applies and this project knowingly does not satisfy it.
+#     For a prohibition only the first is available, which is why each reason below states what this
+#     repository cannot do rather than what would be inconvenient to do.
+#   * Nothing here asserts compliance. What this project actually meets is an evaluation result.
+#
+# Shape: schemas/project-policy.schema.json. Meaning: standards/18-progressive-overload.md is not it —
+# see docs/design/architecture.md and INSTRUCTIONS.md.
+#
+# WHAT THIS REPOSITORY IS, for the purposes of scope: a publisher of standards. It holds no personal
+# health data, interprets nobody's measurements, and delivers no guidance to any reader about their
+# own health, training, or diet. Its worked examples are labelled fictional illustrations of the
+# standards, written to demonstrate the format rather than to advise anyone. That is the basis of
+# every not-applicable declaration below, and the `revisitWhen` triggers are all the same event:
+# this repository acquiring a capability that acts on a real person's data.
+#
+# What it DOES do is make claims about physiology and nutrition, in its standards prose and in the
+# rationale of every catalog entry. So the rules about evidence quality and fabricated facts apply
+# here in full, and are declared applicable below.
+
+standardVersion: "1.0.0-dev"
+project: "HealthAndFitnessAndNutritionStandards"
+
+# Domains of guidance this project produces: none. The list is informational and switches nothing
+# on or off — narrowing scope is done through applicability declarations, each carrying its own
+# reason, so that a single line can never disable a category of prohibition silently.
+domains: []
+
+rules:
+  # Rules that genuinely apply to a repository that publishes standards and makes claims about
+  # health while doing so. Each is held at its catalog strength; nothing here lowers anything.
+  integrity.no-standards-manipulation:
+    note: "Binds the maintainers of this repository more directly than anyone else. The guards in scripts/ exist because of it."
+  escalation.scope-disclosed:
+    note: "The README states that this repository governs wellness guidance and is not medical advice."
+  escalation.tier-model-documented:
+    note: "docs/escalation-tiers.md is both this repository's own tier model and the exemplar adopters copy."
+  escalation.tier-language-calibrated:
+    note: "Standard 3 and the worked examples set the tone every adopter will imitate, so the wording here carries further than usual."
+  trend.trends-over-events:
+    note: "Standard 2 states the principle; the worked examples must not contradict it."
+  trend.principle-documented:
+    note: "Stated in Standard 2 and in the interpretation-record template."
+  health.no-fabricated-medical-facts:
+    note: "Applies in full. The rationale field of every health rule makes claims about physiology."
+  nutrition.no-single-food-disease-claims:
+    note: "Applies in full, for the same reason: this repository makes nutrition claims in its own prose."
+  health.evidence-quality-noted:
+    note: "The claims in standards prose and rule rationales should be traceable to something better than confident writing."
+
+applicability:
+  # ---------------------------------------------------------------------------------------------
+  # Health prohibitions about interpreting a person's measurements.
+  #
+  # This repository interprets nobody's measurements. Note what these reasons do NOT say: they do
+  # not say the behavior would be inconvenient to avoid, or that someone wants it. A not-applicable
+  # reason that said either of those would be a waiver wearing a scope claim's clothing, and the
+  # invariant covers it (Standard 42).
+  # ---------------------------------------------------------------------------------------------
+  health.no-diagnosis-from-single-measurement:
+    status: not-applicable
+    reason: "This repository interprets no personal health measurements and issues no conclusions about any individual, so there is no measurement from which a condition could be diagnosed."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability in this repository interprets a real person's health data."
+  health.no-single-reading-as-trend:
+    status: not-applicable
+    reason: "No readings are collected or interpreted here, so none can be presented as a trend."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability in this repository interprets a real person's health data."
+  health.no-ignored-measurement-quality:
+    status: not-applicable
+    reason: "No measurement is interpreted here, so there is no measurement whose quality could be disregarded."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability in this repository interprets a real person's health data."
+  health.no-fabricated-measurements:
+    status: not-applicable
+    reason: "This repository records no measurements for any person. The numbers in docs/examples are labelled fictional illustrations of the record format and are not presented as anyone's data."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability records or reports measurements for a real person, or an example ceases to be labelled fictional."
+  health.no-false-reassurance:
+    status: not-applicable
+    reason: "This repository responds to nobody's symptoms or measurements, so there is no one to reassure."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability delivers guidance to a reader about their own health."
+  health.no-catastrophizing:
+    status: not-applicable
+    reason: "No individual's measurements are assessed here, so none can be presented as alarming."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability delivers guidance to a reader about their own health."
+  health.no-unwarranted-certainty:
+    status: not-applicable
+    reason: "This repository draws no conclusions about any individual's health, which is the setting in which competing explanations arise. Claims made in standards prose are governed by health.no-fabricated-medical-facts and health.evidence-quality-noted, both of which are declared applicable."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability interprets a real person's health data."
+  health.no-dismissing-serious-symptoms:
+    status: not-applicable
+    reason: "No symptom reported by any person is received or responded to here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability receives or responds to a reported symptom."
+  health.no-wearable-as-ground-truth:
+    status: not-applicable
+    reason: "No wearable data is ingested or interpreted by anything in this repository."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability ingests wearable data."
+  health.no-causation-from-correlation:
+    status: not-applicable
+    reason: "No personal health data is analysed here, so no association can be drawn from it and misreported as a cause."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability analyses a real person's health data."
+  health.no-silently-ignored-modifiers:
+    status: not-applicable
+    reason: "This repository holds no medication or contextual data for any person, so there is none it could hold and pass over."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability holds medication or contextual data for a real person."
+  health.no-population-average-as-baseline:
+    status: not-applicable
+    reason: "No individual baseline is held here, so none can be silently replaced by a population figure."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability holds an individual baseline."
+
+  # ---------------------------------------------------------------------------------------------
+  # Health requirements about interpretation records. This repository produces no interpretations.
+  # ---------------------------------------------------------------------------------------------
+  health.interpretation-record:
+    status: not-applicable
+    reason: "This repository interprets no personal health data, so there is no interpretation to record. The example records under docs/examples are illustrations of the template, not interpretations of anyone."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability interprets a real person's health data."
+  health.symptom-context-recorded:
+    status: not-applicable
+    reason: "No interpretation records exist here to carry a context section."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability interprets a real person's health data."
+  health.measurement-quality-recorded:
+    status: not-applicable
+    reason: "No interpretation records exist here to carry a measurement quality section."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability interprets a real person's health data."
+  health.baseline-recorded:
+    status: not-applicable
+    reason: "No interpretation records exist here to carry a baseline section."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability interprets a real person's health data."
+  health.uncertainty-recorded:
+    status: not-applicable
+    reason: "No interpretation records exist here to carry an uncertainty section."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability interprets a real person's health data."
+  health.escalation-tier-assigned:
+    status: not-applicable
+    reason: "No interpretation records exist here to carry an escalation tier."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability interprets a real person's health data."
+  health.modifiers-recorded:
+    status: not-applicable
+    reason: "No interpretation records exist here to carry a medications and contextual factors section."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability interprets a real person's health data."
+
+  # ---------------------------------------------------------------------------------------------
+  # Fitness. This repository prescribes no training to anyone.
+  # ---------------------------------------------------------------------------------------------
+  fitness.no-training-through-sharp-pain:
+    status: not-applicable
+    reason: "No training is prescribed to any person here, so no one can be advised to train through pain."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability prescribes training to a real person."
+  fitness.no-load-increase-without-recovery:
+    status: not-applicable
+    reason: "No training load is prescribed or progressed here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability prescribes training to a real person."
+  fitness.no-max-effort-as-superior:
+    status: not-applicable
+    reason: "No training intensity is prescribed here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability prescribes training to a real person."
+  fitness.no-fitness-judgment-from-one-workout:
+    status: not-applicable
+    reason: "No workout data for any person is assessed here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability assesses a real person's workout data."
+  fitness.no-heart-rate-as-complete-measure:
+    status: not-applicable
+    reason: "No heart-rate data is ingested or assessed here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability ingests heart-rate data."
+  fitness.no-intensity-without-baseline:
+    status: not-applicable
+    reason: "No intensity is prescribed to any person here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability prescribes training to a real person."
+  fitness.no-unsafe-progression-for-targets:
+    status: not-applicable
+    reason: "No progression toward any person's target is planned here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability plans progression for a real person."
+  fitness.no-soreness-as-effectiveness:
+    status: not-applicable
+    reason: "No workout is evaluated for effectiveness here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability evaluates a real person's workouts."
+  fitness.no-exhaustion-as-quality:
+    status: not-applicable
+    reason: "No workout is evaluated for quality here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability evaluates a real person's workouts."
+  fitness.no-punitive-compensation:
+    status: not-applicable
+    reason: "No training schedule is maintained for any person, so no missed session can be compensated for."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability maintains a training schedule for a real person."
+  fitness.no-extreme-volume-for-speed:
+    status: not-applicable
+    reason: "No training volume is prescribed here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability prescribes training to a real person."
+  fitness.plan-documented:
+    status: not-applicable
+    reason: "No person trains under a plan owned by this repository. The example plan under docs/examples illustrates the template."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability maintains a training plan for a real person."
+  fitness.baseline-recorded:
+    status: not-applicable
+    reason: "No fitness plan for any person exists here to record a baseline in."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability maintains a training plan for a real person."
+  fitness.progression-recorded:
+    status: not-applicable
+    reason: "No fitness plan for any person exists here to record a progression in."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability maintains a training plan for a real person."
+  fitness.recovery-planned:
+    status: not-applicable
+    reason: "No fitness plan for any person exists here to record recovery provisions in."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability maintains a training plan for a real person."
+  fitness.pain-response-protocol:
+    status: not-applicable
+    reason: "No fitness plan for any person exists here to carry a pain response protocol."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability maintains a training plan for a real person."
+  fitness.review-cadence-defined:
+    status: not-applicable
+    reason: "No fitness plan for any person exists here to carry a review cadence."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability maintains a training plan for a real person."
+
+  # ---------------------------------------------------------------------------------------------
+  # Nutrition. This repository advises nobody on what to eat.
+  #
+  # nutrition.no-single-food-disease-claims is deliberately ABSENT from this list: it is declared
+  # applicable above, because this repository does make nutrition claims in its own prose.
+  # ---------------------------------------------------------------------------------------------
+  nutrition.no-crash-dieting:
+    status: not-applicable
+    reason: "This repository generates no dietary plans, calorie targets, or weight-loss recommendations for any person, so it cannot recommend a rate of loss to anyone."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability generates dietary plans, calorie targets, or weight-loss guidance for a real person."
+  nutrition.no-starvation-approaches:
+    status: not-applicable
+    reason: "No intake level is recommended to any person here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability recommends intake levels to a real person."
+  nutrition.no-food-moralizing:
+    status: not-applicable
+    reason: "No person's food choices are described or evaluated here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability describes or evaluates a real person's food choices."
+  nutrition.no-unjustified-extreme-restriction:
+    status: not-applicable
+    reason: "No dietary restriction is recommended to any person here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability recommends dietary restriction to a real person."
+  nutrition.no-scale-change-as-fat-change:
+    status: not-applicable
+    reason: "No body-weight data for any person is interpreted here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability interprets a real person's body-weight data."
+  nutrition.no-adequacy-sacrifice:
+    status: not-applicable
+    reason: "No intake is planned for any person here, so adequacy cannot be traded against a calorie target."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability plans intake for a real person."
+  nutrition.no-fabricated-values:
+    status: not-applicable
+    reason: "No calorie or macronutrient values are recorded for any person. Values in docs/examples are labelled fictional illustrations of the plan format."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability records nutrition values for a real person, or an example ceases to be labelled fictional."
+  nutrition.no-exact-loss-rate-promises:
+    status: not-applicable
+    reason: "No outcome is projected for any person here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability projects an outcome for a real person."
+  nutrition.no-identical-response-assumption:
+    status: not-applicable
+    reason: "No dietary guidance is issued to any person here, so no assumption about how they would respond is made."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability issues dietary guidance to a real person."
+  nutrition.plan-documented:
+    status: not-applicable
+    reason: "No person eats under a plan owned by this repository. The example plan under docs/examples illustrates the template."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability maintains a nutrition plan for a real person."
+  nutrition.targets-recorded:
+    status: not-applicable
+    reason: "No nutrition plan for any person exists here to record targets in."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability maintains a nutrition plan for a real person."
+  nutrition.restrictions-recorded:
+    status: not-applicable
+    reason: "No nutrition plan for any person exists here to record restrictions in."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability maintains a nutrition plan for a real person."
+  nutrition.adequacy-considered:
+    status: not-applicable
+    reason: "No nutrition plan for any person exists here to carry an adequacy section."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability maintains a nutrition plan for a real person."
+  nutrition.value-provenance:
+    status: not-applicable
+    reason: "No nutrition values are recorded for any person here."
+    reviewedAt: "2026-08-09"
+    revisitWhen: "Any capability records nutrition values for a real person."
+
+# No exceptions. Every rule that applies here is either met, failing, or honestly unevaluated, and a
+# failing rule is reported as a failure rather than waived.
+#
+# Note what could not appear here even if someone wanted it: an exception naming any of the 34
+# prohibitions or the integrity invariant. Writing one would not be recorded and would not be
+# ignored — it stops evaluation with BLOCKED_BY_INVARIANT and exit code 3.
+exceptions: []
+
+# Recorded human judgement.
+#
+# THIS SECTION IS DELIBERATELY EMPTY, and that is why `standards check` reports this repository as
+# NOT_EVALUATED rather than COMPLIANT. Four rules apply here that only a human can establish:
+# integrity.no-standards-manipulation, escalation.tier-language-calibrated, trend.trends-over-events,
+# and health.no-fabricated-medical-facts.
+#
+# No attestation appears for them because no human has reviewed them yet. Writing one anyway — an
+# agent recording a review that did not happen — would be the "falsify evidence for" clause of the
+# very invariant being attested. The honest state of this repository is that it cannot yet
+# demonstrate compliance, and the system says so.
+#
+# See INSTRUCTIONS.md for what an attestation looks like and what evidence it must carry.
+attestations: {}

@@ -149,6 +149,19 @@ complainant; a false green has none, by construction.
 
 `COMPLIANT`, `COMPLIANT_WITH_EXCEPTIONS`, `NON_COMPLIANT`, `NOT_EVALUATED`, `BLOCKED_BY_INVARIANT`.
 
+Precedence, which matters as much as the list:
+
+1. Integrity violations → `BLOCKED_BY_INVARIANT`. Nothing else is evaluated.
+2. No policy → `NOT_EVALUATED`.
+3. Any non-excepted failure → `NON_COMPLIANT`. Ordered before the next case because a real failure
+   is actionable now, and a project with both should be told about the failure first.
+4. **Any applicable required-strength rule that nothing established → `NOT_EVALUATED`.** "Nothing
+   failed" is not evidence that anything passed. Because 34 of the 59 rules are prohibitions no
+   machine evaluates, this is the expected result for a project that has recorded no human review —
+   and it is the correct one. Reaching `COMPLIANT` requires that a human actually looked.
+5. Any live exception → `COMPLIANT_WITH_EXCEPTIONS`.
+6. Otherwise → `COMPLIANT`.
+
 `BLOCKED_BY_INVARIANT` is not a compliance failure. It is the system declining to produce a verdict
 because the inputs to the verdict have been manipulated. It is reached when:
 
@@ -247,7 +260,17 @@ runs and attribute the difference to the project rather than to the tool.
 Three separate contracts, deliberately not merged.
 
 - `check`: `0` compliant (including with exceptions) · `1` evaluated and non-compliant · `2`
-  configuration or schema error, including a missing policy · `3` blocked by invariant.
+  configuration or schema error, including a missing policy · `3` blocked by invariant · `4`
+  insufficient evidence to reach a verdict.
+
+  Code `4` exists because `NOT_EVALUATED` is a first-class outcome here rather than an edge case,
+  and folding it into either neighbour would be a lie in one direction or the other. Mapping it to
+  `0` would let a project that has evaluated nothing pass a gate — the false green in its purest
+  form. Mapping it to `1` would report a project as non-compliant when nothing has been found wrong
+  with it. The honest statement is "we cannot establish this", and it deserves its own code so CI
+  can act on it distinctly. In this domain it is also the *expected* first result: 34 of 59 rules
+  are prohibitions no machine evaluates, so a project reaches compliance only once a human has
+  recorded review of them.
 - `audit`: `0` survey completed · `1` `--strict` and something non-`info` was found · `2` invocation
   error.
 - `init`: `0` completed · `1` conflicts, nothing written · `2` could not run.

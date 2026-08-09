@@ -77,7 +77,17 @@ function parseScalar(raw, lineNo) {
   if (first === "|" || first === ">") {
     throw new YamlError("block scalars are not supported", lineNo);
   }
-  if (first === "{") throw new YamlError("flow mappings are not supported", lineNo);
+  // Empty flow collections are permitted and nothing else is. `[]` and `{}` are unambiguous, and
+  // being able to write "explicitly none" matters here: `exceptions: []` and `attestations: {}` are
+  // assertions that a project waived nothing and attested nothing, which is different from omitting
+  // the key and leaving a reader to guess. A flow collection WITH content is still rejected,
+  // because that is where a permissive parser starts inferring types.
+  if (first === "{") {
+    if (value.replace(/\s/g, "") !== "{}") {
+      throw new YamlError("flow mappings with content are not supported", lineNo);
+    }
+    return {};
+  }
   if (first === "[") {
     if (value.replace(/\s/g, "") !== "[]") {
       throw new YamlError("flow sequences with content are not supported", lineNo);

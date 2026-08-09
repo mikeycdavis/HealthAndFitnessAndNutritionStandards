@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/HealthAndFitnessAndNutritionStandards/schemas/project-policy.schema.json",
+  "title": "Project Policy",
+  "description": "A project's declaration of which of these standards apply to it, which it knowingly does not meet, and which have been established by recorded human review. Four mechanisms live here and they are deliberately separate: `rules` records adoption, `applicability` records that a rule has no subject in this project, `exceptions` records an approved and time-bounded waiver of a rule that DOES apply, and `attestations` records human evidence that a rule IS satisfied. Collapsing any two of them hides a real failure. Keys are canonical rule ids and nothing else — the pattern under $defs/ruleId rejects any other spelling by construction (ADR 0001). What this file cannot do: waive a prohibition, waive the integrity invariant, or lower any rule's strength. Those attempts are not rejected quietly — they stop evaluation with BLOCKED_BY_INVARIANT and exit code 3 (ADR 0003).",
+  "type": "object",
+  "required": ["standardVersion"],
+  "additionalProperties": false,
+
+  "properties": {
+    "standardVersion": {
+      "description": "The version of these standards the project is evaluated against. An unresolvable version is a configuration error, not a compliance failure. A prerelease suffix is permitted so that a project can track a series still under construction.",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$"
+    },
+
+    "project": {
+      "description": "Project identity, carried into evaluator output.",
+      "type": "string",
+      "minLength": 1
+    },
+
+    "domains": {
+      "description": "Informational only: which domains of guidance this project produces. It does NOT switch rules on or off — a project narrows scope through `applicability` declarations, each of which carries its own reason and revisit trigger. A single list that silently disabled whole categories of prohibition would be a waiver mechanism with no reason attached to it.",
+      "type": "array",
+      "items": { "type": "string", "enum": ["health", "fitness", "nutrition"] }
+    },
+
+    "rules": {
+      "description": "Which rules this project has considered, and at what strength it holds them. A rule absent from this map takes its catalog kind; an evaluator reports how many rules were never declared so that silence is never mistaken for a decision.",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/ruleId" },
+      "additionalProperties": { "$ref": "#/$defs/ruleSetting" }
+    },
+
+    "applicability": {
+      "description": "Whether a rule's subject exists in this project at all. First-class, and deliberately NOT an exception: `not-applicable` means the prohibited or required behavior cannot occur within the evaluated scope, whereas an exception means the rule applies and the project knowingly does not satisfy it. For a prohibition this is the only door open, so the reason carries real weight — a reason asserting the behavior is wanted, tolerated, or requested by users is a waiver wearing a scope claim's clothing, and falls under Standard 42.",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/ruleId" },
+      "additionalProperties": { "$ref": "#/$defs/applicabilityDeclaration" }
+    },
+
+    "exceptions": {
+      "description": "Approved, time-bounded waivers of rules that DO apply. Valid ONLY against requirements and recommendations. An exception naming a prohibition or the integrity invariant is not recorded and not silently ignored: it stops the run. The schema cannot enforce that — it does not know a rule's kind — so the evaluator does, and reports BLOCKED_BY_INVARIANT.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/exception" }
+    },
+
+    "attestations": {
+      "description": "Recorded human judgement for rules the catalog says a human evaluates — which here means every prohibition. An attestation is EVIDENCE, not a waiver: it says the rule applies and is satisfied on human review. It never overrides an automated finding, is never accepted for the integrity invariant, and returns the rule to not-evaluated once it expires or the reviewed files change.",
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/ruleId" },
+      "additionalProperties": { "$ref": "#/$defs/attestation" }
+    }
+  },
+
+  "$defs": {
+    "ruleId": {
+      "description": "Canonical rule identity per ADR 0001: `category.kebab-case-name`, dot-separated, lower-case throughout. This exact pattern also appears in scripts/catalog.mjs and in Standard 42; a misspelled key is an error here rather than a declaration about a rule that does not exist.",
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9]*(\\.[a-z0-9]+(-[a-z0-9]+)*)+$"
+    },
+
+    "strength": {
+      "description": "How strongly this project holds a rule. A policy may RAISE a recommendation to required; it may never lower anything, and it may not set a strength on a prohibition or the invariant at all. Lowering a rule's strength produces the same relief as a waiver with none of a waiver's visibility, which is why the evaluator treats it as manipulation rather than as configuration.",
+      "type": "string",
+      "enum": ["required", "recommended"]
+    },
+
+    "ruleSetting": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strength": { "$ref": "#/$defs/strength" },
+        "note": {
+          "description": "Why this project holds the rule as it does. Not a substitute for an exception.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+
+    "applicabilityDeclaration": {
+      "type": "object",
+      "required": ["status", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["applicable", "not-applicable"]
+        },
+        "reason": {
+          "description": "Required. A not-applicable declaration with no reason is indistinguishable from a rule that was forgotten. State why the behavior cannot occur within the evaluated scope — not why it would be inconvenient to satisfy the rule.",
+          "type": "string",
+          "minLength": 1
+        },
+        "reviewedAt": {
+          "description": "When this judgement was last examined. Not-applicable is a claim about the PROJECT, not about the rule, and it stops being true the moment the project gains the capability.",
+          "type": "string",
+          "format": "date",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "revisitWhen": {
+          "description": "The condition under which this declaration must be re-examined. Required in spirit and strongly expected: a scope claim with no trigger outlives its truth silently, and `standards status` reports declarations that carry none.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+
+    "attestation": {
+      "type": "object",
+      "required": ["status", "reviewedBy", "reviewedAt", "evidence"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "description": "Only `approved` establishes the rule. `rejected` records that a human looked and found it unmet, which is a failure rather than silence — and is more useful than an absent attestation, because it says the question was asked.",
+          "type": "string",
+          "enum": ["approved", "rejected"]
+        },
+        "reviewedBy": { "type": "string", "minLength": 1 },
+        "reviewedAt": { "type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "evidence": {
+          "description": "What was examined, and what the reviewer concluded. Required, because an attestation without it is an assertion rather than evidence — the thing this mechanism exists to avoid.",
+          "type": "string",
+          "minLength": 1
+        },
+        "reference": { "type": "string", "minLength": 1 },
+        "expires": { "type": "string", "format": "date", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" },
+        "reviewedAgainst": { "$ref": "#/$defs/reviewedAgainst" }
+      }
+    },
+
+    "reviewedAgainst": {
+      "description": "What the reviewer actually looked at. The evaluator digests these paths and compares; when the digest differs the attestation is stale and the rule returns to not-evaluated, because the thing reviewed is not the thing that is there now. Staleness is not treated as tampering — files legitimately change, and a guard that fires on ordinary edits is one people learn to route around.",
+      "type": "object",
+      "required": ["paths"],
+      "additionalProperties": false,
+      "properties": {
+        "paths": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "digest": {
+          "description": "Digest of the reviewed paths. Omit it on a first pass — the evaluator reports the current digest so it can be recorded.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{16,64}$"
+        },
+        "revision": {
+          "description": "Informational revision identifier. Recorded, never computed.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+
+    "exception": {
+      "type": "object",
+      "required": ["rule", "reason", "approvedBy", "approvedAt"],
+      "additionalProperties": false,
+      "properties": {
+        "rule": { "$ref": "#/$defs/ruleId" },
+        "reason": { "type": "string", "minLength": 1 },
+        "approvedBy": {
+          "description": "Provenance. An exception nobody approved is a note.",
+          "type": "string",
+          "minLength": 1
+        },
+        "approvedAt": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "expires": {
+          "description": "Optional. Absence means the waiver is indefinite, which is a stronger claim than it looks and should be rare. An exception past its expiry is a failure, not a resolution.",
+          "type": "string",
+          "format": "date",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "reference": {
+          "description": "An ADR, issue, or work item carrying the decision.",
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

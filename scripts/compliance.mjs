@@ -439,9 +439,21 @@ function summarise(results, policy) {
   const failures = results.filter((r) => r.status === RESULT.failed && r.disposition !== "excepted");
   const excepted = results.filter((r) => r.disposition === "excepted");
 
+  // Rules that apply, are held at required strength, and that nothing established either way.
+  // These are the reason COMPLIANT is not reachable by default in this domain: 34 of the 59 rules
+  // are prohibitions no machine evaluates, so a project that has recorded no human review has not
+  // demonstrated compliance — it has demonstrated that nobody looked.
+  const unevaluated = results.filter(
+    (r) => r.disposition === "not-evaluated" && r.strength === "required",
+  );
+
   let status;
   if (!policy) status = STATUS.NOT_EVALUATED;
   else if (failures.length > 0) status = STATUS.NON_COMPLIANT;
+  // Ordered AFTER failures on purpose: a project with both a real failure and missing evidence
+  // should be told about the failure, which is actionable now. Ordered BEFORE compliance because
+  // "nothing failed" is not evidence that anything passed.
+  else if (unevaluated.length > 0) status = STATUS.NOT_EVALUATED;
   else if (excepted.length > 0) status = STATUS.COMPLIANT_WITH_EXCEPTIONS;
   else status = STATUS.COMPLIANT;
 
@@ -454,6 +466,7 @@ function summarise(results, policy) {
       total: results.length,
       applicable: applicable.length,
       scored: scored.length,
+      unevaluatedRequired: unevaluated.length,
       basis: "rules held at required strength that were actually evaluated",
     },
     integrityViolations: [],
