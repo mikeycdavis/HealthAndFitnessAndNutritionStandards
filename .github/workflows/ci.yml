@@ -1,0 +1,56 @@
+# Continuous integration.
+#
+# THERE IS NO INSTALL STEP, AND THAT IS DELIBERATE. This repository has zero third-party
+# dependencies; the absence of `npm ci` here is what makes that policy structural rather than
+# aspirational. If an install step ever appears in this file, the dependency policy changed, and
+# that change should be argued for in a commit message rather than discovered later.
+#
+# ORDER MATTERS. The guards run before the tests because each answers a question the tests assume:
+# whether the standards series still has the shape a human reviewed, whether the catalog still
+# contains the rules a human reviewed, and whether quoted source text is still the source's. A test
+# suite passing against a catalog that quietly lost a prohibition is a green build that means
+# nothing.
+#
+# `check` is the gate. `audit` runs without --strict on purpose: failing a build on warnings is how
+# an audit step gets disabled, and the real error gate is the assertion inside the test suite that
+# this repository produces no error-severity findings.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Standards series (has the series changed shape?)
+        run: npm run inventory
+
+      - name: Rule catalog (has a rule been dropped, downgraded, or reclassified?)
+        run: npm run rules
+
+      - name: Source fidelity (is quoted source text still the source's?)
+        run: npm run fidelity
+
+      - name: Project policy (is this repository's own policy well-formed?)
+        run: npm run policy
+
+      - name: Diagram freshness (does each embedded diagram match its Mermaid source?)
+        run: npm run diagrams
+
+      - name: Tests
+        run: npm test
+
+      - name: Audit this repository (evidence, not a verdict)
+        run: npm run audit
+
+      - name: Check this repository (the gate)
+        run: npm run check

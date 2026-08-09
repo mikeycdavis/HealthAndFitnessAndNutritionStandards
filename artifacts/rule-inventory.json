@@ -1,0 +1,83 @@
+{
+  "$comment": "CANONICAL RULE ENUMERATION. Reviewed by a human and committed as the record of what these standards contain: every rule id, its kind, its severity, and the standard it belongs to. scripts/rules.mjs derives the same enumeration from rules/*.json and compares it AGAINST this file. This file is NEVER regenerated from a run. Removing a prohibition, downgrading one to a recommendation, or reclassifying a rule therefore requires editing a reviewed file in the same commit, which is a visible line in a diff — that visibility IS the mechanism. See ADR 0003 and Standard 42.",
+  "reviewedOn": "2026-08-09",
+  "expectedCounts": {
+    "total": 59,
+    "prohibitions": {
+      "health": 13,
+      "fitness": 11,
+      "nutrition": 10
+    },
+    "invariants": 1
+  },
+  "$countsNote": "59 = 34 prohibitions + 17 requirements + 7 recommendations + 1 invariant. The per-category prohibition counts are pinned separately from the rule list so the two must agree with each other as well as with the catalog; editing one and forgetting the other is itself a signal.",
+  "rules": [
+    { "id": "escalation.scope-disclosed", "kind": "requirement", "severity": "error", "standard": 1 },
+    { "id": "escalation.tier-model-documented", "kind": "requirement", "severity": "error", "standard": 3 },
+    { "id": "escalation.tier-language-calibrated", "kind": "requirement", "severity": "error", "standard": 3 },
+
+    { "id": "trend.trends-over-events", "kind": "requirement", "severity": "error", "standard": 2 },
+    { "id": "trend.principle-documented", "kind": "recommendation", "severity": "warning", "standard": 2 },
+
+    { "id": "health.no-diagnosis-from-single-measurement", "kind": "prohibition", "severity": "error", "standard": 1 },
+    { "id": "health.no-single-reading-as-trend", "kind": "prohibition", "severity": "error", "standard": 8 },
+    { "id": "health.no-ignored-measurement-quality", "kind": "prohibition", "severity": "error", "standard": 6 },
+    { "id": "health.no-fabricated-medical-facts", "kind": "prohibition", "severity": "error", "standard": 14 },
+    { "id": "health.no-fabricated-measurements", "kind": "prohibition", "severity": "error", "standard": 5 },
+    { "id": "health.no-false-reassurance", "kind": "prohibition", "severity": "error", "standard": 12 },
+    { "id": "health.no-catastrophizing", "kind": "prohibition", "severity": "error", "standard": 3 },
+    { "id": "health.no-unwarranted-certainty", "kind": "prohibition", "severity": "error", "standard": 11 },
+    { "id": "health.no-dismissing-serious-symptoms", "kind": "prohibition", "severity": "error", "standard": 12 },
+    { "id": "health.no-wearable-as-ground-truth", "kind": "prohibition", "severity": "error", "standard": 6 },
+    { "id": "health.no-causation-from-correlation", "kind": "prohibition", "severity": "error", "standard": 15 },
+    { "id": "health.no-silently-ignored-modifiers", "kind": "prohibition", "severity": "error", "standard": 9 },
+    { "id": "health.no-population-average-as-baseline", "kind": "prohibition", "severity": "error", "standard": 7 },
+
+    { "id": "health.interpretation-record", "kind": "requirement", "severity": "error", "standard": 15 },
+    { "id": "health.symptom-context-recorded", "kind": "requirement", "severity": "error", "standard": 4 },
+    { "id": "health.measurement-quality-recorded", "kind": "requirement", "severity": "error", "standard": 6 },
+    { "id": "health.baseline-recorded", "kind": "requirement", "severity": "error", "standard": 7 },
+    { "id": "health.uncertainty-recorded", "kind": "requirement", "severity": "error", "standard": 11 },
+    { "id": "health.escalation-tier-assigned", "kind": "requirement", "severity": "error", "standard": 13 },
+    { "id": "health.modifiers-recorded", "kind": "recommendation", "severity": "warning", "standard": 9 },
+    { "id": "health.evidence-quality-noted", "kind": "recommendation", "severity": "warning", "standard": 14 },
+
+    { "id": "fitness.no-training-through-sharp-pain", "kind": "prohibition", "severity": "error", "standard": 24 },
+    { "id": "fitness.no-load-increase-without-recovery", "kind": "prohibition", "severity": "error", "standard": 18 },
+    { "id": "fitness.no-max-effort-as-superior", "kind": "prohibition", "severity": "error", "standard": 19 },
+    { "id": "fitness.no-fitness-judgment-from-one-workout", "kind": "prohibition", "severity": "error", "standard": 31 },
+    { "id": "fitness.no-heart-rate-as-complete-measure", "kind": "prohibition", "severity": "error", "standard": 19 },
+    { "id": "fitness.no-intensity-without-baseline", "kind": "prohibition", "severity": "error", "standard": 17 },
+    { "id": "fitness.no-unsafe-progression-for-targets", "kind": "prohibition", "severity": "error", "standard": 23 },
+    { "id": "fitness.no-soreness-as-effectiveness", "kind": "prohibition", "severity": "error", "standard": 20 },
+    { "id": "fitness.no-exhaustion-as-quality", "kind": "prohibition", "severity": "error", "standard": 19 },
+    { "id": "fitness.no-punitive-compensation", "kind": "prohibition", "severity": "error", "standard": 30 },
+    { "id": "fitness.no-extreme-volume-for-speed", "kind": "prohibition", "severity": "error", "standard": 22 },
+
+    { "id": "fitness.plan-documented", "kind": "requirement", "severity": "error", "standard": 16 },
+    { "id": "fitness.baseline-recorded", "kind": "requirement", "severity": "error", "standard": 17 },
+    { "id": "fitness.progression-recorded", "kind": "requirement", "severity": "error", "standard": 18 },
+    { "id": "fitness.recovery-planned", "kind": "requirement", "severity": "error", "standard": 20 },
+    { "id": "fitness.pain-response-protocol", "kind": "recommendation", "severity": "warning", "standard": 24 },
+    { "id": "fitness.review-cadence-defined", "kind": "recommendation", "severity": "warning", "standard": 31 },
+
+    { "id": "nutrition.no-crash-dieting", "kind": "prohibition", "severity": "error", "standard": 33 },
+    { "id": "nutrition.no-starvation-approaches", "kind": "prohibition", "severity": "error", "standard": 33 },
+    { "id": "nutrition.no-food-moralizing", "kind": "prohibition", "severity": "error", "standard": 37 },
+    { "id": "nutrition.no-single-food-disease-claims", "kind": "prohibition", "severity": "error", "standard": 14 },
+    { "id": "nutrition.no-unjustified-extreme-restriction", "kind": "prohibition", "severity": "error", "standard": 40 },
+    { "id": "nutrition.no-scale-change-as-fat-change", "kind": "prohibition", "severity": "error", "standard": 32 },
+    { "id": "nutrition.no-adequacy-sacrifice", "kind": "prohibition", "severity": "error", "standard": 36 },
+    { "id": "nutrition.no-fabricated-values", "kind": "prohibition", "severity": "error", "standard": 32 },
+    { "id": "nutrition.no-exact-loss-rate-promises", "kind": "prohibition", "severity": "error", "standard": 33 },
+    { "id": "nutrition.no-identical-response-assumption", "kind": "prohibition", "severity": "error", "standard": 41 },
+
+    { "id": "nutrition.plan-documented", "kind": "requirement", "severity": "error", "standard": 32 },
+    { "id": "nutrition.targets-recorded", "kind": "requirement", "severity": "error", "standard": 32 },
+    { "id": "nutrition.restrictions-recorded", "kind": "requirement", "severity": "error", "standard": 41 },
+    { "id": "nutrition.adequacy-considered", "kind": "recommendation", "severity": "warning", "standard": 36 },
+    { "id": "nutrition.value-provenance", "kind": "recommendation", "severity": "warning", "standard": 32 },
+
+    { "id": "integrity.no-standards-manipulation", "kind": "invariant", "severity": "error", "standard": 42 }
+  ]
+}
