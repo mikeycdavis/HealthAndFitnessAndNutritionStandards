@@ -1,0 +1,1201 @@
+# Evidence pack 03a — verbatim claim extract for `health.no-fabricated-medical-facts`
+
+Companion to [pack 03](03-health-no-fabricated-medical-facts.md). This file exists because the pack
+grouped the empirical claims by category and quoted exemplars. A claim-level disposition needs the
+claims themselves.
+
+**Format.** Each entry gives: claim number · file → requirement · the exact sentence(s) in
+blockquote · enough surrounding text to preserve the qualification the standard attached to it.
+
+**No classification, no citations.** Nothing here is marked correct or incorrect and no external
+source is offered. The corpus is the repository's own claims.
+
+---
+
+## A correction to the pack's count
+
+Pack 03 states "73 sentences carrying empirical assertions". That figure came from an automated
+sentence-level pass over the health and nutrition standards using a heuristic for numeric quantities,
+comparatives, mechanisms, and prevalence language.
+
+A manual enumeration at **claim** granularity — expanding table rows and bulleted lists into their
+constituent assertions, and including the fitness standards that pack 03 §4 covered by summary —
+yields **191 entries, 182 distinct after de-duplication**. The larger number is not a discovery of
+new material; it is the same material counted at a finer grain, plus the fitness standards the
+automated pass did not scan.
+
+The pack's "73" should be read as an undercount of the review surface. This extract is the corpus.
+
+---
+
+# Part A — Health standards (04–15)
+
+## `standards/04-symptom-context.md`
+
+**C1** · R1 — Symptoms accompany the measurement, and usually outweigh it
+
+> A resting heart rate of 105 with no symptoms is a different observation from the same number with
+> chest tightness and breathlessness, and the second is not a worse version of the first — it is a
+> different question.
+
+Context: the requirement opening is "Where symptoms are reported, they are recorded with the
+measurement and carry more interpretive weight than it does." Cross-referenced to Standard 3 R3,
+"symptoms and red flags dominate a reassuring number".
+
+**C2** · R2 — Circumstances are part of the observation
+
+> The circumstances that routinely change what a measurement means:
+>
+> - **Timing** — time of day, position (lying, sitting, standing), time since waking, time since eating.
+> - **Recent activity** — exercise, physical exertion, stairs, the walk from the car.
+> - **Substances** — caffeine, alcohol, nicotine, medication taken or missed.
+> - **State** — illness, poor sleep, acute stress, pain.
+> - **Environment** — heat, cold, altitude, travel and time-zone shift.
+> - **Cycle and life stage** — where relevant to what is being measured.
+
+Qualification attached: "The list is not a form to complete. It is a set of things that, when present
+and unrecorded, will later look like a finding."
+
+**C3** · R5 — Context does not become an excuse
+
+> "You had coffee" is a reason a heart rate might be elevated and not a reason to stop paying
+> attention to it, particularly where symptoms accompany it.
+
+## `standards/05-physiological-measurements.md`
+
+**C4** · R1 — table row, **Time**
+
+> Nearly every physiological quantity varies through the day
+
+Context: one cell in a four-row table of what must travel with a measurement (value and unit, time,
+method or device, provenance).
+
+**C5** · R2 — Derived values are labelled as derived
+
+> Many consumer "measurements" are inferences: sleep stages from movement and heart rate, body fat
+> from impedance, VO2max from pace and heart rate, calorie burn from almost anything.
+
+Followed by: "These are model outputs, and the model's error is a property of the value."
+
+**C6** · R5 — Precision is not accuracy
+
+> A device reporting body fat to one decimal place is not measuring to one decimal place.
+
+Followed by: "Reporting a value at the precision the display offers, rather than the precision the
+method supports, implies an accuracy that misleads without stating anything false."
+
+## `standards/06-measurement-quality.md`
+
+**C7** · R1 — bullet, **The device and its known error**
+
+> every measurement method has one; some are large
+
+**C8** · R2 — Never ignore measurement quality
+
+> A blood pressure taken immediately after climbing stairs, a sleep stage inferred from a night the
+> wearer slept badly with the device loose, a weight taken at a different time of day against one
+> taken fasted — each carries an error that can exceed the effect being discussed.
+
+**C9–C13** · R3 — the wearable inference table. Preamble: "The categories where this matters most,
+because the value is an inference rather than a measurement". Each row is a separate claim.
+
+| # | Reported as | The claim, verbatim |
+| --- | --- | --- |
+| **C9** | Sleep stages | > Inferred from movement and heart rate; agreement with polysomnography is moderate at best |
+| **C10** | Blood oxygen | > Optically estimated; sensitive to contact, motion, skin tone, and perfusion |
+| **C11** | Calorie burn | > Modelled from movement and heart rate; error is routinely large |
+| **C12** | Stress or readiness scores | > Proprietary composites, usually undocumented |
+| **C13** | Body composition by impedance | > Sensitive to hydration, and moves with it rather than with fat |
+
+**C14** · R3 — the bounding sentence immediately after the table
+
+> Devices are still useful — their *trends* often carry real signal even where their absolute values
+> do not, which is one more reason [Standard 2] matters. What is forbidden is treating the number as
+> ground truth.
+
+The "Additions" section records this as deliberate: "R3's note that device trends can carry signal
+where absolute values do not, which keeps the prohibition from being read as 'wearables are useless'."
+
+## `standards/07-individual-baseline.md`
+
+**C15** · R1 — the forward case
+
+> The canonical example: a resting heart rate of 48 sits below most population reference ranges and
+> is unremarkable for the endurance-trained person who has lived at 48 for a decade. Read against the
+> population it is a finding. Read against the person it is Tuesday.
+
+**C16** · R1 — the reverse case
+
+> A resting heart rate of 68 sits comfortably inside every population range and is a substantial,
+> potentially meaningful change for someone whose baseline is 52.
+
+**C17** · R1 — the generalisation drawn from C16
+
+> Population ranges are wide enough to hide real individual change, so using them is not merely less
+> precise — it is insensitive in the direction that matters.
+
+**C18** · R3 — Baselines age, and shift legitimately
+
+> Training, detraining, illness, ageing, medication changes, pregnancy, weight change, and altitude
+> all move baselines legitimately. A stale baseline produces false findings in both directions.
+
+## `standards/08-trends.md`
+
+**C19** · R1 — on spread
+
+> A three beat-per-minute rise means one thing when the measurement varies by one beat day to day and
+> nothing at all when it varies by eight.
+
+Context: "The last is what most reporting omits and what determines whether the trend means
+anything." The numbers are illustrative of the ratio argument rather than reference values.
+
+**C20–C23** · R3 — Enough observations, over a period appropriate to the quantity. Preamble: "How
+many is enough depends on the ratio of the effect to the noise, and different quantities need very
+different spans".
+
+- **C20** > **Body weight** — daily variation routinely exceeds a week of real change, so weeks, not days.
+- **C21** > **Resting heart rate** — moves on sleep, alcohol, illness, heat; a week or more, and interpreted with what was going on.
+- **C22** > **Blood pressure** — multiple readings per occasion, multiple occasions, per the protocol the reference range assumes.
+- **C23** > **Sleep duration** — highly variable and weekday-patterned; a week is the minimum unit and even that mixes weekday with weekend.
+
+**C24** · R4 — three invalidators
+
+> 1. **Gaps.** A trend across a missing month is two trends with a line drawn between them.
+> 2. **Method changes.** A new device, a new measurement time, or a new protocol can produce an
+>    apparent change that is entirely instrumental.
+> 3. **Selection.** Measurements taken when someone felt like measuring are not a random sample of
+>    their days, and the bias usually runs in the direction of the story.
+
+**C25** · R6 — A trend can be the finding
+
+> Where a baseline itself has shifted — a resting heart rate that has moved from 52 to 68 over two
+> months, entirely within population normal ranges throughout — the shift is the observation, and it
+> may be more informative than any single value in it.
+
+## `standards/09-medications-where-relevant.md`
+
+**C26** · R1 — the framing claim
+
+> Medications get their own standard because their effects are large, systematic, and specifically
+> documented — they do not merely add noise, they shift what a normal value *is*.
+
+**C27–C32** · R1 — the medication list. Preamble, verbatim: "Examples of the effect, **stated as
+illustration rather than as a reference table**". Closing qualification, verbatim: "A project need
+not encode pharmacology to satisfy this standard. It needs to record what is known and not interpret
+as though it were absent."
+
+- **C27** > Beta blockers lower heart rate and blunt its response to exertion, so a heart-rate-derived training intensity or fitness estimate does not mean what it usually means.
+- **C28** > Diuretics and antihypertensives move blood pressure and fluid balance, and fluid balance moves body weight.
+- **C29** > Corticosteroids affect glucose, fluid retention, and sleep.
+- **C30** > Stimulants, including prescribed ones, raise resting heart rate.
+- **C31** > Thyroid medication shifts heart rate, temperature, and weight.
+- **C32** > Antidepressants and antihistamines affect sleep architecture, which wearable sleep staging then reports as a sleep quality change.
+
+**C33** · R2 — the four forms of silent ignoring
+
+> - computing a heart-rate training zone for someone on a beta blocker without noting it;
+> - flagging a resting heart rate as elevated for someone on a stimulant;
+> - reading a weight change as fat change for someone whose diuretic dose changed;
+> - comparing against a baseline established before a medication started.
+
+**C34** · R5 — Medication changes date a baseline
+
+> Starting, stopping, or changing a medication that affects a measurement invalidates baselines
+> established before it. Comparing across such a change produces a finding about the medication,
+> presented as a finding about the person.
+
+## `standards/10-known-contextual-factors.md`
+
+**C35** · R1 — the contextual-factor classification. Preamble: "Not an exhaustive list — an
+exhaustive list is not possible — but the classes that recur".
+
+> | **Physiological state** | Illness, infection, injury, recovery from either, pregnancy, menstrual cycle phase |
+> | **Sleep** | Duration, quality, timing, shift work, recent disruption |
+> | **Load** | A new training block, unusual exertion, a competition, detraining |
+> | **Substances** | Caffeine, alcohol, nicotine — dose and timing both matter |
+> | **Environment** | Heat, cold, humidity, altitude, air quality |
+> | **Disruption** | Travel, time-zone change, schedule change |
+> | **Psychological** | Acute stress, chronic stress, anxiety about the measurement itself |
+> | **Life stage and history** | Age, relevant conditions, relevant surgical history |
+
+**C36** · R3 — Factors modify; they do not dismiss
+
+> "You slept badly and it was hot" is a plausible partial account of an elevated resting heart rate
+> and not a reason to stop looking, especially if the elevation persists once those factors have
+> passed.
+
+**C37** · R5 — Factors are re-examined, not assumed persistent
+
+> Context expires. A factor recorded three months ago — a training block, an illness, a period of
+> disrupted sleep — may no longer apply, and carrying it forward silently produces the mirror of
+> ignoring it.
+
+## `standards/11-uncertainty.md`
+
+**C38** · R1 — a claim about reasoning
+
+> A useful discipline: if only one explanation comes to mind, that is usually a fact about the effort
+> spent rather than about the observation.
+
+**C39** · R3 — on grammar
+
+> Certainty is claimed by grammar as much as by assertion. "This is dehydration" and "this is
+> consistent with dehydration, among other things" carry the same information and different claims.
+
+**C40** · R4 — the behavioural claim about uniform hedging
+
+> A system that qualifies every statement equally conveys no information about which statements are
+> solid, and readers respond by ignoring the qualifiers entirely.
+
+Context: this is the load-bearing argument for R4's confidence grading. The standard's "Additions"
+section flags it as its own: "R4's grading, and specifically the argument that uniform hedging is its
+own failure. The source prohibits false certainty and says nothing about the overcorrection."
+
+## `standards/12-red-flags.md`
+
+**C41** · R1 — the definition, and its prevalence claim
+
+> A red flag is not an observation that is probably serious. **Most are probably benign.** It is an
+> observation where the cost of being wrong in one direction is very much larger than in the other,
+> so the decision does not turn on the probability.
+
+**C42** · R3 — why false reassurance is the worst failure
+
+> Reassurance is what a worried person is looking for, so it is accepted readily and questioned
+> rarely — and when it is wrong, it delays care at the moment delay costs most.
+
+**C43** · R3 — the five forms
+
+> - explaining away a symptom with a plausible benign cause;
+> - answering the measurement and not the symptom that came with it;
+> - reporting that a number is within a normal range when the concern was never the number;
+> - burying the escalation in a paragraph of reassurance, where a reader will not find it;
+> - treating uncertainty as a reason to wait.
+
+**C44** · R5 — the behavioural claim underneath tier-four language
+
+> Then stop. Piling on consequences does not increase the chance someone acts; past a point it
+> reduces it.
+
+**C45** · R6 — precedence
+
+> A normal heart rate alongside chest pain does not make the chest pain a lesser observation.
+
+**C46** · "Additions" — the competence disclaimer, included because it bounds everything above
+
+> This standard deliberately does not enumerate specific red-flag presentations. Doing so would
+> produce a clinical triage list, which is outside what this series is competent to publish and would
+> be read as authoritative.
+
+## `standards/13-appropriate-escalation.md`
+
+**C47** · R2 — the destination-and-timeframe table
+
+> | Worth monitoring | No one yet — another observation | Stated interval |
+> | Worth discussing | A clinician, pharmacist, physiotherapist, dietitian — whichever fits | Next reasonable opportunity |
+> | Potentially urgent | Urgent care, emergency services, or contact now, as fits | Now, not at the next convenient time |
+
+**C48** · R4 — the behavioural claim for de-escalation
+
+> A system that will not say anything is fine is not being careful — it is producing uniform anxiety,
+> and a reader who is told everything might be something learns to discount all of it, which degrades
+> the escalations that matter.
+
+## `standards/14-evidence-quality.md`
+
+**C49** · R1 — the support hierarchy. Preamble: "Roughly descending, the kinds of support a claim can
+have".
+
+> | Consistent evidence across well-designed trials, in the relevant population | A confident general claim |
+> | A single trial, or trials with mixed results | A claim stated as provisional |
+> | Observational association | An association, explicitly not a cause |
+> | Mechanism or extrapolation from adjacent findings | A hypothesis, labelled as one |
+> | Common practice, expert opinion, tradition | Reportable as practice, not as evidence |
+> | Nothing identifiable | Not stated as a claim at all |
+
+Qualification: "The point is not to demand citations for ordinary statements."
+
+**C50** · R2 — the characterisation of how fabrication usually occurs
+
+> The most common form is not invention from nothing. It is a real finding stated more strongly than
+> its evidence, generalised past the population it was found in, or given a precise number it never
+> had.
+
+This is the rule's own standard of judgement, and therefore the criterion the rest of this extract
+should be read against.
+
+**C51** · R3 — the single-food reasoning
+
+> Complex diseases have many contributing causes, and single-food claims almost always outrun their
+> support — typically a mechanism demonstrated in vitro, or an association in an observational study
+> with substantial confounding.
+
+**C52** · R3 — the bounding, in both directions
+
+> The qualifier matters in both directions: this is not a prohibition on discussing diet and disease,
+> which is a real and important subject. It is a prohibition on the causal or curative claim about a
+> single food where the evidence does not carry it. And the cure claim is the more dangerous half,
+> because it can displace treatment that works.
+
+**C53** · R5 — Absence of evidence is reported as absence
+
+> "No good evidence supports X" and "evidence shows X does not work" are different statements, and
+> collapsing them is a failure in the opposite direction from R2. Many things are unstudied rather
+> than disproven.
+
+## `standards/15-limits-of-interpretation.md`
+
+**C54** · R1 — the five structural limits of personal health data
+
+> - **No control condition.** What would have happened otherwise is unobserved.
+> - **Many variables move together.** Sleep, stress, training, diet, illness, and season are correlated with each other, so their effects cannot be separated by observation.
+> - **Small effective sample.** Days are not independent observations; consecutive days share almost everything.
+> - **Selection in the measurements.** People measure when they think to, which is not at random.
+> - **Feedback.** Seeing the data changes the behaviour that generates it.
+
+Closing: "These limits are properties of the data, not deficiencies in the analysis, and a more
+sophisticated method does not remove them."
+
+**C55** · R2 — the multiple-comparisons claim
+
+> Personal data produces coincidences abundantly: dozens of tracked variables over hundreds of days
+> will yield striking associations by chance alone.
+
+**C56** · R2 — the regression claim
+
+> A causal claim drawn from one tells someone to change a behaviour that may have nothing to do with
+> the outcome — and the change will then appear to work, because regression toward the mean does the
+> rest.
+
+**C57** · R3 — what the data does support
+
+> - describing what happened;
+> - comparing the present against the person's own history;
+> - identifying trends;
+> - generating hypotheses worth testing deliberately;
+> - noticing observations that warrant attention.
+
+**C58** · R4 — the n-of-1 claim
+
+> Where someone changes one thing on purpose, holds the rest as steady as they can, and observes what
+> happens — with enough time on each side to see past the noise — that is a weak experiment rather
+> than a mere correlation, and it supports a correspondingly stronger claim.
+
+---
+
+# Part B — Physiological claims in the fitness standards
+
+Pack 03 §4 summarised these as eight bullets. Verbatim, with their qualifications:
+
+## `standards/17-baseline-fitness.md`
+
+**C59** · R1 — the returning-athlete claim
+
+> Training history matters because tissue tolerance and technical competence do not decay at the same
+> rate as fitness. Someone returning after a year off has the fitness of a beginner and the
+> confidence and technique of a trained person, which is a combination that produces injuries.
+
+**C60** · R3 — **the ±10–12 bpm claim**
+
+> Age-predicted maximum heart rate deserves specific mention because it is ubiquitous and has an
+> individual error of roughly ±10–12 beats per minute, which is wider than the zones drawn from it.
+> Using it is acceptable where nothing better exists, provided the error is acknowledged.
+
+Full surrounding requirement, because the scope matters: R3 opens "Prescriptions anchored to the
+person rather than to an absolute: a percentage of a tested maximum, a rating of perceived exertion,
+a pace relative to a recent time trial, a heart rate relative to a measured — not age-predicted —
+maximum, or simply repetitions in reserve."
+
+The "Additions" section claims it explicitly: "R3's treatment of age-predicted maximum heart rate,
+**including the size of its individual error**." No population, equation, or source is named. No age
+range is specified. It is stated as a property of "age-predicted maximum heart rate" in general.
+
+**C61** · R4 — Establishing a baseline must not itself be unsafe
+
+> Maximal testing is a poor first interaction with someone whose capacity is unknown.
+
+**C62** · R6 — Baselines move in both directions
+
+> Illness, layoff, poor sleep, life stress, and age all reduce capacity, sometimes quickly.
+
+## `standards/18-progressive-overload.md`
+
+**C63** · R1 — the adaptation mechanism
+
+> training applies a stress, the body responds during recovery by adapting, and capacity increases.
+> The session is the stimulus; the adaptation is not in it.
+
+Followed by: "Doing more each time without recovery does not produce more adaptation — it removes the
+mechanism that produces any."
+
+## `standards/20-recovery.md`
+
+**C64** · R1 — sleep as largest contributor
+
+> **Sleep** — the largest single contributor, and the one most affected by everything else
+
+**C65** · R1 — energy and protein
+
+> **Energy and protein availability** — inadequate intake limits adaptation directly
+
+**C66** · R1 — differential recovery rates
+
+> **Time since the stimulus**, which differs by tissue: cardiovascular and metabolic recovery run
+> faster than connective-tissue remodelling.
+
+**C67** · R1 — shared capacity
+
+> **Total load**, training and otherwise. Physical work, life stress, and illness draw on the same
+> capacity.
+
+**C68** · R3 — the DOMS claim
+
+> Delayed-onset soreness tracks novelty and eccentric loading, not adaptation. It is highest when
+> someone is least trained and fades as they improve — so using it as a quality signal rewards
+> constant change over the consistency that actually produces progress, and tells an improving person
+> their training has stopped working.
+
+**C69** · R4 — what soreness does indicate
+
+> Soreness indicates novelty or unusual eccentric load; severe or unusually persistent soreness
+> indicates the jump was too large; soreness that impairs movement is a reason to modify the next
+> session.
+
+**C70** · R5 — signals of inadequate recovery. Qualification stated first: "Read together rather than
+individually, and none is diagnostic alone".
+
+> - performance stalling or declining under unchanged or increased load;
+> - resting heart rate elevated relative to the person's own baseline;
+> - sleep worsening despite adequate opportunity;
+> - persistent, unusual fatigue; irritability; loss of motivation;
+> - minor niggles accumulating;
+> - frequent minor illness.
+
+**C71** · R6 — recovery scaling
+
+> It rises with training load and intensity, and it varies with age, sleep, life stress, and
+> nutrition.
+
+## `standards/22-training-volume.md`
+
+**C72** · R4 — where injury concentrates
+
+> An increase in volume is itself a stimulus that must be recovered from. Large jumps are where
+> injury concentrates, particularly in connective tissue, which adapts more slowly than the
+> cardiovascular and muscular systems that make the higher volume feel manageable.
+
+## `standards/24-pain-injury-signals.md`
+
+**C73–C78** · R1 — **the discomfort-versus-injury table.** Preamble: "Not degrees of the same thing.
+The distinctions that carry the decision". Each row is a separate claim.
+
+| # | Axis | Training discomfort | Injury pain |
+| --- | --- | --- | --- |
+| **C73** | Quality | Burning, heaviness, breathlessness, general ache | Sharp, stabbing, catching, or a distinct localised pain |
+| **C74** | Location | Diffuse, in the working muscles | Localised, often at a joint, tendon, or bone |
+| **C75** | Timing | During effort; eases when it stops | May start suddenly, persist after stopping, or appear at rest |
+| **C76** | Course | Fades over hours to a couple of days | Persists, or worsens with continued use |
+| **C77** | Effect on movement | Movement remains normal | Altered movement, guarding, loss of range, instability |
+| **C78** | What it accompanies | Effort | Sometimes swelling, bruising, numbness, weakness, or a sound at onset |
+
+The **entire** qualification the standard attaches, verbatim and in full:
+
+> No single row is decisive. Sharp pain at a joint that alters how someone moves is the clear case,
+> and the clear case is the one this standard is most concerned with.
+
+**C79** · R2 — the mechanism claim
+
+> Sharp pain signals that something is being damaged, and training through it converts a recoverable
+> problem into a lasting one. The distinction in R1 is well understood by people who train and
+> routinely blurred by systems that treat persistence as a virtue.
+
+**C80** · R5 — presentations warranting evaluation rather than management
+
+> pain following a distinct traumatic event, inability to bear weight, marked swelling, numbness or
+> weakness, a joint that gives way, pain that wakes someone at night, or pain that is not improving
+> over a reasonable period.
+
+Bounded by: "a plan can say this warrants assessment; it cannot say what the injury is."
+
+**C81** · R6 — accumulated niggles
+
+> Recurring niggles that individually never justify stopping are one of the clearest signs that load
+> has outrun tolerance.
+
+## `standards/25-cardiovascular-conditioning.md`
+
+**C82** · R1 — the intensity/adaptation table. Preamble: "The adaptations do not stack in a single
+dimension". Note the hedge in the column header — "Roughly".
+
+> | Easy, conversational | Aerobic base, capillary and mitochondrial density, fat oxidation, tissue tolerance | Low |
+> | Moderate | A mix, and a well-known trap — see R3 | Moderate |
+> | Threshold | Sustainable pace at the edge of steady state | Moderate to high |
+> | Hard intervals | Maximal oxygen uptake, high-intensity tolerance | High |
+
+**C83** · R2 — **the intensity distribution**
+
+> For most people and most goals, the majority of cardiovascular volume belongs at genuinely easy
+> intensity, with a smaller proportion hard. This is not a compromise for beginners — it is broadly
+> how well-conditioned endurance athletes train, and the reason is recovery: easy volume can be
+> accumulated, hard volume cannot.
+
+That is R2 in its entirety. No proportion is given, no population is named beyond "well-conditioned
+endurance athletes", and the generalisation to "most people and most goals" carries no qualifier.
+
+**C84** · R3 — the moderate-intensity trap, with a prevalence claim
+
+> The most common failure in self-directed cardiovascular training is that easy sessions drift up and
+> hard sessions drift down, leaving everything at a moderate intensity that is tiring enough to
+> impair recovery and not hard enough to drive high-end adaptation.
+
+**C85** · R4 — perceived exertion versus heart rate
+
+> Perceived exertion and the talk test are robust to heat, sleep, caffeine, and illness in a way
+> heart rate is not, and they require no device.
+
+**C86** · R5 — the connective-tissue lag
+
+> Cardiovascular fitness improves faster than tendons, ligaments, and bone adapt to the associated
+> impact and volume. This is why a rapidly improving runner can feel capable of far more than their
+> tissues tolerate.
+
+**C87** · R6 — the interference claim
+
+> Substantial cardiovascular volume competes with strength training for recovery and, at high
+> volumes, for adaptation.
+
+## `standards/26-strength.md`
+
+**C88** · R1 — proximity to failure as a determinant
+
+> "Three sets of ten" describes very different sessions depending on whether the tenth repetition was
+> comfortable or barely completed, and a plan that omits it has not specified the intensity at all.
+
+**C89** · R2 — technical quality
+
+> Load added beyond the point where movement quality degrades is not training the intended pattern;
+> it is training a compensation, under load.
+
+**C90** · R3 — the failure-training cost curve
+
+> Proximity to failure drives adaptation and carries a recovery cost that rises steeply near the
+> limit. Repeatedly training to failure across a whole programme raises fatigue substantially for a
+> modest additional stimulus, and it degrades the technical quality R2 requires.
+
+**C91** · R4 — frequency
+
+> Distributing work across the week generally beats concentrating it, for the same reason volume
+> beats intensity at the margin: it is recoverable.
+
+**C92** · R4 — tendon lag
+
+> Tendons and connective tissue adapt more slowly than muscle, so a programme whose loads rise as
+> fast as strength does will outrun tendon tolerance.
+
+**C93** · R5 — the protective claim
+
+> Resistance training supports bone density, muscle mass retention with age, tendon and joint
+> tolerance, and functional capacity in later life. It is frequently omitted from plans built around
+> cardiovascular goals or weight loss, and that omission has costs that appear slowly.
+
+**C94** · R5 — the lean-mass claim in a deficit
+
+> In a calorie deficit particularly, resistance training plus adequate protein is what preserves lean
+> mass, and a weight-loss plan without it loses a larger proportion of that weight as muscle.
+
+## `standards/27-mobility-where-relevant.md`
+
+**C95** · R2 — **the negative claim about stretching**
+
+> Several widely-repeated claims — that stretching prevents injury generally, that it prevents
+> post-exercise soreness, that a particular routine corrects posture — are substantially weaker than
+> their confident presentation suggests.
+
+**C96** · R2 — the positive claim
+
+> What is better supported: mobility work increases range of motion at the joints trained, and range
+> of motion matters where an activity requires it.
+
+Closing: "State the claim at the strength the evidence carries. That is not an argument against
+mobility work; it is an argument against selling it on grounds that will not hold."
+
+**C97** · R3 — controllable range
+
+> Range that a person cannot control under load is not obviously an asset, and for some joints and
+> some people it is a liability. Useful mobility work develops range with the ability to produce
+> force through it, which is why loaded work through a full range is often a better instrument than
+> passive stretching.
+
+**C98** · R4 — the acute static-stretching effect, **with its hedge**
+
+> Prolonged static stretching immediately before a session involving maximal force or speed can
+> transiently reduce force production. Where mobility work is prescribed as a warm-up, dynamic
+> preparation generally serves better, and longer static work is better placed after training or in a
+> separate session.
+>
+> The effect is modest and its practical relevance depends on the goal — worth mentioning rather than
+> worth alarm.
+
+## `standards/28-sleep.md`
+
+**C99** · R1 — sleep as a training variable
+
+> Inadequate sleep reduces recovery, impairs performance, raises perceived exertion at a given
+> workload, and affects appetite regulation and mood.
+
+**C100** · R3 — **staging agreement**, the second instance of the "moderate at best" phrase
+
+> Sleep stage breakdowns from wearables are inferred from movement and heart rate, and their
+> agreement with polysomnography is moderate at best.
+
+**C101** · R3 — duration versus composition
+
+> Total sleep duration is measured considerably better than its composition.
+
+**C102** · R3 — the feedback claim
+
+> This matters because stage data is presented with more precision than it has, and people act on it
+> — including by worrying about a "poor deep sleep score", which is itself a mechanism for sleeping
+> worse.
+
+**C103** · R4 — sleep variability
+
+> Sleep varies substantially with day of week, travel, illness, alcohol, and circumstance, and a
+> single night's data supports very little.
+
+**C104** · R5 — presentations outside a training plan
+
+> Persistent insomnia, loud snoring with witnessed pauses in breathing, marked daytime sleepiness
+> despite adequate opportunity, and sudden changes in sleep pattern are outside what a training plan
+> should attempt to manage.
+
+Assigned to "worth discussing with a professional", with the recognise-but-do-not-name boundary.
+
+**C105** · R6 — the anxiety feedback claim
+
+> a real risk given how much sleep data people now see and how readily it produces anxiety about
+> sleep, which then affects sleep.
+
+## `standards/29-hydration-fitness.md`
+
+**C106** · R1 — sweat rate variation
+
+> Sweat rate varies severalfold between individuals and with heat, humidity, intensity, duration,
+> clothing, and acclimatisation.
+
+**C107** · R2 — dehydration
+
+> Dehydration impairs performance and thermoregulation.
+
+**C108** · R2 — **exercise-associated hyponatraemia**
+
+> Overdrinking, particularly of plain water during prolonged exercise, can produce
+> exercise-associated hyponatraemia, which is uncommon but serious and has been made more likely by
+> well-meant advice to drink as much as possible.
+
+**C109** · R2 — the default
+
+> Drinking to thirst is a reasonable default for most people and most sessions.
+
+**C110** · R3 — duration and sodium
+
+> Short sessions in temperate conditions rarely require any in-session strategy beyond normal daily
+> intake. Long or hot sessions do, and sodium becomes relevant as duration extends and sweat losses
+> accumulate.
+
+**C111** · R4 — body weight as a fluid proxy
+
+> Weight change across a session is dominated by fluid and is a usable rough guide to sweat losses.
+
+Caveats attached: "it is an estimate rather than a measurement, and it must not be confused with the
+body-weight tracking of Standard 32".
+
+**C112** · R5 — consumer hydration estimates
+
+> Devices and apps that report hydration status generally estimate it from intake logging or from
+> proxies with poor validation.
+
+**C113** · R6 — heat illness
+
+> Signs of heat illness, confusion, collapse, or marked disorientation during or after exercise are
+> emergencies, not hydration coaching.
+
+---
+
+# Part C — Nutrition standards (32–41)
+
+## `standards/32-energy-balance.md`
+
+**C114–C118** · R1 — why each energy-balance quantity is uncertain. Preamble: "The arithmetic is
+simple and the inputs are not".
+
+| # | Quantity | The claim, verbatim |
+| --- | --- | --- |
+| **C114** | Intake | > Self-report is systematically under-reported; label values carry tolerance; portion estimation is poor |
+| **C115** | Resting expenditure | > Predicted from equations with substantial individual error |
+| **C116** | Activity expenditure | > Device estimates are modelled; error is routinely large |
+| **C117** | Non-exercise activity | > Varies considerably day to day and adapts to intake |
+| **C118** | Absorption | > Not all consumed energy is absorbed, and this varies with the food |
+
+Bounded by: "The conclusion is not that energy balance is useless — it is the right framework for
+direction of change."
+
+**C119** · R4 — daily weight variation
+
+> Day-to-day body weight moves on water, glycogen, sodium, gut contents, and hormonal cycle —
+> routinely by more than a week of actual fat change.
+
+**C120** · R4 — the glycogen mechanism
+
+> starting a lower-carbohydrate approach drops glycogen and its associated water, producing a rapid
+> initial loss that is largely not fat; a high-sodium meal or the start of resistance training
+> produces an increase that is largely not fat either. Both are read as evidence about the diet, and
+> both are wrong.
+
+**C121** · R5 — frequent weighing
+
+> Weighing frequently and averaging is generally better than weighing rarely, provided what is read
+> is the average — more data reduces the noise, but only if the individual readings are not each
+> treated as a verdict.
+
+## `standards/33-sustainable-calorie-changes.md`
+
+**C122** · R1 — deficit size and loss composition
+
+> A deficit does not remove fat selectively. Larger deficits increase the proportion of loss that is
+> lean mass, make nutritional adequacy harder to achieve, impair training quality and therefore
+> recovery, and are harder to adhere to.
+>
+> Moderate deficits, adequate protein, and resistance training are what preserve lean mass. A plan
+> that pursues rapid loss without those loses more of the wrong thing.
+
+**C123** · R2 — the crash-dieting claim
+
+> Severe rapid deficits cost lean mass, are difficult to meet micronutrient needs within, and are
+> followed by regain often enough that the approach is self-defeating on its own terms.
+
+**C124** · R2 — the comparative claim
+
+> The sustainable rate outperforms the fast rate measured at any horizon long enough to matter.
+
+**C125** · R3 — starvation-level intakes
+
+> Intakes at this level carry medical risk, cannot meet nutritional requirements, and belong to
+> supervised clinical settings if anywhere.
+
+Note: "starvation-level" is not numerically defined anywhere in the repository.
+
+**C126** · R4 — rate variability
+
+> The response to a given intake varies with body composition, adaptation, adherence, measurement
+> error, and much that is not understood.
+
+**C127** · R5 — metabolic adaptation
+
+> Expenditure falls as body mass falls, and non-exercise activity tends to decline in a deficit. A
+> plan that treats its initial deficit as permanent will find the rate slowing.
+
+**C128** · R6 — the surplus symmetry
+
+> For gaining mass, larger surpluses increase the proportion gained as fat without proportionally
+> increasing lean gain, which is limited by training and recovery rather than by intake.
+
+## `standards/34-protein.md`
+
+**C129–C132** · R2 — the modifiers. Preamble, verbatim: "The relevant modifiers, **without
+prescribing numbers this repository is not positioned to publish as clinical guidance**".
+
+- **C129** > **Body mass or lean mass** — the base against which any target is expressed.
+- **C130** > **Training** — resistance training in particular raises requirements.
+- **C131** > **Energy deficit** — requirements rise as energy falls, because protein is otherwise used for energy rather than for tissue.
+- **C132** > **Age** — older adults require more per meal to achieve the same anabolic response.
+
+Followed by: "The interaction in the third point is the one most often missed: the situation where
+protein matters most is exactly the one where total intake is being cut."
+
+**C133** · R3 — protein in a deficit
+
+> Together with resistance training, adequate protein is the main determinant of how much of a body
+> mass loss is fat rather than muscle.
+
+**C134** · R4 — why protein is the casualty
+
+> it is energy-dense relative to vegetables and less satisfying to cut than fat or carbohydrate
+> feels, so it tends to be the casualty of a deficit unless explicitly protected.
+
+**C135** · R6 — the ceiling
+
+> Beyond the range that supports the relevant adaptations, additional protein does not produce
+> additional benefit, and it displaces other foods — including the fibre-bearing ones.
+
+**C136** · "Additions" — **the abstention**, quoted because pack 03 asks the reviewer to confirm it held
+
+> This standard deliberately publishes no gram-per-kilogram figures. Numeric targets are clinical
+> guidance, they vary by population and purpose, and a figure stated here would be read as
+> authoritative and cited past its evidence.
+
+## `standards/35-fiber.md`
+
+**C137** · R2 — **the fibre–quality correlation**
+
+> Fibre intake correlates with the whole-food, plant-containing patterns that dietary quality
+> guidance generally points toward. It is therefore a useful single indicator — a plan meeting a
+> reasonable fibre target is usually meeting other things too.
+
+**C138** · R2 — the limit on C137
+
+> This makes it a good proxy and not a substitute: the correlation runs through food patterns, and it
+> breaks when fibre is supplied by supplementation rather than by the foods it usually accompanies.
+> Meeting a target from a powder is not the same nutritional outcome as meeting it from vegetables,
+> legumes, and whole grains.
+
+**C139** · R3 — restriction and fibre
+
+> Low-carbohydrate patterns, very low-energy diets, elimination diets, and any approach that removes
+> whole food groups tend to reduce fibre substantially, often without anyone noticing — there is no
+> acute symptom to prompt attention.
+
+**C140** · R4 — the tolerance claim
+
+> A large, sudden increase in fibre commonly produces bloating, discomfort, and abdominal symptoms,
+> which is a reliable way to make someone abandon an otherwise good change.
+
+**C141** · R5 — the contraindication
+
+> Several conditions and clinical situations call for restricting or specifically modifying fibre
+> intake. Where someone reports such a condition, general guidance to eat more fibre is not
+> appropriate.
+
+No conditions are named.
+
+**C142** · "Additions" — the second abstention
+
+> As with Standard 34, no numeric target is published. Figures vary by population and guideline body,
+> and one stated here would be read as authoritative.
+
+## `standards/36-micronutrient-adequacy.md`
+
+**C143** · R2 — consequences of inadequacy
+
+> A deficit that leaves protein, fibre, or micronutrients short produces fatigue, lean mass loss, and
+> poor adherence — it undermines the outcome it was adopted for, while the scale reports success.
+
+**C144** · R3 — where adequacy risk concentrates
+
+> - **Lower total energy** — fewer calories means less room for everything, and requirements do not fall proportionally.
+> - **Excluded food groups** — each exclusion removes a cluster of nutrients, and the cluster is usually not obvious to the person excluding it.
+> - **Repetitive eating patterns** — variety is a substantial part of how adequacy is achieved in practice.
+> - **Life stage and circumstance** — pregnancy, growth, older age, and certain conditions and medications all change requirements.
+
+**C145** · R5 — supplementation
+
+> Where a plan structurally cannot supply a nutrient, supplementation is a reasonable answer and
+> should be stated as part of the plan. What it is not is a general substitute for food-derived
+> intake.
+
+**C146** · R5 — the meta-claim about the supplement literature
+
+> Claims about what a supplement does are subject to Standard 14 in full — this is a domain where
+> confident claims routinely outrun their evidence.
+
+**C147** · R6 — deficiency by inference
+
+> Attributing symptoms to a specific micronutrient deficiency from dietary patterns or from how
+> someone feels is inference presented as a finding.
+
+**C148** · "Additions" — the third abstention
+
+> No numeric requirements are published here, for the reasons given in Standard 34: figures vary by
+> population and guideline body, and one stated here would be read as authoritative.
+
+## `standards/37-dietary-quality.md`
+
+**C149** · R1 — **the structural position**
+
+> No single food determines the quality of a diet, and no single food is required for one. Quality
+> emerges from what is eaten across days and weeks: adequacy, fibre and whole-food content, protein
+> sufficiency, variety, and sustainability.
+
+**C150** · R2 — **the shame claim**
+
+> Framing foods as good or bad, and eating them as being good or bad, attaches shame to an ordinary
+> daily activity performed several times a day. Shame does not improve adherence: it predicts
+> concealment and abandonment, and it is a documented component of disordered eating patterns.
+
+"a documented component" is the strongest evidentiary phrasing in the nutrition domain. Nothing is
+cited.
+
+**C151** · R6 — features harmful to a predisposed reader
+
+> Restriction, moral framing, compensation, and rigid rules are features of guidance that can be
+> harmful to someone with or predisposed to a disordered relationship with food. A project cannot
+> screen for this, and it can avoid the framings that make it worse.
+
+## `standards/38-hydration-nutrition.md`
+
+**C152** · R1 — **the fixed-volume correction**
+
+> The widely repeated fixed daily volume is not well supported as a universal target, and repeating
+> it is Standard 14's failure — a confident number with weaker provenance than its ubiquity suggests.
+
+**C153** · R1 — thirst
+
+> Thirst is a reasonable guide for most healthy adults under ordinary conditions.
+
+**C154** · R2 — food and other beverages
+
+> A meaningful share of daily fluid comes from food, and tea, coffee, milk, and other beverages
+> contribute.
+
+**C155** · R2 — **the caffeine claim**
+
+> Coffee and tea are net contributors at ordinary intakes despite their reputation.
+
+**C156** · R3 — the ceiling
+
+> Beyond meeting needs, additional fluid produces no benefit, and in the extreme carries risk.
+
+**C157** · R4 — interactions
+
+> Fibre increases require adequate fluid to be comfortable. Alcohol, high-sodium intake, and some
+> medications affect fluid balance.
+
+**C158** · R5 — clinical fluid restriction
+
+> Fluid restriction or specific fluid targets are prescribed in several conditions, and in those
+> cases general "drink more" guidance is wrong and potentially harmful.
+
+**C159** · R6 — urine colour
+
+> the same caution applies to consumer-facing interpretations of urine colour, which is affected by
+> supplements, foods, and medications as well as by hydration.
+
+## `standards/39-goal-compatibility.md`
+
+**C160–C163** · R1 — the goal-conflict table. Preamble: "the conflict is physiological rather than
+motivational".
+
+| # | Pursued together | The tension, verbatim |
+| --- | --- | --- |
+| **C160** | Substantial fat loss and substantial muscle gain | > An energy deficit limits tissue building; simultaneous progress in both is possible mainly for the untrained, the returning, and those starting with higher body fat |
+| **C161** | Aggressive fat loss and peak performance | > Training quality and recovery degrade in a meaningful deficit |
+| **C162** | Maximal strength and maximal endurance | > Compete for recovery capacity, and at high volumes for adaptation |
+| **C163** | Rapid loss and lean mass retention | > Directly opposed |
+
+**C164** · R3 — energy availability and training
+
+> Energy and carbohydrate availability affect training quality and recovery. A plan prescribing
+> demanding training alongside a substantial deficit is prescribing something that will not go well.
+
+**C165** · R5 — the shifting trade-off
+
+> as body mass falls the deficit's relative size grows, as training load rises its cost grows, and as
+> the person adapts the trade-offs shift.
+
+## `standards/40-sustainability.md`
+
+**C166** · R1 — **the regain claim**
+
+> A plan that reaches a target and cannot be continued has solved half the problem and frequently
+> reversed it, since regain past the starting point is a common outcome of approaches that end
+> abruptly.
+
+**C167** · R2 — what restriction costs
+
+> Eliminating whole food groups narrows nutrient intake and is hard to sustain.
+
+**C168** · R2 — the drift claim
+
+> Restriction adopted without a proportionate reason tends to persist past any benefit and to expand.
+
+**C169** · R3 — what predicts sustainability
+
+> - **Fits the person's life** — schedule, budget, cooking capacity, household, work pattern.
+> - **Includes foods they like** — enjoyment is a functional requirement, not a concession.
+> - **Tolerates imperfection** — an approach that fails on a missed day is one that will fail.
+> - **Survives ordinary life** — travel, restaurants, holidays, illness, and other people.
+> - **Requires effort proportionate to its benefit** — elaborate tracking has a maintenance cost that eventually exceeds what people will pay.
+
+**C170** · R5 — **the rigidity claim**
+
+> Rigid restriction predicts preoccupation with the restricted food and a pattern in which breaking
+> the rule leads to abandoning it entirely. Flexible approaches generally outperform rigid ones over
+> long horizons for this reason, independent of their nutritional content.
+
+**C171** · R6 — the simplicity trade
+
+> An approach a person will follow beats a superior one they will not, and the margin is large enough
+> that simplicity should usually win where the two conflict.
+
+## `standards/41-dietary-restrictions-and-context.md`
+
+**C172** · R2 — allergen absoluteness
+
+> An allergy or medically required exclusion is not a preference to be worked around or a constraint
+> to be optimised against. Guidance that includes an allergen for someone who has declared an allergy
+> is a direct harm, and no nutritional benefit offsets it.
+
+**C173** · R4 — individual response
+
+> Responses differ with physiology, medication, health status, culture, budget, schedule, and
+> preference. Advice built on a single assumed response fits the average of a population that
+> contains nobody, and it fails first for the people whose circumstances differ most from whoever the
+> guidance was written for.
+
+---
+
+# Part D — The `rationale` fields
+
+Pack 03 §5 item 5 flags these as receiving less scrutiny because they sit in JSON. Only those
+carrying an empirical assertion distinct from the standards prose are listed; the rest restate their
+standard.
+
+## `rules/health.json`
+
+**C174** · `health.no-diagnosis-from-single-measurement`
+
+> A single reading cannot separate the condition from the hundred ordinary things that move the same
+> number, and naming a condition on that basis produces a conclusion the reader cannot easily undo —
+> including one who then stops looking for the real explanation.
+
+**C175** · `health.no-catastrophizing`
+
+> Alarming someone about ordinary variation produces anxiety, unnecessary testing, and — worst — a
+> learned habit of discounting the system, which then applies to the warning that was real.
+
+**C176** · `health.no-wearable-as-ground-truth`
+
+> Sleep staging, blood oxygen, stress scores, and calorie estimates in particular are inferences from
+> proxies, and treating them as ground truth attributes an authority to the device that the device
+> does not claim for itself.
+
+**C177** · `health.no-causation-from-correlation`
+
+> Personal health data is a small sample of an uncontrolled experiment with dozens of moving
+> variables, and it produces coincidences abundantly. […] the change then appears to work for reasons
+> of regression alone.
+
+**C178** · `health.no-silently-ignored-modifiers`
+
+> A beta blocker changes what a heart rate means; an illness, a time zone, a night shift, a new
+> training block, or a medication started last week each change what a measurement can be compared
+> against.
+
+**C179** · `health.no-population-average-as-baseline`
+
+> A resting heart rate of 48 is alarming against a population average and unremarkable for the person
+> who has lived at 48 for a decade.
+
+**C180** · `health.evidence-quality-noted`
+
+> Labelling evidence strength is also the practical defence against fabricated facts: a claim that
+> cannot be labelled usually cannot be sourced.
+
+## `rules/nutrition.json`
+
+**C181** · `nutrition.no-crash-dieting`
+
+> Severe rapid deficits cost lean mass, are difficult to meet micronutrient needs within, and are
+> followed by regain often enough that the approach is self-defeating on its own terms. The rate that
+> is sustainable outperforms the rate that is fast, measured at any horizon long enough to matter.
+
+**C182** · `nutrition.no-food-moralizing`
+
+> Shame does not improve adherence — it predicts concealment and abandonment, and it is a documented
+> component of disordered eating.
+
+Note: the standards prose (C150) says "disordered eating **patterns**"; the rationale says
+"disordered eating". The rationale is the stronger of the two formulations.
+
+**C183** · `nutrition.no-single-food-disease-claims`
+
+> single-food claims almost always outrun their evidence — usually a mechanism in vitro or an
+> association in an observational study. The harm is not only the false belief: a cure claim can
+> displace treatment that works.
+
+**C184** · `nutrition.no-scale-change-as-fat-change`
+
+> Day-to-day body weight moves on water, glycogen, sodium, gut contents, and hormonal cycle —
+> routinely by more than a week's actual fat change.
+
+**C185** · `nutrition.no-adequacy-sacrifice`
+
+> A deficit that leaves protein, fibre, or micronutrients short produces fatigue, lean mass loss, and
+> poor adherence.
+
+**C186** · `nutrition.no-exact-loss-rate-promises`
+
+> The response to a given intake varies with body composition, adaptation, adherence, measurement
+> error, and much that is not understood.
+
+**C187** · `nutrition.no-identical-response-assumption`
+
+> Advice built on a single assumed response fits the average of a population that contains nobody.
+
+**C188** · `nutrition.targets-recorded`
+
+> These three carry most of the weight in whether a plan is followable and adequate: energy sets the
+> direction, protein protects lean mass and satiety, fibre carries much of dietary quality.
+
+---
+
+# Part E — Numeric claims in the worked examples
+
+The examples are labelled fictional. The reference values inside them are not.
+
+**C189** · `docs/examples/interpretation-normal-variation.md`
+
+> population reference range of roughly 60–100 bpm
+
+**C190** · `docs/examples/interpretation-worth-discussing.md`
+
+A resting heart rate of 68 against a baseline of 52, characterised as "a rise of roughly 30%".
+Arithmetic: 68/52 = 1.308.
+
+**C191** · `docs/examples/interpretation-worth-monitoring.md`
+
+A blood pressure of 148/94 assigned tier 2 on measurement-quality grounds, with a one-to-two-week
+measurement protocol prescribed and an immediate-escalation clause for symptoms. Pack 01 §3 flags
+the tier assignment; the reading itself is the empirical element here.
+
+---
+
+# Reconciliation
+
+| | Count |
+| --- | --- |
+| Part | Range | Entries |
+| --- | --- | --- |
+| A — Health standards 04–15 | C1–C58 | 58 |
+| B — Fitness standards | C59–C113 | 55 |
+| C — Nutrition standards 32–41 | C114–C173 | 60 |
+| D — `rationale` fields | C174–C188 | 15 |
+| E — Worked-example numerics | C189–C191 | 3 |
+| **Total entries** | | **191** |
+| Less duplicate pairs (below) | | −9 |
+| **Distinct assertions** | | **182** |
+
+The nine duplicate pairs — the same assertion in standards prose and again in a rule rationale:
+C119/C184, C123/C181, C143/C185, C150/C182, C126/C186, C173/C187, C15/C179, C51/C183, C55–C56/C177.
+Both instances are listed because the wording differs and, in the case of C150/C182, differs in
+strength.
+
+## Where the corpus is thinnest, restated against the extract
+
+For the reviewer's convenience, pack 03 §5's flagged items, now with claim numbers:
+
+1. **C60** — the ±10–12 bpm figure.
+2. **C73–C78** — the six-row pain table, and the sufficiency of its single qualifier.
+3. **C83** — "most people and most goals".
+4. **C9 / C100** — "moderate at best", stated twice.
+5. **C174–C188** — the rationale fields.
+
+Two the pack did not flag, surfaced by building this extract:
+
+6. **C150 versus C182** — the same claim about shame and disordered eating, stated at two different
+   strengths in two files. Whichever disposition the claim receives, the divergence is a defect on
+   its own terms: [Standard 14](../../standards/14-evidence-quality.md) R1 requires a claim to carry
+   an indication of how well established it is, and the repository states this one two ways.
+7. **C155** — "Coffee and tea are net contributors at ordinary intakes despite their reputation."
+   A correction of a popular belief, stated without hedge, in a standard whose own R1 criticises
+   confident numbers with weak provenance.
