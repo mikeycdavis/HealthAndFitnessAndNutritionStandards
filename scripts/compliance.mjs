@@ -133,16 +133,24 @@ export function screenIntegrity({ catalog, policy, findings, today }) {
       continue;
     }
 
-    // 4. A not-applicable declaration contradicted by evidence. The project says the behavior
-    //    cannot occur here; a check observed it occurring. This is the one form of false
+    // 4. A not-applicable declaration contradicted by evidence. The project says the rule's
+    //    subject does not exist here; a check found that it does. This is the one form of false
     //    not-applicable a machine can catch, and it is worth catching precisely because
     //    not-applicable is the only door left open on a prohibition.
-    const hits = findingsByRule.get(rule.id) ?? [];
+    //
+    //    ONLY findings that establish the subject EXISTS can contradict such a claim. This
+    //    distinction is load-bearing and was found by running the tool against this repository:
+    //    most findings report an ABSENCE ("no interpretation records found"), and an absence is
+    //    perfectly consistent with — indeed is evidence for — a declaration that this project
+    //    interprets nobody's health data. Treating every finding as a contradiction would have
+    //    blocked every correctly-scoped project as an integrity violation, which is the most
+    //    damaging possible false positive for a mechanism whose whole purpose is to be believed.
+    const hits = (findingsByRule.get(rule.id) ?? []).filter((f) => f.subjectExists === true);
     if (hits.length > 0) {
       add(
         rule.id,
         "contradicted-applicability",
-        `${rule.id} is declared not-applicable — the subject supposedly does not exist here — but a check observed it: ${hits[0].message}`,
+        `${rule.id} is declared not-applicable — the subject supposedly does not exist here — but a check found it does: ${hits[0].message}`,
         "Withdraw the not-applicable declaration and address the finding. A scope claim contradicted by evidence is not a scope claim.",
       );
     }
