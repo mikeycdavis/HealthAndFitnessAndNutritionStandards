@@ -1,0 +1,12 @@
+# Line endings are normalised to LF in the repository and on checkout.
+#
+# This is not a style preference. Several guards in this repository compare text:
+# scripts/fidelity.mjs checks that a block quoted in a standard is byte-faithful to the source
+# specification, scripts/diagrams.mjs compares a Mermaid source against its embedded copy, and
+# attestation staleness is a content digest over reviewed files. If line endings depended on which
+# platform last touched a file, those comparisons would fail — or worse, a digest would change with
+# no change to the content, and someone would learn to ignore the resulting noise.
+#
+# eol=lf rather than eol=native for the same reason: identical content must digest identically on
+# every machine that runs the checks.
+* text=auto eol=lf
