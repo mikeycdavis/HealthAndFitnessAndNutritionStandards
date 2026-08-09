@@ -56,14 +56,19 @@ jobs:
       # flag, because it is a statement about this repository's honest state rather than a relaxation
       # of the check.
       #
-      # This repository's own status is NOT_EVALUATED. Four rules apply here that only a human can
-      # establish — integrity.no-standards-manipulation, escalation.tier-language-calibrated,
-      # trend.trends-over-events, and health.no-fabricated-medical-facts — and no human has recorded
-      # a review of them. Adding an attestation to turn this green would be the "falsify evidence
-      # for" clause of the very invariant being attested, so the honest result is reported instead.
+      # This repository's own status is NOT_EVALUATED. Run `standards status .` for the current list
+      # of rules awaiting review — it is not repeated here, because a hand-maintained copy of it
+      # drifted once already.
+      #
+      # Adding an attestation to turn this green would be the "falsify evidence for" clause of the
+      # very invariant being attested, so the honest result is reported instead.
       #
       # Exit 0, 1, 2, and 3 are all treated as they should be: 0 passes, and 1, 2, and 3 fail the
-      # build. When the owner records those four reviews, delete the `|| [ $? -eq 4 ]` and this
-      # comment, and the gate tightens to 0 alone.
+      # build.
+      #
+      # NOTE: this condition cannot currently be removed by recording reviews. The integrity
+      # invariant is required, human-evaluated, and never attestable, so it permanently reports
+      # not-evaluated and no project can reach COMPLIANT. That is an open semantics question found
+      # during release certification — see PROJECT.md, Known gaps.
       - name: Check this repository (the gate)
         run: npm run check || [ $? -eq 4 ]

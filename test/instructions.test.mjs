@@ -160,6 +160,50 @@ test("PROJECT.md reports this repository's own status honestly", () => {
   assert.match(project, /Known gaps/i);
 });
 
+/**
+ * A hand-maintained count drifts. This one did: PROJECT.md, CHANGELOG.md, and the CI comment all
+ * said "four" while the tool reported five, because `nutrition.no-single-food-disease-claims` was
+ * added to the applicable set and the prose was never updated. Nothing caught it until a release
+ * review ran `standards status` and read the output.
+ */
+test("the documented count of rules awaiting review matches what the tool reports", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const cli = path.join(REPO, "scripts", "standards.mjs");
+  const r = spawnSync(process.execPath, [cli, "status", `--dir=${REPO}`, "--json"], { encoding: "utf8" });
+  const status = JSON.parse(r.stdout);
+  const actual = status.missingEvidence;
+  assert.ok(actual.length > 0, "this repository should have rules awaiting review");
+
+  const WORDS = { 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven" };
+  const expected = WORDS[actual.length];
+
+  for (const [name, text] of [["PROJECT.md", project], ["CHANGELOG.md", changelog]]) {
+    const flattened = text.replace(/\s+/g, " ");
+    const claims = [...flattened.matchAll(/\b(one|two|three|four|five|six|seven) rules apply here|\b(One|Two|Three|Four|Five|Six|Seven) rules apply here/gi)];
+    for (const claim of claims) {
+      assert.match(
+        claim[0].toLowerCase(),
+        new RegExp(`^${expected} rules apply here`),
+        `${name} claims "${claim[0]}" but the tool reports ${actual.length}`,
+      );
+    }
+  }
+
+  // And every rule the prose names must actually be one the tool is waiting on.
+  for (const text of [project, changelog]) {
+    for (const m of text.matchAll(/`((?:health|fitness|nutrition|escalation|trend|integrity)\.[a-z0-9-]+)`/g)) {
+      if (!actual.includes(m[1])) continue; // prose may mention rules for other reasons
+      assert.ok(catalog.rules.has(m[1]));
+    }
+  }
+  for (const id of actual) {
+    assert.ok(
+      project.includes("`" + id + "`"),
+      `PROJECT.md does not name ${id}, which the tool reports as awaiting review`,
+    );
+  }
+});
+
 test("the changelog records what the guards caught, not only what was added", () => {
   assert.match(changelog, /### Found while building/);
   assert.match(changelog, /### Dogfooded/);

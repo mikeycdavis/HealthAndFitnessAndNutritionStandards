@@ -24,11 +24,20 @@ catalog entry — so the evidence-quality rules apply here in full and are decla
 This repository is evaluated against its own standards, version `1.0.0-dev`, declared in
 [`project-policy.yml`](project-policy.yml).
 
-Its current status is **`NOT_EVALUATED`**, and that is the honest result rather than a defect. Four
-rules apply here that only a human can establish — `integrity.no-standards-manipulation`,
-`escalation.tier-language-calibrated`, `trend.trends-over-events`, and
-`health.no-fabricated-medical-facts` — and no human has reviewed them yet. Recording an attestation
+Its current status is **`NOT_EVALUATED`**. Five rules apply here that no machine evaluates —
+`escalation.tier-language-calibrated`, `trend.trends-over-events`,
+`health.no-fabricated-medical-facts`, `nutrition.no-single-food-disease-claims`, and
+`integrity.no-standards-manipulation` — and no human has reviewed them. Recording an attestation
 anyway would be the "falsify evidence for" clause of the very invariant being attested.
+
+Run `standards status .` for the current list; do not maintain a copy of it by hand. An earlier
+version of this paragraph said "four" and omitted `nutrition.no-single-food-disease-claims`, which is
+the kind of drift a hand-maintained count produces. `test/instructions.test.mjs` now asserts this
+paragraph against what the tool actually reports.
+
+**The last of the five can never be attested**, because the integrity invariant is not attestable by
+design — self-certifying one's own integrity is worth nothing. That has a consequence for the verdict
+model which is recorded under Known gaps below.
 
 ## Stack
 
@@ -91,3 +100,9 @@ five subcommands, 130 tests passing, all guards green.
   ADR 0006.
 - The version is `1.0.0-dev`. At a release version the inventory guard additionally requires every
   standard to exist, which it now does.
+- **`COMPLIANT` is currently unreachable by any project, including this one.** The integrity
+  invariant is required, evaluated by human review, and never attestable — so it permanently reports
+  `not-evaluated`, and the verdict rule "any applicable required rule that nothing established yields
+  `NOT_EVALUATED`" therefore fires for every project forever. Found during release certification, not
+  yet resolved; see the release note below. This is a semantics decision rather than a bug fix,
+  because either resolution changes what a verdict means.

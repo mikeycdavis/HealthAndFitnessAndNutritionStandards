@@ -71,7 +71,7 @@ features implies the process was smoother than it was.
 
 This repository carries its own `project-policy.yml` and is evaluated by its own CI.
 
-Its status is **`NOT_EVALUATED`**, and it is left that way. Four rules apply here that only a human
+Its status is **`NOT_EVALUATED`**, and it is left that way. Five rules apply here that only a human
 can establish, and no human has reviewed them. Recording an attestation to make CI green would be the
 "falsify evidence for" clause of the invariant being attested — so the honest state is reported
 instead, and the CI step that runs `check` accepts exit 4 with a comment explaining why.
