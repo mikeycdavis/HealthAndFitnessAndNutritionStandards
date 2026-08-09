@@ -1,0 +1,8 @@
+standardVersion: "1.0.0"
+project: "expired-exception-fixture"
+exceptions:
+  - rule: health.interpretation-record
+    reason: "Records land next quarter."
+    approvedBy: "owner"
+    approvedAt: "2025-01-01"
+    expires: "2025-06-30"

@@ -37,7 +37,7 @@
       "deprecatedIn": null,
       "supersededBy": null,
       "removedIn": null,
-      "$assuranceNote": "A detector establishes that a document names all four tiers. It establishes nothing about whether the distinctions drawn are sound, whether the tiers are applied consistently, or whether the boundaries sit in clinically sensible places."
+      "$assuranceNote": "A detector scans docs/escalation-tiers.md for the four canonical tier labels. It is a substring scan, so it establishes that the labels APPEAR — not that the document defines them, applies them consistently, draws sound distinctions, or places the boundaries sensibly. A document that merely mentions the labels in passing would satisfy it. This is the use/mention limit of a text scan, and it is why this rule carries partial assurance rather than full; strengthening the check to require a definitional context was considered and rejected as likely to reject legitimate formats while still being satisfiable by a determined author."
     },
     {
       "id": "escalation.tier-language-calibrated",

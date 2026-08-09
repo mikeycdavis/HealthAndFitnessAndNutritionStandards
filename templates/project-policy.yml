@@ -1,0 +1,94 @@
+# Project policy — copy to your repository root as project-policy.yml.
+#
+# This file is where your project says which of these standards apply to it, which it knowingly does
+# not meet, and which have been established by human review. Four mechanisms live here and they are
+# deliberately separate. Collapsing any two of them hides a real failure:
+#
+#   rules          which rules this project has considered, and at what strength
+#   applicability  the rule has no subject here — the behavior CANNOT OCCUR in scope
+#   exceptions     the rule applies and this project knowingly does not satisfy it
+#   attestations   a human reviewed it and it IS satisfied
+#
+# THREE THINGS THIS FILE CANNOT DO. Each stops evaluation with BLOCKED_BY_INVARIANT and exit code 3,
+# rather than being rejected quietly:
+#
+#   * waive a prohibition or the integrity invariant with an exception
+#   * lower any rule's strength
+#   * attest, or declare not-applicable, the integrity invariant
+#
+# EXPECT NOT_EVALUATED AT FIRST. 34 of the 59 rules are prohibitions no machine evaluates. Until a
+# human has reviewed them and that review is recorded below, `standards check` reports
+# NOT_EVALUATED and exits 4. That is the system working: nothing failing is not evidence that
+# anything passed.
+#
+# Shape: schemas/project-policy.schema.json.  Adoption guide: INSTRUCTIONS.md.
+
+standardVersion: "1.0.0"
+project: "REPLACE-ME"
+
+# Informational only. It switches nothing on or off — narrow your scope through `applicability`
+# below, where each declaration carries its own reason. A single line that silently disabled whole
+# categories of prohibition would be a waiver mechanism with no reason attached to it.
+domains: []
+
+# Rules this project has considered. A rule absent from every section below is UNDECLARED — which
+# means nobody looked at it, not that it was accepted. `standards status` reports how many.
+rules:
+  integrity.no-standards-manipulation:
+    note: "Binds this project, and everyone working in it, including agents."
+
+# Rules whose subject does not exist here.
+#
+# For a PROHIBITION this is the only door open, so the reason carries real weight. It must establish
+# that the prohibited behavior CANNOT OCCUR within the evaluated scope. A reason saying the behavior
+# is wanted, tolerated, or requested by users is a waiver wearing a scope claim's clothing, and it is
+# an integrity violation (Standard 42 R3).
+#
+#   Recipe-search app, nutrition.no-crash-dieting:
+#     NOT APPLICABLE — "Application does not generate dietary plans, calorie targets, or
+#                       weight-loss recommendations."
+#
+#   Weight-loss coaching app, same rule:
+#     APPLICABLE.
+#     "Not applicable because some users want rapid weight loss" → BLOCKED_BY_INVARIANT.
+#
+# Every declaration needs a reason. Add revisitWhen: a scope claim is true of a project at a moment,
+# and with no trigger it outlives its truth silently.
+applicability: {}
+#  fitness.plan-documented:
+#    status: not-applicable
+#    reason: "This application gives no training guidance; it records food intake only."
+#    reviewedAt: "2026-01-01"
+#    revisitWhen: "Any capability plans or recommends training."
+
+# Approved, time-bounded waivers of rules that DO apply. Valid only against requirements and
+# recommendations. Leave a failing rule visible rather than waiving it because it is inconvenient.
+exceptions: []
+#  - rule: health.interpretation-record
+#    reason: "Interpretation records land in the Q2 release; interpretations are currently ephemeral."
+#    approvedBy: "name"
+#    approvedAt: "2026-01-01"
+#    expires: "2026-06-30"
+#    reference: "artifacts/adr/0007-deferred-interpretation-records.md"
+
+# Recorded human review. An attestation is EVIDENCE, not a waiver: it says the rule applies and is
+# satisfied. It never overrides an automated finding, and it goes stale when the reviewed files
+# change — which is why reviewedAgainst names them.
+#
+# Do not record a review that did not happen. That is the "falsify evidence for" clause of the
+# integrity invariant, and it is the failure this whole mechanism exists to make unnecessary:
+# NOT_EVALUATED is always available and is an honest answer.
+attestations: {}
+#  nutrition.no-crash-dieting:
+#    status: approved
+#    reviewedBy: "name"
+#    reviewedAt: "2026-01-01"
+#    evidence: "Reviewed every rate-of-loss path in src/plans/. The generator floors the deficit at
+#      a sustainable rate and refuses lower targets with an explanation. Verified by the tests in
+#      test/plans/deficit.test.ts."
+#    reviewedAgainst:
+#      paths:
+#        - src/plans/deficit.ts
+#        - test/plans/deficit.test.ts
+#      # Omit on the first pass; `standards check` prints the current digest so you can record it.
+#      digest: ""

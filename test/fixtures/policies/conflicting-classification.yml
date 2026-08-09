@@ -1,0 +1,13 @@
+standardVersion: "1.0.0"
+project: "conflicting-classification-fixture"
+applicability:
+  health.interpretation-record:
+    status: not-applicable
+    reason: "We interpret no personal health data."
+    revisitWhen: "Any capability interprets a real person's data."
+exceptions:
+  - rule: health.interpretation-record
+    reason: "We do interpret data but have not built records yet."
+    approvedBy: "owner"
+    approvedAt: "2026-08-01"
+    expires: "2027-01-01"

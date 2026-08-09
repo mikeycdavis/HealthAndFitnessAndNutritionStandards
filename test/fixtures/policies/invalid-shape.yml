@@ -1,0 +1,3 @@
+standardVersion: "not-a-version"
+project: ""
+unknownKey: "should be rejected by additionalProperties: false"

@@ -1,0 +1,13 @@
+standardVersion: "1.0.0"
+project: "valid-fixture"
+rules:
+  integrity.no-standards-manipulation:
+    note: "Applies here."
+applicability:
+  fitness.plan-documented:
+    status: not-applicable
+    reason: "This project gives no training guidance; it records food intake only."
+    reviewedAt: "2026-01-01"
+    revisitWhen: "Any capability plans or recommends training."
+exceptions: []
+attestations: {}

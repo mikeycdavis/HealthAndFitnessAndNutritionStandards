@@ -1,0 +1,5 @@
+standardVersion: "1.0.0"
+project: "strength-on-prohibition-fixture"
+rules:
+  nutrition.no-crash-dieting:
+    strength: recommended

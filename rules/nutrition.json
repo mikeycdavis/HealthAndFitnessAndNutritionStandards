@@ -228,7 +228,7 @@
       "deprecatedIn": null,
       "supersededBy": null,
       "removedIn": null,
-      "$assuranceNote": "A detector establishes that the section is present and names energy, protein, and fiber. It does not check that the numbers are appropriate for the person."
+      "$assuranceNote": "A detector establishes that the section is present and that the words energy, protein, and fiber appear in it. It is a substring scan: it cannot tell a stated target from a passing mention, and it does not check that any number is appropriate for the person. This use/mention limit is real and was found by writing a fixture whose explanatory text mentioned the macronutrients while asserting their absence, which satisfied the scan. It is why this rule carries partial assurance."
     },
     {
       "id": "nutrition.restrictions-recorded",

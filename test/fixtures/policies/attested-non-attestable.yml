@@ -1,0 +1,8 @@
+standardVersion: "1.0.0"
+project: "attested-non-attestable-fixture"
+attestations:
+  health.interpretation-record:
+    status: approved
+    reviewedBy: "reviewer"
+    reviewedAt: "2026-08-01"
+    evidence: "A human looked at the records directory."

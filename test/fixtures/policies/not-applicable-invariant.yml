@@ -1,0 +1,7 @@
+standardVersion: "1.0.0"
+project: "not-applicable-invariant-fixture"
+applicability:
+  integrity.no-standards-manipulation:
+    status: not-applicable
+    reason: "We are a small team and move fast."
+    revisitWhen: "Never"

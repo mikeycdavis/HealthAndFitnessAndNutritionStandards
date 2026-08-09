@@ -1,0 +1,8 @@
+standardVersion: "1.0.0"
+project: "false-not-applicable-fixture"
+applicability:
+  nutrition.no-crash-dieting:
+    status: not-applicable
+    reason: "Not applicable because some users want rapid weight loss."
+    reviewedAt: "2026-08-01"
+    revisitWhen: "If regulations change."

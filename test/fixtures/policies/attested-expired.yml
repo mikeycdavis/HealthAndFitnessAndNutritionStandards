@@ -1,0 +1,9 @@
+standardVersion: "1.0.0"
+project: "attested-expired-fixture"
+attestations:
+  nutrition.no-crash-dieting:
+    status: approved
+    reviewedBy: "reviewer"
+    reviewedAt: "2025-01-01"
+    evidence: "Reviewed the deficit floor in the plan generator."
+    expires: "2025-06-30"

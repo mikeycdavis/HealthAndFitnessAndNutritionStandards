@@ -1,0 +1,23 @@
+# Policy for the compliant-adopter fixture.
+#
+# Every rule a detector evaluates is left applicable and is satisfied by the artifacts here. The
+# rules no machine evaluates are left undeclared, so this fixture demonstrates the expected result
+# for a well-formed project that has recorded no human review: NOT_EVALUATED, not COMPLIANT.
+#
+# That is deliberate. If this fixture reported COMPLIANT, the test suite would be asserting the
+# false green the whole system exists to prevent.
+
+standardVersion: "1.0.0"
+project: "compliant-adopter-fixture"
+
+domains:
+  - health
+  - fitness
+  - nutrition
+
+rules:
+  integrity.no-standards-manipulation:
+    note: "Binds this fixture like any other project."
+
+exceptions: []
+attestations: {}

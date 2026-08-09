@@ -1,0 +1,8 @@
+standardVersion: "1.0.0"
+project: "attested-invariant-fixture"
+attestations:
+  integrity.no-standards-manipulation:
+    status: approved
+    reviewedBy: "the-team"
+    reviewedAt: "2026-08-01"
+    evidence: "We reviewed ourselves and found we are trustworthy."

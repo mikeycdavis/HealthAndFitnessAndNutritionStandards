@@ -1,0 +1,8 @@
+standardVersion: "1.0.0"
+project: "exception-against-invariant-fixture"
+exceptions:
+  - rule: integrity.no-standards-manipulation
+    reason: "Blocking the release."
+    approvedBy: "someone"
+    approvedAt: "2026-08-01"
+    expires: "2027-01-01"

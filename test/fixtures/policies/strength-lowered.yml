@@ -1,0 +1,6 @@
+standardVersion: "1.0.0"
+project: "strength-lowered-fixture"
+rules:
+  health.interpretation-record:
+    strength: recommended
+    note: "Too much overhead right now."

@@ -1,0 +1,8 @@
+standardVersion: "1.0.0"
+project: "exception-against-prohibition-fixture"
+exceptions:
+  - rule: nutrition.no-crash-dieting
+    reason: "Our growth team wants a fast-results program."
+    approvedBy: "vp-product"
+    approvedAt: "2026-08-01"
+    expires: "2027-01-01"
