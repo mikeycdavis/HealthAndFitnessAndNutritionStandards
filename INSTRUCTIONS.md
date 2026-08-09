@@ -108,6 +108,34 @@ is a heuristic and cannot judge honesty; what it guarantees is that the claim is
 carries a revisit trigger, and is contradicted when a check observes the behaviour it says cannot
 occur.
 
+## 3a. The integrity invariant, and `screened`
+
+`integrity.no-standards-manipulation` behaves unlike every other rule, and its state is reported
+separately rather than folded into the verdict.
+
+It is never exemptible, never attestable, and never not-applicable. What it *is* is screened: on
+every `check` run the evaluator executes nine distinct integrity checks, and if none fires the rule
+reports **`screened`**:
+
+> All implemented integrity checks applicable to this evaluation completed and detected no integrity
+> violation. This does not establish that no undetectable manipulation occurred, and it is not human
+> attestation of the invariant.
+
+`screened` is deliberately **not** a pass. It scores nothing, and it does not hold your verdict at
+`NOT_EVALUATED`. The asymmetry is the point:
+
+```text
+absence of detected manipulation  → weak evidence  → screened
+presence of detected manipulation → decisive       → BLOCKED_BY_INVARIANT, exit 3
+```
+
+So a `COMPLIANT` project sees its invariant reported as `screened` alongside the verdict, not hidden
+inside it. `COMPLIANT` never means "and Standard 42 is satisfied" — no run establishes that.
+
+You cannot obtain `screened` for anything else. It is restricted in code to invariants with a bound
+screening implementation, precisely so it does not become a convenient state for hard manual-review
+rules. See [ADR 0007](artifacts/adr/0007-screened-as-a-distinct-invariant-state.md).
+
 ## 4. Why your first result is NOT_EVALUATED
 
 Because 34 of the 59 rules are prohibitions that no machine evaluates.

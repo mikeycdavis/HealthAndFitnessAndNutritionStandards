@@ -16,11 +16,15 @@
  *
  * WHAT THE DETECTORS CAN CLAIM. Every detector in this file establishes that an artifact or a
  * section EXISTS. None establishes that its content is correct, and every rule they bind to carries
- * `assurance: "partial"` and an $assuranceNote saying so. The 34 prohibitions and the integrity
- * invariant have no detector at all and report not-evaluated unless a human review is recorded.
- * That is the honest position for this domain: a confident green on unsafe health guidance is worse
- * than no answer, and a detector that read a `## Measurement Quality` heading and reported the
- * measurement-quality analysis as sound would produce exactly that.
+ * `assurance: "partial"` and an $assuranceNote saying so. The 34 prohibitions have no detector at
+ * all and report not-evaluated unless a human review is recorded. That is the honest position for
+ * this domain: a confident green on unsafe health guidance is worse than no answer, and a detector
+ * that read a `## Measurement Quality` heading and reported the measurement-quality analysis as
+ * sound would produce exactly that.
+ *
+ * The integrity invariant is the one exception, and not a detector: it is screened by
+ * `screenIntegrity` in compliance.mjs and reports `screened` when every bound check ran and none
+ * fired (ADR 0007). Screened is not passed.
  *
  * EXIT CODES (see docs/design/architecture.md):
  *   check:  0 compliant · 1 non-compliant · 2 config error · 3 blocked by invariant · 4 not evaluated
@@ -37,7 +41,7 @@ import process from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { loadCatalog, resolve as resolveRule, assertBindings, coverage } from "./catalog.mjs";
-import { evaluate, envelope, STATUS, baselineStrength } from "./compliance.mjs";
+import { evaluate, envelope, STATUS, baselineStrength, INVARIANT_SCREENS, SCREENED_MEANING } from "./compliance.mjs";
 import { parseYaml, YamlError } from "./yaml.mjs";
 import { validate, assertSchemaSupported, SchemaError } from "./jsonschema.mjs";
 import { plan as initPlan, apply as initApply, detectMode, render as initRender } from "./init.mjs";
@@ -648,8 +652,24 @@ function renderCheck(r) {
   out.push(`Status: ${r.status}`);
   out.push(`Score:  ${r.score === null ? "n/a" : r.score + "%"}  (rules at required strength that were evaluated: ${r.denominator.scored})`);
   out.push(`Rules:  ${s.passed} passed, ${s.failed} failed, ${s.warnings} warning(s), ${s.skipped} skipped`);
-  out.push(`Cover:  ${r.assurance.automated} automated, ${r.assurance.manualReview} manual-review, ${r.assurance.notEvaluated} not-evaluated`);
+  out.push(`Cover:  ${r.assurance.automated} automated, ${r.assurance.manualReview} manual-review, ${r.assurance.notEvaluated} not-evaluated, ${r.assurance.screened} screened`);
   out.push("");
+
+  // The integrity invariant is reported explicitly rather than folded into the verdict, so that
+  // COMPLIANT never quietly stands in for "and Standard 42 is satisfied" — which no run establishes.
+  const screened = r.results.filter((x) => x.status === "screened");
+  for (const x of screened) {
+    out.push(`Integrity: ${x.ruleId} — screened`);
+    out.push(`  ${x.checks.length} integrity check(s) ran; none detected a violation.`);
+    out.push("  Screened is not passed. Absence of detected manipulation is weak evidence;");
+    out.push("  detected manipulation is decisive and would have stopped this run (exit 3).");
+    out.push("  No run establishes that no undetectable manipulation occurred.");
+    out.push("");
+  }
+  if (r.integrityScreen && !r.integrityScreen.executed) {
+    out.push("Integrity: the screen did not execute, so the invariant is not-evaluated.");
+    out.push("");
+  }
 
   const failures = r.results.filter((x) => x.status === "failed");
   const warnings = r.results.filter((x) => x.status === "warning");
@@ -754,7 +774,14 @@ async function commandExplain(root, target, { json }) {
   out.push(`  ${wrap(rule.rationale, 76, "  ")}`);
   out.push("");
   out.push("What evidence would satisfy it");
-  if (rule.attestable && !EVALUATED_RULES.includes(rule.id)) {
+  if (rule.kind === "invariant") {
+    out.push("  Nothing establishes this rule, and nothing is permitted to. It is never attestable —");
+    out.push("  self-certifying one's own integrity is worth nothing — and never not-applicable.");
+    out.push("");
+    out.push(`  On a run where the integrity screen executes fully, it reports 'screened': all`);
+    out.push(`  ${(INVARIANT_SCREENS[rule.id] ?? []).length} implemented checks ran and detected no violation. That is weak evidence and`);
+    out.push("  deliberately not a pass. Detected manipulation is decisive and stops the run (exit 3).");
+  } else if (rule.attestable && !EVALUATED_RULES.includes(rule.id)) {
     out.push("  A recorded human review: an attestation in project-policy.yml naming who reviewed it,");
     out.push("  when, what they examined, and what they concluded. Without one this reports");
     out.push("  not-evaluated — never passed.");
@@ -848,6 +875,8 @@ async function commandStatus(root, { json }) {
   const payload = {
     project: policy.project ?? null,
     status: verdict.status,
+    integrityScreen: verdict.integrityScreen,
+    screenedInvariants: verdict.results.filter((r) => r.status === "screened").map((r) => r.ruleId),
     expiredExceptions,
     expiredAttestations,
     staleAttestations,
@@ -863,7 +892,12 @@ async function commandStatus(root, { json }) {
     return EXIT.OK;
   }
 
-  const out = [`Project: ${payload.project ?? "(unnamed)"}`, `Status:  ${payload.status}`, ""];
+  const out = [
+    `Project: ${payload.project ?? "(unnamed)"}`,
+    `Status:  ${payload.status}`,
+    `Screen:  ${payload.integrityScreen.executed ? `${payload.integrityScreen.checks.length} integrity check(s) ran, none fired` : "did not execute"}`,
+    "",
+  ];
   const section = (title, items, render) => {
     out.push(`${title}: ${items.length}`);
     for (const item of items.slice(0, 20)) out.push(`  ${render(item)}`);

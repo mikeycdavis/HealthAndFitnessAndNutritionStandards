@@ -154,10 +154,12 @@ test("the README carries the not-medical-advice statement escalation.scope-discl
 // ---------------------------------------------------------------------------------------------
 
 test("PROJECT.md reports this repository's own status honestly", () => {
-  assert.match(project, /NOT_EVALUATED/);
-  assert.match(project, /no human has reviewed them/i);
+  const flat = project.replace(/\s+/g, " ");
+  assert.match(flat, /NOT_EVALUATED/);
+  assert.match(flat, /no human has reviewed them/i);
   assert.match(project, /## Current state/);
-  assert.match(project, /Known gaps/i);
+  assert.match(flat, /Known gaps/i);
+  assert.match(flat, /screened/, "the invariant's state must be reported, not folded into the verdict");
 });
 
 /**

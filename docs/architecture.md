@@ -146,13 +146,21 @@ Deliberately **not** treated as manipulation: a stale attestation digest. Files 
 returning the rule to not-evaluated is the mechanism working, and a guard that fires on ordinary edits
 is one people route around.
 
-`evaluate()` then decides per rule: not-applicable → attestation → not-evaluated → passed → failed.
-`summarise()` computes counts, the assurance breakdown (which must sum to the applicable rules), the
-score, and the status.
+On a clean run the screen also reports **which checks executed**, and `screenedInvariants()` grants
+the `screened` state to any `kind: "invariant"` rule that has a binding in `INVARIANT_SCREENS` and
+whose every bound check ran. A partial screen grants nothing.
+
+`evaluate()` then decides per rule: not-applicable → attestation → **screened** → not-evaluated →
+passed → failed. `summarise()` computes counts, the assurance breakdown (four buckets, which must sum
+to the applicable rules), the score, and the status.
 
 **Status precedence:** integrity violations → no policy → any failure → **any applicable required
 rule that nothing established** → any exception → compliant. The fourth clause is why a well-formed
 project reports `NOT_EVALUATED`: nothing failing is not evidence that anything passed.
+
+A `screened` invariant is excluded from that fourth clause, from the score numerator, and from its
+denominator. Including it made `COMPLIANT` unreachable for every project — see
+[ADR 0007](../artifacts/adr/0007-screened-as-a-distinct-invariant-state.md).
 
 ### `scripts/standards.mjs` — the detectors
 

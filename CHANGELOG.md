@@ -67,11 +67,30 @@ features implies the process was smoother than it was.
 - **An anchor check disagreed with every anchor that works in a browser**, because it collapsed
   whitespace runs where GitHub replaces each space individually.
 
+### Found during release certification
+
+The release review found two things by running `standards status` and reading the output rather than
+trusting the prose. Both are the reason a release review exists.
+
+- **`COMPLIANT` was unreachable by any project, forever.** Four individually correct decisions — the
+  integrity invariant applies to everyone, is human-evaluated, is never attestable, and any
+  applicable required rule that nothing established yields `NOT_EVALUATED` — composed into an
+  impossible state. Verified against the most favourable possible policy. No test caught it because
+  every test asserted behaviour that was locally correct; it was reachable only by asking whether the
+  system can emit a verdict it defines. Fixed by [ADR 0007](artifacts/adr/0007-screened-as-a-distinct-invariant-state.md)'s
+  `screened` state, and a regression test now asks that question.
+- **A hand-maintained count had drifted.** `PROJECT.md`, `CHANGELOG.md`, and the CI comment each said
+  four rules awaited human review while the tool reported five —
+  `nutrition.no-single-food-disease-claims` had been made applicable and the prose never updated.
+  Nothing compared the two. A test now does, and it caught the prose being wrong a second time when
+  ADR 0007 moved the invariant out of that set and the count became four again. Derived operational
+  state now comes from `standards status`, not from a copy in prose.
+
 ### Dogfooded
 
 This repository carries its own `project-policy.yml` and is evaluated by its own CI.
 
-Its status is **`NOT_EVALUATED`**, and it is left that way. Five rules apply here that only a human
+Its status is **`NOT_EVALUATED`**, and it is left that way. Four rules apply here that only a human
 can establish, and no human has reviewed them. Recording an attestation to make CI green would be the
 "falsify evidence for" clause of the invariant being attested — so the honest state is reported
 instead, and the CI step that runs `check` accepts exit 4 with a comment explaining why.

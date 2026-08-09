@@ -36,7 +36,51 @@ export const STATUS = {
   BLOCKED_BY_INVARIANT: "BLOCKED_BY_INVARIANT",
 };
 
-const RESULT = { passed: "passed", failed: "failed", warning: "warning", skipped: "skipped" };
+const RESULT = {
+  passed: "passed",
+  failed: "failed",
+  warning: "warning",
+  skipped: "skipped",
+  screened: "screened",
+};
+
+/**
+ * Which invariants have a mechanically bound screening implementation, and which checks constitute
+ * it. An invariant may report `screened` ONLY if it appears here and every listed check executed.
+ *
+ * THIS MAP IS DELIBERATELY NOT EXTENSIBLE TO ORDINARY RULES. `screened` exists because Standard 42
+ * is not an ordinary proposition about an adopter that a human is expected to establish — it is
+ * partly a meta-invariant enforced by this evaluator, and reporting a rule as "not evaluated" when
+ * the evaluator just ran nine checks against it is factually misleading. That reasoning does not
+ * transfer. The temptation it must not enable: "health.no-false-reassurance has some regex checks,
+ * so let us call it screened." A regex over prose is not a screening implementation, and a rule
+ * about an adopter's guidance is not a meta-invariant about the evaluation.
+ *
+ * Eligibility is therefore mechanical and narrow — `kind: "invariant"` AND a key here — and a test
+ * asserts no non-invariant can acquire one.
+ */
+export const INVARIANT_SCREENS = Object.freeze({
+  "integrity.no-standards-manipulation": Object.freeze([
+    "exception-against-non-exemptible",
+    "strength-change-on-non-negotiable",
+    "strength-lowered",
+    "not-applicable-invariant",
+    "contradicted-applicability",
+    "attested-invariant",
+    "attestation-on-non-attestable-rule",
+    "contradicted-attestation",
+    "attestation-expired-before-review",
+  ]),
+});
+
+/**
+ * What `screened` means, stated once and rendered wherever the disposition appears.
+ *
+ * The asymmetry it preserves: absence of detected manipulation is weak evidence; presence of
+ * detected manipulation is decisive. `screened` is the weak half, and says so.
+ */
+export const SCREENED_MEANING =
+  "All implemented integrity checks applicable to this evaluation completed and detected no integrity violation. This does not establish that no undetectable manipulation occurred, and it is not human attestation of the invariant.";
 
 /**
  * How strongly a project holds a rule. A policy may RAISE a recommendation to required; it may
@@ -48,6 +92,29 @@ export const STRENGTHS = { recommended: 1, required: 2 };
 /** The strength a rule carries before any policy says anything. */
 export function baselineStrength(rule) {
   return rule.kind === "recommendation" ? "recommended" : "required";
+}
+
+/**
+ * Which invariants earned `screened` on this run.
+ *
+ * An invariant qualifies only when it is `kind: "invariant"`, the catalog defines it, it has a
+ * binding in INVARIANT_SCREENS, and EVERY check that binding names actually executed. A screen that
+ * was skipped, short-circuited, or removed leaves the invariant at not-evaluated — which is the
+ * honest answer, because in that case nothing looked.
+ */
+export function screenedInvariantsForTest(catalog, executedChecks) {
+  return screenedInvariants(catalog, executedChecks);
+}
+
+function screenedInvariants(catalog, executedChecks) {
+  const ran = new Set(executedChecks);
+  const screened = [];
+  for (const [ruleId, required] of Object.entries(INVARIANT_SCREENS)) {
+    const rule = catalog.rules.get(ruleId);
+    if (!rule || rule.kind !== "invariant") continue;
+    if (required.every((check) => ran.has(check))) screened.push(ruleId);
+  }
+  return screened;
 }
 
 /**
@@ -65,10 +132,18 @@ export function baselineStrength(rule) {
  */
 export function screenIntegrity({ catalog, policy, findings, today }) {
   const violations = [];
-  if (!policy) return violations;
+  const executed = [];
+
+  // Screening cannot run without a policy — there is nothing to screen. This is reported as
+  // NOT EXECUTED rather than as a clean result, because "we found no manipulation" and "we did not
+  // look" must never collapse into the same answer. An invariant cannot be `screened` on this path.
+  if (!policy) {
+    return { executed: false, checks: [], violations, screened: [] };
+  }
 
   const add = (ruleId, kind, message, remediation) =>
     violations.push({ ruleId, violation: kind, message, remediation });
+  const ran = (check) => executed.push(check);
 
   const findingsByRule = new Map();
   for (const finding of findings ?? []) {
@@ -79,6 +154,7 @@ export function screenIntegrity({ catalog, policy, findings, today }) {
     findingsByRule.get(rule.id).push(finding);
   }
 
+  ran("exception-against-non-exemptible");
   // 1. An exception against a rule that admits none.
   for (const entry of Array.isArray(policy.exceptions) ? policy.exceptions : []) {
     const rule = resolve(catalog, entry.rule);
@@ -93,6 +169,8 @@ export function screenIntegrity({ catalog, policy, findings, today }) {
     );
   }
 
+  ran("strength-change-on-non-negotiable");
+  ran("strength-lowered");
   // 2. A policy lowering a rule's strength, or setting one on a rule that has no strength to set.
   for (const [ruleId, setting] of Object.entries(policy.rules ?? {})) {
     const rule = resolve(catalog, ruleId);
@@ -117,6 +195,8 @@ export function screenIntegrity({ catalog, policy, findings, today }) {
     }
   }
 
+  ran("not-applicable-invariant");
+  ran("contradicted-applicability");
   for (const [ruleId, declaration] of Object.entries(policy.applicability ?? {})) {
     const rule = resolve(catalog, ruleId);
     if (!rule || declaration?.status !== "not-applicable") continue;
@@ -156,6 +236,10 @@ export function screenIntegrity({ catalog, policy, findings, today }) {
     }
   }
 
+  ran("attested-invariant");
+  ran("attestation-on-non-attestable-rule");
+  ran("contradicted-attestation");
+  ran("attestation-expired-before-review");
   // 5. An attestation asserting what a check contradicts, or standing in for a rule no human is
   //    entitled to sign off. Both are the "falsify evidence for" clause of the invariant.
   for (const [ruleId, attestation] of Object.entries(policy.attestations ?? {})) {
@@ -199,7 +283,7 @@ export function screenIntegrity({ catalog, policy, findings, today }) {
     }
   }
 
-  return violations;
+  return { executed: true, checks: executed, violations, screened: screenedInvariants(catalog, executed) };
 }
 
 /**
@@ -213,18 +297,20 @@ export function screenIntegrity({ catalog, policy, findings, today }) {
  * @param digests   Map<ruleId, currentDigest> for attestation staleness
  */
 export function evaluate({ catalog, policy, findings, evaluated, today, digests }) {
-  const integrityViolations = screenIntegrity({ catalog, policy, findings, today });
-  if (integrityViolations.length > 0) {
+  const screen = screenIntegrity({ catalog, policy, findings, today });
+  if (screen.violations.length > 0) {
     return {
       status: STATUS.BLOCKED_BY_INVARIANT,
       score: null,
-      summary: { passed: 0, failed: 0, warnings: 0, skipped: 0 },
-      assurance: { automated: 0, manualReview: 0, notEvaluated: 0 },
-      denominator: { total: 0, applicable: 0, scored: 0, basis: "not evaluated — the run was blocked" },
-      integrityViolations,
+      summary: { passed: 0, failed: 0, warnings: 0, skipped: 0, screened: 0 },
+      assurance: { automated: 0, manualReview: 0, notEvaluated: 0, screened: 0 },
+      denominator: { total: 0, applicable: 0, scored: 0, unevaluatedRequired: 0, basis: "not evaluated — the run was blocked" },
+      integrityScreen: { executed: screen.executed, checks: screen.checks },
+      integrityViolations: screen.violations,
       results: [],
     };
   }
+  const screenedIds = new Set(screen.screened);
 
   const declaredRules = policy?.rules ?? {};
   const applicability = policy?.applicability ?? {};
@@ -284,6 +370,17 @@ export function evaluate({ catalog, policy, findings, evaluated, today, digests 
       // or recorded as rejected). Silently ignoring it would be worse than falling through.
     }
 
+    // An invariant with a bound screening implementation that fully executed. NOT a pass: the screen
+    // establishes that no manipulation was DETECTED, which is weak evidence, whereas detected
+    // manipulation is decisive and blocked the run above. Reporting this as not-evaluated would be
+    // factually wrong — the evaluator just ran every check it has against this rule (ADR 0007).
+    if (rule.kind === "invariant" && screenedIds.has(rule.id)) {
+      const r = base(rule, strength, RESULT.screened, "screened", SCREENED_MEANING);
+      r.checks = INVARIANT_SCREENS[rule.id] ?? [];
+      results.push(r);
+      continue;
+    }
+
     // A manual-review rule is never established by an automated run. Without a valid attestation it
     // is not-evaluated even when the evaluator examined it and found nothing, because "no automated
     // finding" is not evidence for a rule whose evaluator is a human. Every prohibition lands here,
@@ -341,7 +438,7 @@ export function evaluate({ catalog, policy, findings, evaluated, today, digests 
     });
   }
 
-  return summarise(results, policy);
+  return summarise(results, policy, screen);
 }
 
 /**
@@ -420,27 +517,36 @@ function base(rule, strength, status, disposition, message) {
   };
 }
 
-function summarise(results, policy) {
-  const counts = { passed: 0, failed: 0, warnings: 0, skipped: 0 };
+function summarise(results, policy, screen) {
+  const counts = { passed: 0, failed: 0, warnings: 0, skipped: 0, screened: 0 };
   for (const r of results) {
     if (r.status === RESULT.passed) counts.passed++;
     else if (r.status === RESULT.failed) counts.failed++;
     else if (r.status === RESULT.warning) counts.warnings++;
+    else if (r.status === RESULT.screened) counts.screened++;
     else counts.skipped++;
   }
 
-  // Assurance accounts for every applicable rule, and the three MUST sum to that number. An
-  // attested rule counts as manualReview, never automated: a human established it.
-  const assurance = { automated: 0, manualReview: 0, notEvaluated: 0 };
+  // Assurance accounts for every applicable rule, and the four MUST sum to that number. An attested
+  // rule counts as manualReview, never automated: a human established it. A screened invariant is
+  // its own category — it is neither a machine establishing a requirement nor a human reviewing one.
+  const assurance = { automated: 0, manualReview: 0, notEvaluated: 0, screened: 0 };
   for (const r of results) {
     if (r.disposition === "not-applicable") continue;
-    if (r.status === RESULT.skipped) assurance.notEvaluated++;
+    if (r.status === RESULT.screened) assurance.screened++;
+    else if (r.status === RESULT.skipped) assurance.notEvaluated++;
     else if (r.validationType === "manual-review") assurance.manualReview++;
     else assurance.automated++;
   }
 
   const applicable = results.filter((r) => r.disposition !== "not-applicable");
-  const scored = applicable.filter((r) => r.status !== RESULT.skipped && r.strength === "required");
+
+  // `screened` enters neither the numerator nor the denominator. A screen that detected nothing is
+  // weak evidence, and letting it score would let the invariant inflate a percentage it does not
+  // support.
+  const scored = applicable.filter(
+    (r) => r.status !== RESULT.skipped && r.status !== RESULT.screened && r.strength === "required",
+  );
   const scoredPassed = scored.filter((r) => r.status === RESULT.passed).length;
   const score = scored.length === 0 ? null : Math.round((scoredPassed / scored.length) * 100);
 
@@ -451,6 +557,11 @@ function summarise(results, policy) {
   // These are the reason COMPLIANT is not reachable by default in this domain: 34 of the 59 rules
   // are prohibitions no machine evaluates, so a project that has recorded no human review has not
   // demonstrated compliance — it has demonstrated that nobody looked.
+  //
+  // A `screened` invariant is deliberately absent from this set. Before ADR 0007 it was present,
+  // and because the integrity invariant is required, human-evaluated, and never attestable, it made
+  // COMPLIANT unreachable for every project forever — which would have turned NOT_EVALUATED into
+  // boilerplate and destroyed the distinction it exists to carry.
   const unevaluated = results.filter(
     (r) => r.disposition === "not-evaluated" && r.strength === "required",
   );
@@ -475,8 +586,9 @@ function summarise(results, policy) {
       applicable: applicable.length,
       scored: scored.length,
       unevaluatedRequired: unevaluated.length,
-      basis: "rules held at required strength that were actually evaluated",
+      basis: "rules held at required strength that were actually evaluated; screened invariants are excluded",
     },
+    integrityScreen: { executed: screen?.executed ?? false, checks: screen?.checks ?? [] },
     integrityViolations: [],
     results,
   };
@@ -493,6 +605,7 @@ export function envelope({ verdict, project, standardVersion, auditedAt, framewo
     summary: verdict.summary,
     assurance: verdict.assurance,
     denominator: verdict.denominator,
+    integrityScreen: verdict.integrityScreen ?? { executed: false, checks: [] },
     integrityViolations: verdict.integrityViolations ?? [],
     // Framework maturity, sitting outside the verdict on purpose. It says how much of the framework
     // can be evaluated by machine at all — never how compliant this project is.

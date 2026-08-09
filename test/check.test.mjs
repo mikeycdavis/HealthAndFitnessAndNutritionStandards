@@ -14,7 +14,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { loadCatalog } from "../scripts/catalog.mjs";
-import { evaluate, screenIntegrity, STATUS, baselineStrength } from "../scripts/compliance.mjs";
+import { evaluate, screenIntegrity, STATUS, baselineStrength, INVARIANT_SCREENS } from "../scripts/compliance.mjs";
 import { parseYaml } from "../scripts/yaml.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -50,6 +50,13 @@ test("a rule nothing evaluated is skipped, never passed", () => {
   const passed = verdict.results.filter((r) => r.status === "passed");
   assert.deepEqual(passed, [], "nothing was evaluated, so nothing may be reported as passing");
   for (const r of verdict.results) {
+    // The integrity invariant is the sole exception, and it is not an exception to the principle:
+    // `screened` is not `passed`, it is a fourth state meaning the evaluator's own checks ran
+    // (ADR 0007). Every ordinary rule still lands on skipped/not-evaluated.
+    if (r.ruleId === "integrity.no-standards-manipulation") {
+      assert.equal(r.status, "screened");
+      continue;
+    }
     assert.equal(r.status, "skipped");
     assert.equal(r.disposition, "not-evaluated");
   }
@@ -61,20 +68,137 @@ test("nothing failing does not produce COMPLIANT while required rules are uneval
   assert.ok(verdict.denominator.unevaluatedRequired > 0);
 });
 
-test("COMPLIANT is reachable only when every applicable required rule was established", () => {
-  // Declare every rule not-applicable except one, and evaluate that one cleanly.
-  const applicability = {};
+/**
+ * The regression test for ADR 0007. Before that decision, COMPLIANT was unreachable by ANY project:
+ * the integrity invariant is required, human-evaluated, and never attestable, so it permanently sat
+ * in the "applicable required rule that nothing established" set and forced NOT_EVALUATED forever.
+ *
+ * No test caught it, because every test asserted behaviour that was locally correct. It was reachable
+ * only by asking a question none of them asked: can the system ever emit a verdict it defines?
+ */
+test("REGRESSION (ADR 0007): COMPLIANT is reachable by a project that earns it", () => {
+  const policy = { standardVersion: "1.0.0", applicability: {}, exceptions: [], attestations: {} };
   for (const rule of catalog.rules.values()) {
-    if (rule.id === "trend.principle-documented" || rule.kind === "invariant") continue;
-    applicability[rule.id] = { status: "not-applicable", reason: "fixture", revisitWhen: "never" };
+    if (rule.kind === "invariant") continue;
+    if (rule.attestable) {
+      policy.attestations[rule.id] = {
+        status: "approved",
+        reviewedBy: "a-human",
+        reviewedAt: "2026-08-01",
+        evidence: "reviewed",
+      };
+    } else {
+      policy.applicability[rule.id] = { status: "not-applicable", reason: "no subject here", revisitWhen: "x" };
+    }
   }
-  // The invariant is manual-review and cannot be attested, so it always holds the verdict open.
-  const verdict = run({ standardVersion: "1.0.0", applicability }, { evaluated: ["trend.principle-documented"] });
-  assert.equal(
-    verdict.status,
-    STATUS.NOT_EVALUATED,
-    "the integrity invariant is required, manual-review, and never attestable — so COMPLIANT requires it to be evaluated by something, and nothing can",
+  const verdict = run(policy);
+  assert.equal(verdict.status, STATUS.COMPLIANT, "a project that satisfies everything must be able to be told so");
+  assert.equal(verdict.summary.failed, 0);
+});
+
+test("the invariant reports screened, with the checks that ran recorded as evidence", () => {
+  const verdict = run({ standardVersion: "1.0.0" });
+  const invariant = verdict.results.find((r) => r.ruleId === "integrity.no-standards-manipulation");
+  assert.equal(invariant.status, "screened");
+  assert.equal(invariant.disposition, "screened");
+  assert.deepEqual(invariant.checks, INVARIANT_SCREENS["integrity.no-standards-manipulation"]);
+  assert.equal(verdict.integrityScreen.executed, true);
+  assert.equal(verdict.integrityScreen.checks.length, invariant.checks.length);
+  assert.match(invariant.message, /does not establish that no undetectable manipulation occurred/i);
+});
+
+test("screened is not passed, and enters neither the score nor the NOT_EVALUATED trigger", () => {
+  const policy = { standardVersion: "1.0.0", applicability: {}, attestations: {} };
+  for (const rule of catalog.rules.values()) {
+    if (rule.kind === "invariant") continue;
+    policy.applicability[rule.id] = { status: "not-applicable", reason: "fixture", revisitWhen: "x" };
+  }
+  const verdict = run(policy);
+
+  assert.equal(verdict.summary.passed, 0, "screened must not be counted as a pass");
+  assert.equal(verdict.summary.screened, 1);
+  assert.equal(verdict.denominator.scored, 0, "screened must not enter the score denominator");
+  assert.equal(verdict.score, null, "no scored rules means no score, not a score of 100");
+  assert.equal(verdict.denominator.unevaluatedRequired, 0, "screened must not trigger NOT_EVALUATED");
+  assert.equal(verdict.status, STATUS.COMPLIANT);
+});
+
+test("the assurance breakdown gives screened its own bucket and still sums", () => {
+  const verdict = run({ standardVersion: "1.0.0" }, { evaluated: [] });
+  const applicable = verdict.results.filter((r) => r.disposition !== "not-applicable").length;
+  const { automated, manualReview, notEvaluated, screened } = verdict.assurance;
+  assert.equal(screened, 1);
+  assert.equal(automated + manualReview + notEvaluated + screened, applicable, "the four must sum");
+});
+
+/**
+ * The narrowness constraint. `screened` must not become a convenient state for difficult
+ * manual-review rules — the predictable proposal being "health.no-false-reassurance has some regex
+ * checks, so let us call it screened".
+ */
+test("only invariants with a bound screen may be screened; no ordinary rule can be", () => {
+  for (const id of Object.keys(INVARIANT_SCREENS)) {
+    const rule = catalog.rules.get(id);
+    assert.ok(rule, `INVARIANT_SCREENS names ${id}, which the catalog does not define`);
+    assert.equal(rule.kind, "invariant", `${id} has a screen but is a ${rule.kind}`);
+  }
+  const verdict = run({ standardVersion: "1.0.0" }, { evaluated: [] });
+  for (const result of verdict.results.filter((r) => r.status === "screened")) {
+    assert.equal(
+      catalog.rules.get(result.ruleId).kind,
+      "invariant",
+      `${result.ruleId} reported screened but is not an invariant`,
+    );
+  }
+  assert.equal(verdict.results.filter((r) => r.status === "screened").length, 1);
+});
+
+/**
+ * MUTATION: bypass the screen and the invariant must fall back to not-evaluated, never remain
+ * screened. A state that survived its own evidence disappearing would be a claim about nothing.
+ */
+test("MUTATION: a screen that does not execute leaves the invariant not-evaluated", () => {
+  // No policy: screening cannot run, because there is nothing to screen.
+  const screen = screenIntegrity({ catalog, policy: null, findings: [], today: "2026-08-09" });
+  assert.equal(screen.executed, false);
+  assert.deepEqual(screen.screened, [], "an unexecuted screen must screen nothing");
+
+  const verdict = evaluate({ catalog, policy: null, findings: [], evaluated: [], today: "2026-08-09", digests: new Map() });
+  const invariant = verdict.results.find((r) => r.ruleId === "integrity.no-standards-manipulation");
+  assert.notEqual(invariant?.status, "screened", "no policy means no screen, so no screened state");
+});
+
+test("MUTATION: removing a bound check from the screen withdraws the screened state", async () => {
+  const { screenedInvariantsForTest } = await import("../scripts/compliance.mjs");
+  const full = INVARIANT_SCREENS["integrity.no-standards-manipulation"];
+  assert.ok(
+    screenedInvariantsForTest(catalog, full).includes("integrity.no-standards-manipulation"),
+    "all checks present should screen",
   );
+  assert.deepEqual(
+    screenedInvariantsForTest(catalog, full.slice(1)),
+    [],
+    "one missing check must withdraw the screened state entirely — a partial screen is not a screen",
+  );
+  assert.deepEqual(screenedInvariantsForTest(catalog, []), []);
+});
+
+test("the invariant is still never attestable and never not-applicable", async () => {
+  const invariant = catalog.rules.get("integrity.no-standards-manipulation");
+  assert.equal(invariant.attestable, false, "ADR 0007 must not have weakened ADR 0003");
+  assert.equal(invariant.exemptible, false);
+
+  const attested = run(await policyFixture("attested-invariant"));
+  assert.equal(attested.status, STATUS.BLOCKED_BY_INVARIANT);
+  const notApplicable = run(await policyFixture("not-applicable-invariant"));
+  assert.equal(notApplicable.status, STATUS.BLOCKED_BY_INVARIANT);
+});
+
+test("detected manipulation still blocks, and produces no screened state", async () => {
+  const verdict = run(await policyFixture("exception-against-prohibition"));
+  assert.equal(verdict.status, STATUS.BLOCKED_BY_INVARIANT);
+  assert.deepEqual(verdict.results, [], "a blocked run reports no per-rule states at all");
+  assert.equal(verdict.summary.screened, 0);
 });
 
 test("an attested prohibition passes and is counted as manual review, never automated", () => {
@@ -100,8 +224,8 @@ test("an attested prohibition passes and is counted as manual review, never auto
 test("the assurance breakdown accounts for every applicable rule", () => {
   const verdict = run({ standardVersion: "1.0.0" }, { evaluated: [] });
   const applicable = verdict.results.filter((r) => r.disposition !== "not-applicable").length;
-  const { automated, manualReview, notEvaluated } = verdict.assurance;
-  assert.equal(automated + manualReview + notEvaluated, applicable, "the three must sum");
+  const { automated, manualReview, notEvaluated, screened } = verdict.assurance;
+  assert.equal(automated + manualReview + notEvaluated + screened, applicable, "the four must sum");
 });
 
 test("the score's denominator is what was evaluated, and status never derives from it", () => {
@@ -307,20 +431,23 @@ test("integrity screening runs before everything, so a blocked run reports no pa
   assert.deepEqual(verdict.results, [], "a partial result invites salvaging the parts that look fine");
 });
 
-test("a clean policy produces no integrity violations", async () => {
-  const violations = screenIntegrity({
+test("a clean policy produces no integrity violations, and a fully executed screen", async () => {
+  const screen = screenIntegrity({
     catalog,
     policy: await policyFixture("valid"),
     findings: [],
     today: "2026-08-09",
   });
-  assert.deepEqual(violations, []);
+  assert.deepEqual(screen.violations, []);
+  assert.equal(screen.executed, true);
+  assert.deepEqual(screen.screened, ["integrity.no-standards-manipulation"]);
 });
 
 test("this repository's own policy produces no integrity violations", async () => {
   const policy = parseYaml(await readFile(path.join(REPO, "project-policy.yml"), "utf8"));
-  const violations = screenIntegrity({ catalog, policy, findings: [], today: "2026-08-09" });
-  assert.deepEqual(violations, []);
+  const screen = screenIntegrity({ catalog, policy, findings: [], today: "2026-08-09" });
+  assert.deepEqual(screen.violations, []);
+  assert.equal(screen.executed, true);
 });
 
 // ---------------------------------------------------------------------------------------------

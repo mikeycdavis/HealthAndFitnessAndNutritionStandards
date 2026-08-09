@@ -145,6 +145,31 @@ Decision order per rule:
 **A skip never counts as a pass.** This is the property everything else protects. A false red has a
 complainant; a false green has none, by construction.
 
+### Per-rule states
+
+`passed` · `failed` · `warning` · `skipped` (not-applicable or not-evaluated) · **`screened`**
+
+`screened` is available **only** to a `kind: "invariant"` rule that has a binding in
+`INVARIANT_SCREENS` and whose every bound check executed on this run. It means:
+
+> All implemented integrity checks applicable to this evaluation completed and detected no integrity
+> violation. This does not establish that no undetectable manipulation occurred, and it is not human
+> attestation of the invariant.
+
+It is not `passed`, enters neither the score numerator nor its denominator, and does not trigger
+`NOT_EVALUATED`. The asymmetry it preserves:
+
+```text
+absence of detected manipulation  → weak evidence  → screened
+presence of detected manipulation → decisive       → BLOCKED_BY_INVARIANT (exit 3)
+```
+
+Eligibility is deliberately narrow and mechanical, because the predictable future proposal is
+"`health.no-false-reassurance` has some regex checks, so let us call it screened". A regex over prose
+is not a screening implementation, and a rule about an adopter's guidance is not a meta-invariant
+about the evaluation. Tests assert no non-invariant can acquire a screen, and that removing any bound
+check withdraws the state entirely.
+
 ### Project verdicts
 
 `COMPLIANT`, `COMPLIANT_WITH_EXCEPTIONS`, `NON_COMPLIANT`, `NOT_EVALUATED`, `BLOCKED_BY_INVARIANT`.
@@ -159,6 +184,11 @@ Precedence, which matters as much as the list:
    failed" is not evidence that anything passed. Because 34 of the 59 rules are prohibitions no
    machine evaluates, this is the expected result for a project that has recorded no human review —
    and it is the correct one. Reaching `COMPLIANT` requires that a human actually looked.
+
+   A `screened` invariant is **not** in this set. Before [ADR 0007](../../artifacts/adr/0007-screened-as-a-distinct-invariant-state.md)
+   it was, and since the integrity invariant is required, human-evaluated, and never attestable, that
+   made `COMPLIANT` unreachable for every project forever — which would have turned `NOT_EVALUATED`
+   into boilerplate and destroyed the distinction it exists to carry.
 5. Any live exception → `COMPLIANT_WITH_EXCEPTIONS`.
 6. Otherwise → `COMPLIANT`.
 

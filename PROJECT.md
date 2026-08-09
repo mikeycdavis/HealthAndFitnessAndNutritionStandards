@@ -24,20 +24,20 @@ catalog entry — so the evidence-quality rules apply here in full and are decla
 This repository is evaluated against its own standards, version `1.0.0-dev`, declared in
 [`project-policy.yml`](project-policy.yml).
 
-Its current status is **`NOT_EVALUATED`**. Five rules apply here that no machine evaluates —
+Its current status is **`NOT_EVALUATED`**. Four rules apply here that no machine evaluates —
 `escalation.tier-language-calibrated`, `trend.trends-over-events`,
-`health.no-fabricated-medical-facts`, `nutrition.no-single-food-disease-claims`, and
-`integrity.no-standards-manipulation` — and no human has reviewed them. Recording an attestation
-anyway would be the "falsify evidence for" clause of the very invariant being attested.
+`health.no-fabricated-medical-facts`, and `nutrition.no-single-food-disease-claims` — and no human
+has reviewed them. Recording an attestation anyway would be the "falsify evidence for" clause of the
+integrity invariant.
 
-Run `standards status .` for the current list; do not maintain a copy of it by hand. An earlier
-version of this paragraph said "four" and omitted `nutrition.no-single-food-disease-claims`, which is
-the kind of drift a hand-maintained count produces. `test/instructions.test.mjs` now asserts this
-paragraph against what the tool actually reports.
+The integrity invariant itself reports **`screened`**: all nine bound integrity checks executed and
+none detected a violation (ADR 0007). Screened is not passed — absence of detected manipulation is
+weak evidence, whereas detected manipulation is decisive and would stop the run with exit 3.
 
-**The last of the five can never be attested**, because the integrity invariant is not attestable by
-design — self-certifying one's own integrity is worth nothing. That has a consequence for the verdict
-model which is recorded under Known gaps below.
+Run `standards status .` for the current list; do not maintain a copy of it by hand. This paragraph
+has been wrong twice — once saying "four" when the tool said five, then "five" when the fix made it
+four again — which is exactly why `test/instructions.test.mjs` now asserts it against the tool's
+own output rather than trusting the prose.
 
 ## Stack
 
@@ -100,9 +100,11 @@ five subcommands, 130 tests passing, all guards green.
   ADR 0006.
 - The version is `1.0.0-dev`. At a release version the inventory guard additionally requires every
   standard to exist, which it now does.
-- **`COMPLIANT` is currently unreachable by any project, including this one.** The integrity
-  invariant is required, evaluated by human review, and never attestable — so it permanently reports
-  `not-evaluated`, and the verdict rule "any applicable required rule that nothing established yields
-  `NOT_EVALUATED`" therefore fires for every project forever. Found during release certification, not
-  yet resolved; see the release note below. This is a semantics decision rather than a bug fix,
-  because either resolution changes what a verdict means.
+- Detector paths are fixed. A project using a different layout must declare the affected rules
+  not-applicable rather than configure the paths.
+
+**Resolved during release certification:** `COMPLIANT` was unreachable by any project, because the
+integrity invariant is required, human-evaluated, and never attestable, so it permanently sat in the
+"nothing established this" set. Fixed by ADR 0007's `screened` state. This repository still exits 4,
+which was the test of whether the fix was narrow enough — a change that turned this repository green
+would have been too broad.

@@ -147,7 +147,7 @@ claims it while being human-evaluated.
 
 | Verdict | Exit | Means |
 | --- | --- | --- |
-| `COMPLIANT` | 0 | Every applicable rule was established and passed |
+| `COMPLIANT` | 0 | Every applicable rule was established and passed, and the integrity screen detected nothing |
 | `COMPLIANT_WITH_EXCEPTIONS` | 0 | As above, with approved time-bounded waivers |
 | `NON_COMPLIANT` | 1 | Evaluated, and something that applies is failing |
 | — | 2 | Configuration or schema error, including no policy |
@@ -156,6 +156,12 @@ claims it while being human-evaluated.
 
 **4 is not a worse 0.** Mapping it to 0 would let a project that evaluated nothing pass a gate;
 mapping it to 1 would call a project non-compliant when nothing is known to be wrong with it.
+
+The integrity invariant has a state of its own, **`screened`** — every bound integrity check ran and
+none fired. It is not a pass: absence of detected manipulation is weak evidence, whereas detected
+manipulation is decisive and stops the run at exit 3. It is reported beside the verdict rather than
+inside it, so `COMPLIANT` never quietly stands in for "and Standard 42 is satisfied"
+([ADR 0007](artifacts/adr/0007-screened-as-a-distinct-invariant-state.md)).
 
 ## Layout
 
