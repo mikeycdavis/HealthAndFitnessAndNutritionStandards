@@ -1,0 +1,27 @@
+{
+  "name": "health-fitness-nutrition-standards",
+  "version": "1.0.0-dev",
+  "description": "Numbered standards for personal health, fitness, exercise, and nutrition guidance, and the commands that evaluate a project against them.",
+  "type": "module",
+  "bin": {
+    "standards": "scripts/standards.mjs"
+  },
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\"",
+    "audit": "node scripts/standards.mjs audit .",
+    "check": "node scripts/standards.mjs check .",
+    "explain": "node scripts/standards.mjs explain",
+    "status": "node scripts/standards.mjs status .",
+    "inventory": "node scripts/inventory.mjs",
+    "rules": "node scripts/rules.mjs",
+    "fidelity": "node scripts/fidelity.mjs",
+    "policy": "node scripts/policy.mjs",
+    "diagrams": "node scripts/diagrams.mjs",
+    "audit:strict": "node scripts/standards.mjs audit . --strict"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
