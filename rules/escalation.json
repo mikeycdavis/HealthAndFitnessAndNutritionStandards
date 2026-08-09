@@ -1,0 +1,62 @@
+{
+  "$comment": "Rule catalog — the wellness/medical boundary and the escalation tiers. Standards 1 and 3. This is a cross-domain category on purpose: the boundary between general wellness guidance and medical assessment, and the four-tier model for when ordinary guidance stops being enough, apply to health interpretation, fitness planning, and nutrition alike. Filing them under health.* would falsely scope them to one domain, and would break the property that health.* contains exactly the thirteen health prohibitions.",
+  "rules": [
+    {
+      "id": "escalation.scope-disclosed",
+      "title": "Guidance discloses its wellness scope and does not present itself as medical assessment",
+      "standard": 1,
+      "category": "escalation",
+      "kind": "requirement",
+      "severity": "error",
+      "validationType": "document",
+      "assurance": "partial",
+      "introducedIn": "1.0.0",
+      "description": "A project that produces health, fitness, or nutrition guidance states plainly what kind of guidance it is: general wellness information rather than medical assessment, diagnosis, or treatment. The statement appears where a reader encounters the guidance, not only in a legal appendix.",
+      "rationale": "A reader who believes they have been assessed acts differently from one who knows they have been given general information — they stop looking, and they may not raise the symptom with someone qualified to evaluate it. The boundary matters most for the reader who is least equipped to infer it.",
+      "remediation": "State the scope where the guidance is delivered, in plain language. Name what the guidance is for and what it is not a substitute for.",
+      "aliases": [],
+      "deprecatedIn": null,
+      "supersededBy": null,
+      "removedIn": null,
+      "$assuranceNote": "A detector establishes that a scope statement is PRESENT in the documentation or guidance templates. It establishes nothing about whether the guidance elsewhere in the project stays inside that scope, and it cannot observe what the running system says to a reader."
+    },
+    {
+      "id": "escalation.tier-model-documented",
+      "title": "The four-tier escalation model is documented",
+      "standard": 3,
+      "category": "escalation",
+      "kind": "requirement",
+      "severity": "error",
+      "validationType": "document",
+      "assurance": "partial",
+      "introducedIn": "1.0.0",
+      "description": "The project documents the four escalation tiers it uses — normal variation, something worth monitoring, something worth discussing with a professional, and potentially urgent warning signs — and what distinguishes each from its neighbours.",
+      "rationale": "Without a written model, escalation decisions are made case by case and drift with mood: the same finding becomes reassuring on a confident day and alarming on a cautious one. The four tiers exist so that a decision can be checked against something, and so that the reader learns what the levels mean rather than re-deriving them each time.",
+      "remediation": "Write the four tiers down with the distinction between each, and state which observations move something between them.",
+      "aliases": [],
+      "deprecatedIn": null,
+      "supersededBy": null,
+      "removedIn": null,
+      "$assuranceNote": "A detector establishes that a document names all four tiers. It establishes nothing about whether the distinctions drawn are sound, whether the tiers are applied consistently, or whether the boundaries sit in clinically sensible places."
+    },
+    {
+      "id": "escalation.tier-language-calibrated",
+      "title": "Tier language is proportionate and does not create alarmism",
+      "standard": 3,
+      "category": "escalation",
+      "kind": "requirement",
+      "severity": "error",
+      "validationType": "manual-review",
+      "assurance": "none",
+      "introducedIn": "1.0.0",
+      "description": "The language attached to each escalation tier is proportionate to it. The lower tiers do not borrow urgency they have not earned, and the highest tier says what to consider doing rather than commanding panic. Escalation guidance must not create alarmism.",
+      "rationale": "An escalation model that frightens people is not safer than one that does not — it is less safe. A reader alarmed by ordinary variation learns to discount the system, and the discounting is indiscriminate: it applies to the tier-four warning too. Proportion is what keeps the top tier meaningful.",
+      "remediation": "Reread each tier's wording as someone in that tier would. Reserve urgency for the tier that warrants it, and make the highest tier actionable rather than frightening.",
+      "aliases": [],
+      "deprecatedIn": null,
+      "supersededBy": null,
+      "removedIn": null,
+      "$assuranceNote": "Judgment. Nothing mechanical evaluates tone, and an attempt to do so by keyword would misfire on exactly the careful writing it should reward. Without a recorded human review this rule reports not-evaluated."
+    }
+  ]
+}

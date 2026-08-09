@@ -1,0 +1,25 @@
+{
+  "$comment": "Rule catalog — standards integrity. Standard 42. This file contains exactly one rule, and it is the only rule of kind 'invariant' in the catalog. Unlike every other rule here, it is not about an adopting project's health guidance: it binds anyone who maintains, adopts, or evaluates against these standards, including the maintainers of this repository. See ADR 0003 for how it is protected and tested.",
+  "rules": [
+    {
+      "id": "integrity.no-standards-manipulation",
+      "title": "A standard is never bypassed, weakened, or given falsified evidence to reach a desired conclusion",
+      "standard": 42,
+      "category": "integrity",
+      "kind": "invariant",
+      "severity": "error",
+      "validationType": "manual-review",
+      "assurance": "none",
+      "introducedIn": "1.0.0",
+      "description": "A human or AI must never bypass, weaken, remove, reclassify, reinterpret, falsify evidence for, or manipulate a standard, test, applicability determination, evidence requirement, or verification mechanism solely because it prevents the desired implementation or conclusion.",
+      "rationale": "Every other rule in this catalog assumes the evaluation is honest. When a standard obstructs a conclusion someone wants, the cheapest path is to adjust the standard, and each step of that path is individually defensible: the rule 'did not really apply here', the severity 'was too high', the attestation 'reflects a review that happened'. Nothing in a document stops any of it, because the document is what is being edited. This rule exists so that the manipulation is itself a violation rather than a workaround.",
+      "remediation": "Restore what was changed and state the real position instead. A rule that cannot be met is a failure, or a time-bounded exception with an approver — both of which stay visible. A rule with no subject in this project is a not-applicable declaration whose reason says the behavior cannot occur here. What is not available is quietly making the obstacle disappear.",
+      "aliases": [],
+      "deprecatedIn": null,
+      "supersededBy": null,
+      "removedIn": null,
+      "$assuranceNote": "Nothing mechanical establishes that no manipulation occurred. What IS mechanical is the detection of specific attempts — an exception against a prohibition, a lowered strength, an attestation contradicting a finding, a not-applicable declaration on this rule, a not-applicable declaration contradicted by evidence — each of which blocks the run with BLOCKED_BY_INVARIANT rather than being recorded as a failure. Two reviewed inventories additionally make a silently dropped or downgraded rule fail CI. None of that amounts to proof of integrity, and this rule does not claim it.",
+      "$exemptibilityNote": "Never exemptible, never attestable, and never not-applicable — all three enforced in code. An attestation that we are not manipulating standards would be self-certification of the thing under suspicion; a not-applicable declaration would be the claim that this project is exempt from integrity, which is not a statement about scope."
+    }
+  ]
+}

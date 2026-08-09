@@ -1,0 +1,43 @@
+{
+  "$comment": "Rule catalog — the trend-over-event principle. Standard 2. Cross-domain by the source's own wording, which names a workout, a heart-rate reading, a meal, a body-weight measurement, and a bad day in a single sentence. A single observation informs a decision; a trend establishes a pattern.",
+  "rules": [
+    {
+      "id": "trend.trends-over-events",
+      "title": "Individual observations inform decisions; trends establish patterns",
+      "standard": 2,
+      "category": "trend",
+      "kind": "requirement",
+      "severity": "error",
+      "validationType": "manual-review",
+      "assurance": "none",
+      "introducedIn": "1.0.0",
+      "description": "Guidance distinguishes what a single observation can support from what a trend can support. A single workout, heart-rate reading, meal, body-weight measurement, or bad day does not redefine a plan on its own.",
+      "rationale": "Individual measurements carry noise that is often larger than the effect being tracked: a body weight moves several pounds on water alone, a resting heart rate moves on sleep and caffeine, a day's intake moves on nothing in particular. A system that reacts to each observation converts that noise into instructions, and the person following them ends up chasing variation they cannot control. Reacting to trends is not merely more accurate — it is what makes a plan followable.",
+      "remediation": "Say what the observation supports and what it does not. Where a change is warranted, name the trend that warrants it rather than the reading that prompted the question.",
+      "aliases": [],
+      "deprecatedIn": null,
+      "supersededBy": null,
+      "removedIn": null,
+      "$assuranceNote": "Judgment. Whether a particular piece of guidance respects the distinction cannot be established by inspecting files, and this rule reports not-evaluated without a recorded human review. The related rule trend.principle-documented checks only that the principle is written down, which is a much weaker claim."
+    },
+    {
+      "id": "trend.principle-documented",
+      "title": "The trend-over-event principle is stated in the project's documentation",
+      "standard": 2,
+      "category": "trend",
+      "kind": "recommendation",
+      "severity": "warning",
+      "validationType": "document",
+      "assurance": "partial",
+      "introducedIn": "1.0.0",
+      "description": "The project's documentation or guidance templates state the trend-over-event principle, so that the people and agents working in the project share it rather than each inferring it.",
+      "rationale": "A principle nobody has written down is applied inconsistently, and inconsistently in a particular direction: whoever is closest to the data at the time decides how much a single reading means. Writing it down is cheap and makes disagreement about it possible, which is the point.",
+      "remediation": "State the principle in the documentation or in the templates that shape how observations are recorded.",
+      "aliases": [],
+      "deprecatedIn": null,
+      "supersededBy": null,
+      "removedIn": null,
+      "$assuranceNote": "A detector establishes that the principle appears in the documentation. Whether decisions in the project actually follow it is trend.trends-over-events, which no machine evaluates."
+    }
+  ]
+}
