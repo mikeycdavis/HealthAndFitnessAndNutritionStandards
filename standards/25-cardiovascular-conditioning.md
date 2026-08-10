@@ -25,12 +25,19 @@ The adaptations do not stack in a single dimension:
 A plan states which quality each session is for. "Cardio" as a single undifferentiated instruction
 loses the distinction entirely.
 
-### R2 — Most volume sits at low intensity
+### R2 — In endurance-oriented training, most volume sits at low intensity
 
-For most people and most goals, the majority of cardiovascular volume belongs at genuinely easy
-intensity, with a smaller proportion hard. This is not a compromise for beginners — it is broadly
-how well-conditioned endurance athletes train, and the reason is recovery: easy volume can be
+For endurance goals, the majority of cardiovascular volume belongs at genuinely easy intensity, with
+a smaller proportion hard. This is not a compromise for beginners: it is broadly how competitive
+endurance athletes are observed to train, and the reason is recovery — easy volume can be
 accumulated, hard volume cannot.
+
+Outside endurance-oriented programming, treat it as a **practical default rather than an established
+finding**. The evidence for the distribution comes from trained endurance populations, and extending
+it to general health, weight-management, or mixed-goal training is an extrapolation. It is a
+reasonable one — the recovery argument does not depend on the population — but a plan should say it
+is starting from a default rather than implying the distribution has been established for whoever it
+is written for.
 
 ### R3 — The moderate-intensity trap
 
@@ -52,12 +59,13 @@ maximum rather than an age prediction, and read alongside other signals
 The practical test of a prescription is whether someone can tell, mid-session, whether they are doing
 it right.
 
-### R5 — Adaptation is slower in connective tissue than in the cardiovascular system
+### R5 — Perceived capacity can outrun tissue tolerance
 
-Cardiovascular fitness improves faster than tendons, ligaments, and bone adapt to the associated
-impact and volume. This is why a rapidly improving runner can feel capable of far more than their
-tissues tolerate, and it is the specific mechanism behind
-[Standard 22](22-training-volume.md) R4's dangerous case.
+Cardiovascular fitness can improve faster than tendons, ligaments, and bone adapt to the associated
+impact and volume. This is the usual account of why a rapidly improving runner can feel capable of
+far more than their tissues tolerate, and it is the mechanism behind
+[Standard 22](22-training-volume.md) R4's dangerous case — stated there, as here, as a reason for
+conservatism rather than as a fixed hierarchy of adaptation rates.
 
 Progression in impact-bearing cardiovascular work should be governed by the slower system.
 
@@ -69,7 +77,8 @@ prescribing full programmes of each and leaving the interference implicit.
 
 ## Additions this standard makes beyond the source
 
-The source names "cardiovascular conditioning" as a topic. R1's table, R2's distribution, R3's
+The source names "cardiovascular conditioning" as a topic. R1's table, R2's distribution and the
+limit on generalising it, R3's
 moderate-intensity trap, R4's applicability test, R5's connective-tissue lag, and R6's interference
 argument are all this standard's.
 

@@ -45,9 +45,11 @@ Prescriptions anchored to the person rather than to an absolute: a percentage of
 rating of perceived exertion, a pace relative to a recent time trial, a heart rate relative to a
 measured — not age-predicted — maximum, or simply repetitions in reserve.
 
-Age-predicted maximum heart rate deserves specific mention because it is ubiquitous and has an
-individual error of roughly ±10–12 beats per minute, which is wider than the zones drawn from it.
-Using it is acceptable where nothing better exists, provided the error is acknowledged — which is
+Age-predicted maximum heart rate deserves specific mention because it is ubiquitous. The equations
+for it carry substantial individual prediction error — large enough that training zones derived from
+them should not be treated as precise individual thresholds. How large depends on the equation and
+the population it was fitted to, which is itself part of the point. Using a prediction is acceptable
+where nothing better exists, provided the error is acknowledged — which is
 [Standard 7](07-individual-baseline.md) R4's requirement in another domain.
 
 ### R4 — Establishing a baseline must not itself be unsafe
@@ -84,7 +86,9 @@ longer has, which is where the load-versus-recovery failures in
 
 - R1's three components, and the argument that training history is distinct from current capacity —
   the returning-athlete case is a well-known injury pattern the source does not mention.
-- R3's treatment of age-predicted maximum heart rate, including the size of its individual error.
+- R3's treatment of age-predicted maximum heart rate, and the consequence its prediction error has
+  for the zones drawn from it. The error is stated as substantial rather than as a figure: a single
+  number would be read as universal, and it varies with the equation and the population.
 - R4 in full. Requiring a baseline creates pressure to test for one, and maximal testing of an
   untrained person is a foreseeable harm the requirement itself could cause.
 - R6's insistence that baselines move downward too.

@@ -33,10 +33,10 @@ clinical guidance:
 The interaction in the third point is the one most often missed: the situation where protein matters
 most is exactly the one where total intake is being cut.
 
-### R3 — Protein in a deficit is what preserves lean mass
+### R3 — Protein in a deficit supports the retention of lean mass
 
-Together with resistance training ([Standard 26](26-strength.md) R5), adequate protein is the main
-determinant of how much of a body mass loss is fat rather than muscle
+Together with resistance training ([Standard 26](26-strength.md) R5), adequate protein is among the
+main determinants of how much of a body mass loss is fat rather than muscle
 ([Standard 33](33-sustainable-calorie-changes.md) R1).
 
 A deficit that cuts protein proportionally with everything else loses a larger share as lean tissue —

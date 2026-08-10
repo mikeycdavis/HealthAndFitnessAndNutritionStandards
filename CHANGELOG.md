@@ -86,6 +86,43 @@ trusting the prose. Both are the reason a release review exists.
   ADR 0007 moved the invariant out of that set and the count became four again. Derived operational
   state now comes from `standards status`, not from a copy in prose.
 
+### Found by independent content review
+
+`health.no-fabricated-medical-facts` applies to this repository, because every standard and every
+rule rationale here makes claims about physiology. An independent reviewer — who did not write the
+prose — read all 191 extracted claims against external evidence and returned **DEFECTIVE**.
+
+No invented physiology was found. Every defect was a real finding stated past its evidence, which is
+precisely the failure [Standard 14](standards/14-evidence-quality.md) R2 names as the most common
+one. It was written that way by an author who had read R2 while writing it, which is the argument for
+external review rather than for a longer checklist.
+
+Six blocking findings and eight wording issues were remediated in
+[pack 03b](artifacts/release-review/03b-remediation-diff.md). The load-bearing ones:
+
+- **A precise number that was not universal.** Age-predicted maximum heart rate was given "an
+  individual error of roughly ±10–12 beats per minute". The figure is real, but it varies with the
+  equation and the population and no equation or population was named. Now stated qualitatively, with
+  the operational conclusion — that zones drawn from a prediction are not precise thresholds —
+  preserved.
+- **A table that read as a diagnostic instrument.** Standard 24's discomfort-versus-injury table had
+  a column headed *Injury pain*, which turned a list of reasons to stop into a differential. It is
+  now framed around the behavioural decision, and the claim that "sharp pain signals that something
+  is being damaged" is gone: pain and tissue damage do not correspond one-to-one, and the rule never
+  needed them to.
+- **A rationale that silently strengthened its standard.** Standard 37 said shame is "a documented
+  component of disordered eating **patterns**"; the JSON rationale dropped the qualifier. Both are
+  now one sentence, at association strength, pinned by `test/claim-strength.test.mjs` with a mutation
+  test that reintroduces the exact drift. The rationale fields had been flagged in advance as the
+  least-scrutinised surface in the repository, and this is the evidence that the flag was right.
+- **Findings generalised past their population.** The low-intensity training distribution is
+  supported for trained endurance athletes and was stated for "most people and most goals"; it is now
+  scoped, with the wider application labelled a practical default rather than an established finding.
+
+The rule was not weakened, the evaluator was not touched, no numeric target was introduced to make
+the standards appear better-evidenced, and `check` still exits 4. The repository failed its own
+release criterion and nobody changed the criterion.
+
 ### Dogfooded
 
 This repository carries its own `project-policy.yml` and is evaluated by its own CI.

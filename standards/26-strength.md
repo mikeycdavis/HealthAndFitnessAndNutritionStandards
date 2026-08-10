@@ -43,9 +43,10 @@ resistance training the belief that harder is always better has an immediate mec
 ### R4 — Frequency, and the tissue that adapts slowest
 
 Distributing work across the week generally beats concentrating it, for the same reason volume beats
-intensity at the margin: it is recoverable. Tendons and connective tissue adapt more slowly than
-muscle, so a programme whose loads rise as fast as strength does will outrun tendon tolerance —
-[Standard 22](22-training-volume.md) R4's mechanism in the resistance domain.
+intensity at the margin: it is recoverable. Tendons and connective tissue are generally slower to
+adapt than muscle, so a programme whose loads rise as fast as strength does risks outrunning tendon
+tolerance — [Standard 22](22-training-volume.md) R4's mechanism in the resistance domain, and
+carrying the same caveat about how firmly that ordering is established.
 
 ### R5 — Strength training is broadly protective, and this is worth saying
 
@@ -53,9 +54,10 @@ Resistance training supports bone density, muscle mass retention with age, tendo
 tolerance, and functional capacity in later life. It is frequently omitted from plans built around
 cardiovascular goals or weight loss, and that omission has costs that appear slowly.
 
-In a calorie deficit particularly, resistance training plus adequate protein is what preserves lean
-mass ([Standard 34](34-protein.md), [Standard 33](33-sustainable-calorie-changes.md)), and a
-weight-loss plan without it loses a larger proportion of that weight as muscle.
+In a calorie deficit particularly, resistance training together with adequate protein supports the
+retention of lean mass ([Standard 34](34-protein.md),
+[Standard 33](33-sustainable-calorie-changes.md)), and a weight-loss plan without it is more likely
+to lose a larger proportion of that weight as muscle.
 
 ### R6 — Progression in strength follows the general rule
 

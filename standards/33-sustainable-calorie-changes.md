@@ -19,8 +19,8 @@ lean mass, make nutritional adequacy harder to achieve
 are harder to adhere to.
 
 Moderate deficits, adequate protein ([Standard 34](34-protein.md)), and resistance training
-([Standard 26](26-strength.md) R5) are what preserve lean mass. A plan that pursues rapid loss
-without those loses more of the wrong thing.
+([Standard 26](26-strength.md) R5) support the retention of lean mass. A plan that pursues rapid
+loss without them is more likely to lose the wrong thing.
 
 ### R2 — Never recommend crash dieting
 
@@ -29,9 +29,11 @@ Reproduced verbatim from the source:
 > recommend crash dieting
 
 Severe rapid deficits cost lean mass, are difficult to meet micronutrient needs within, and are
-followed by regain often enough that the approach is self-defeating on its own terms. The
-sustainable rate outperforms the fast rate measured at any horizon long enough to matter — the same
-argument [Standard 23](23-sustainable-progression.md) makes about training.
+followed by regain often enough that the approach is frequently self-defeating on its own terms.
+The case for a sustainable rate rests on that — on what remains once the approach ends, rather than
+on the rate achieved while it runs — which is the same argument
+[Standard 23](23-sustainable-progression.md) makes about training. It is a claim about which
+approach is the better bet, not a demonstrated ordering of outcomes at every horizon.
 
 Rule [`nutrition.no-crash-dieting`](../PROHIBITIONS.md).
 

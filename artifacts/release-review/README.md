@@ -8,7 +8,8 @@ reviewer needs to reach a disposition on each, assembled by the implementer.
 | [01](01-escalation-tier-language-calibrated.md) | `escalation.tier-language-calibrated` | Is the escalation language proportionate to its tier, and does it neither alarm nor understate? |
 | [02](02-trend-trends-over-events.md) | `trend.trends-over-events` | Is the trend-over-event principle consistently operationalised, including where a single event legitimately overrides it? |
 | [03](03-health-no-fabricated-medical-facts.md) | `health.no-fabricated-medical-facts` | Are the physiological claims supportable rather than invented, overstated, or beyond available evidence? |
-| [03a](03a-claim-extract.md) | *(companion to 03)* | The 191 empirical claims verbatim, with the qualification each standard attached. Claim-level review needs this, not pack 03's categories. |
+| [03a](03a-claim-extract.md) | *(companion to 03)* | The 191 empirical claims verbatim, with the qualification each standard attached. Claim-level review needs this, not pack 03's categories. Revised after remediation; numbering unchanged. |
+| [03b](03b-remediation-diff.md) | *(companion to 03)* | **The re-review packet.** Rule 03 came back DEFECTIVE; this is the before/after for the thirty claims that changed, so a focused re-review covers 30 rather than 182. |
 | [04](04-nutrition-no-single-food-disease-claims.md) | `nutrition.no-single-food-disease-claims` | Do the nutrition standards avoid attributing complex disease causation or cure to single foods? |
 
 ## How to use these

@@ -1,7 +1,7 @@
 # Standard 28 — Sleep
 
-Sleep is the largest single contributor to recovery and the one most affected by everything else in a
-person's life. This standard governs treating it as part of training rather than as background.
+Sleep is a major contributor to recovery and the one most affected by everything else in a person's
+life. This standard governs treating it as part of training rather than as background.
 
 Source: item 28 of [`artifacts/prompts/health-fitness-nutrition-standards-spec.md`](../artifacts/prompts/health-fitness-nutrition-standards-spec.md).
 
@@ -34,8 +34,9 @@ with.
 ### R3 — Consumer sleep staging is an inference
 
 Sleep stage breakdowns from wearables are inferred from movement and heart rate, and their agreement
-with polysomnography is moderate at best. Total sleep duration is measured considerably better than
-its composition.
+with polysomnography varies by device and by stage — not well enough, on current evidence, for a
+stage estimate to be treated as ground truth. Total sleep duration is measured considerably better
+than its composition.
 
 This matters because stage data is presented with more precision than it has, and people act on it —
 including by worrying about a "poor deep sleep score", which is itself a mechanism for sleeping
@@ -76,7 +77,7 @@ control converts a recommendation into a source of guilt, and guilt does not imp
 
 ## Relationship to other standards
 
-[Standard 20](20-recovery.md) R1 names sleep as its largest component.
+[Standard 20](20-recovery.md) R1 names sleep as a major component of recovery.
 [Standard 6](06-measurement-quality.md) governs R3.
 [Standard 2](02-trend-over-event.md) supplies R4.
 [Standard 10](10-known-contextual-factors.md) covers sleep as a contextual factor.

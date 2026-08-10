@@ -15,8 +15,9 @@ Applies wherever a project recommends a dietary approach.
 ### R1 — The horizon is the one the goal implies, and it is usually longer than the plan
 
 Most dietary goals are goals about a state, and a state has to be maintained. A plan that reaches a
-target and cannot be continued has solved half the problem and frequently reversed it, since regain
-past the starting point is a common outcome of approaches that end abruptly.
+target and cannot be continued has solved half the problem, since regain following an approach that
+ends is a common outcome. Whether regain routinely carries someone past their starting point is a
+stronger claim, and it is not asserted here.
 
 The question a plan should be able to answer: what does this look like once the target is reached?
 
@@ -66,9 +67,14 @@ Framing non-adherence as a personal failing is also
 
 ### R5 — Restriction has a psychological cost
 
-Rigid restriction predicts preoccupation with the restricted food and a pattern in which breaking the
-rule leads to abandoning it entirely. Flexible approaches generally outperform rigid ones over long
-horizons for this reason, independent of their nutritional content.
+Rigid restriction is associated with preoccupation with the restricted food and with a pattern in
+which breaking the rule leads to abandoning it entirely.
+
+Observational work associates flexible restraint with better long-run outcomes than rigid restraint.
+That literature is more contested than the summary suggests, the direction of the relationship is
+not settled, and more recent work has challenged the simplest versions of the claim. It is a reason
+to prefer flexibility where two approaches are otherwise comparable — not an established superiority
+holding independent of nutritional content.
 
 This also bears on [Standard 37](37-dietary-quality.md) R6: rigid rules are among the features that
 make guidance harmful to someone predisposed to a disordered relationship with food.

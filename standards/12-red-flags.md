@@ -16,9 +16,9 @@ in [Standard 3](03-safety-and-escalation-tiers.md)'s highest tier and the narrow
 
 ### R1 — A red flag is defined by asymmetry of cost, not by probability
 
-A red flag is not an observation that is probably serious. Most are probably benign. It is an
-observation where the cost of being wrong in one direction is very much larger than in the other, so
-the decision does not turn on the probability.
+A red flag is not an observation that is probably serious. It is an observation where the cost of
+being wrong in one direction is very much larger than in the other, so the decision does not turn on
+the probability at all — which is what makes the category work without anyone having to estimate one.
 
 That asymmetry is why red flags escalate on a single observation. Waiting for a trend is a reasonable
 policy when the cost of waiting is low, and it stops being reasonable exactly here.

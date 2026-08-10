@@ -16,12 +16,13 @@ covers the prescribed absence of training that supports it.
 
 Recovery is not simply time passing. What it consists of:
 
-- **Sleep** — the largest single contributor, and the one most affected by everything else
+- **Sleep** — a major contributor, and the one most affected by everything else
   ([Standard 28](28-sleep.md)).
 - **Energy and protein availability** — inadequate intake limits adaptation directly
   ([Standard 32](32-energy-balance.md), [Standard 34](34-protein.md)).
-- **Time since the stimulus**, which differs by tissue: cardiovascular and metabolic recovery run
-  faster than connective-tissue remodelling.
+- **Time since the stimulus**, which differs by tissue: cardiovascular and metabolic recovery is
+  generally quicker than connective-tissue remodelling, though the rates vary by person and by
+  loading pattern rather than following a fixed order.
 - **Total load**, training and otherwise. Physical work, life stress, and illness draw on the same
   capacity.
 

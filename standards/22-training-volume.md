@@ -52,9 +52,12 @@ compared across weeks.
 
 ### R4 — Volume rises gradually, and the rise is part of the load
 
-An increase in volume is itself a stimulus that must be recovered from. Large jumps are where injury
-concentrates, particularly in connective tissue, which adapts more slowly than the cardiovascular and
-muscular systems that make the higher volume feel manageable.
+An increase in volume is itself a stimulus that must be recovered from, and large jumps are where
+injury concentrates. The working assumption behind progressing gradually is that connective tissue
+is slower to adapt than the cardiovascular and muscular systems that make the higher volume feel
+manageable. Treat that as a reason for caution rather than as an established ordering: adaptation
+rates vary by tissue, by loading pattern, and by person, and the conservative practice does not
+depend on the ordering being exact.
 
 The dangerous case is specific: someone whose fitness has improved enough that a large jump feels
 easy, whose tendons have not kept pace. Feeling capable of more volume is not evidence that the

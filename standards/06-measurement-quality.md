@@ -56,7 +56,7 @@ The categories where this matters most, because the value is an inference rather
 
 | Reported as | Actually |
 | --- | --- |
-| Sleep stages | Inferred from movement and heart rate; agreement with polysomnography is moderate at best |
+| Sleep stages | Inferred from movement and heart rate; agreement with polysomnography varies by device and by stage, and is insufficient to treat a stage estimate as ground truth |
 | Blood oxygen | Optically estimated; sensitive to contact, motion, skin tone, and perfusion |
 | Calorie burn | Modelled from movement and heart rate; error is routinely large |
 | Stress or readiness scores | Proprietary composites, usually undocumented |

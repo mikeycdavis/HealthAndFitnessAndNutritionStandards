@@ -16,8 +16,8 @@ data. It governs what happens when the information is present.
 ### R1 — Medications are a class of contextual factor important enough to name separately
 
 [Standard 10](10-known-contextual-factors.md) covers contextual factors generally. Medications get
-their own standard because their effects are large, systematic, and specifically documented — they do
-not merely add noise, they shift what a normal value *is*.
+their own standard because their effects are often large, systematic, and specifically documented —
+they do not merely add noise, they can shift the expected value or alter what it means.
 
 Examples of the effect, stated as illustration rather than as a reference table:
 
@@ -28,8 +28,10 @@ Examples of the effect, stated as illustration rather than as a reference table:
 - Corticosteroids affect glucose, fluid retention, and sleep.
 - Stimulants, including prescribed ones, raise resting heart rate.
 - Thyroid medication shifts heart rate, temperature, and weight.
-- Antidepressants and antihistamines affect sleep architecture, which wearable sleep staging then
-  reports as a sleep quality change.
+- Some antidepressants and some antihistamines affect sleep architecture, which wearable sleep
+  staging then reports as a sleep quality change. Both are broad classes and the effects vary
+  substantially by agent — which is itself the reason a project should record what someone actually
+  takes rather than reason from the class.
 
 A project need not encode pharmacology to satisfy this standard. It needs to record what is known and
 not interpret as though it were absent.

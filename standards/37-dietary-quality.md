@@ -30,10 +30,18 @@ Reproduced verbatim from the source:
 > moralize food as evidence of personal virtue/failure
 
 Framing foods as good or bad, and eating them as being good or bad, attaches shame to an ordinary
-daily activity performed several times a day. Shame does not improve adherence: it predicts
-concealment and abandonment, and it is a documented component of disordered eating patterns.
+daily activity performed several times a day.
 
-The framing is also simply inaccurate, per R1.
+Moralising food can contribute to shame and to rigid eating patterns, and weight-related stigma and
+internalised stigma are associated with disordered-eating outcomes.
+
+That sentence is the claim, stated at association strength deliberately. This standard does not
+assert a demonstrated causal chain running from a food label through shame to a disorder — the
+evidence does not carry one, and the prohibition does not need it. Moralising has no benefit to set
+against the risk, so an association is sufficient grounds to avoid it
+([Standard 14](14-evidence-quality.md) R1).
+
+The framing is also simply inaccurate, per R1 above.
 
 Rule [`nutrition.no-food-moralizing`](../PROHIBITIONS.md).
 

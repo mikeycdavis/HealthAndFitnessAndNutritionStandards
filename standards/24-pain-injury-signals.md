@@ -13,21 +13,29 @@ counterpart to [Standard 12](12-red-flags.md), and it shares that standard's asy
 
 ## Requirements
 
-### R1 — Training discomfort and injury pain are different signals
+### R1 — Ordinary exertional sensation and a signal to stop are different things
 
-Not degrees of the same thing. The distinctions that carry the decision:
+The decision a plan has to support is behavioural: continue, modify, stop, or seek assessment. The
+features that bear on it:
 
-| | Training discomfort | Injury pain |
+| | Ordinary exertional sensation | Feature that should prompt stopping, modifying, or assessment |
 | --- | --- | --- |
 | Quality | Burning, heaviness, breathlessness, general ache | Sharp, stabbing, catching, or a distinct localised pain |
 | Location | Diffuse, in the working muscles | Localised, often at a joint, tendon, or bone |
-| Timing | During effort; eases when it stops | May start suddenly, persist after stopping, or appear at rest |
+| Timing | During effort; eases when it stops | Sudden onset, persistence after stopping, or pain at rest |
 | Course | Fades over hours to a couple of days | Persists, or worsens with continued use |
 | Effect on movement | Movement remains normal | Altered movement, guarding, loss of range, instability |
-| What it accompanies | Effort | Sometimes swelling, bruising, numbness, weakness, or a sound at onset |
+| What it accompanies | Effort | Swelling, bruising, numbness, weakness, or a sound at onset |
 
-No single row is decisive. Sharp pain at a joint that alters how someone moves is the clear case, and
-the clear case is the one this standard is most concerned with.
+**This is not a diagnostic instrument, and the right-hand column is not a name for a condition.** It
+is a list of features that make continuing to load a movement a worse bet than stopping to find out.
+Pain and tissue damage do not correspond one-to-one in either direction: significant damage can
+present with little pain, and considerable pain can occur without it. No single row is decisive, and
+the table cannot distinguish a serious injury from a minor one — which is why R5 routes several
+presentations out of the plan entirely rather than grading them here.
+
+The clear case, and the one this standard is most concerned with, is sharp localised pain that alters
+how someone moves.
 
 ### R2 — Never recommend training through sharp or significant injury pain
 
@@ -35,9 +43,11 @@ Reproduced verbatim from the source:
 
 > recommend training through sharp/significant injury pain
 
-Sharp pain signals that something is being damaged, and training through it converts a recoverable
-problem into a lasting one. The distinction in R1 is well understood by people who train and
-routinely blurred by systems that treat persistence as a virtue.
+Sharp, localised, sudden, or movement-altering pain is not ordinary training discomfort, and
+continuing to load it can worsen some injuries and delay the point at which the problem is
+recognised. The rule does not depend on knowing what the pain is or whether damage is occurring —
+that is the point of it. The distinction in R1 is well understood by people who train and routinely
+blurred by systems that treat persistence as a virtue.
 
 Rule [`fitness.no-training-through-sharp-pain`](../PROHIBITIONS.md).
 
@@ -90,7 +100,11 @@ direction where the trend is the warning.
 ## Additions this standard makes beyond the source
 
 - R1's table. The source's prohibition presupposes the distinction and does not draw it, and the
-  distinction is the part a practitioner needs.
+  distinction is the part a practitioner needs. It is framed around what to do rather than around
+  what the pain is: a table with an "injury pain" column would read as a differential diagnostic
+  instrument, which is outside what this series may publish
+  ([Standard 12](12-red-flags.md) R2), and would attach a claim about tissue damage to features that
+  only warrant a change in behaviour.
 - R3's argument for deciding in advance, and what a protocol must contain.
 - R4 in full — the observation that an all-or-nothing stopping rule gets ignored, so modification is
   what makes the protocol real.
