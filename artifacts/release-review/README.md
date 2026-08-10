@@ -13,6 +13,7 @@ reviewer needs to reach a disposition on each, assembled by the implementer.
 | [03a](03a-claim-extract.md) | *(companion to 03)* | The 191 empirical claims verbatim, with the qualification each standard attached. Claim-level review needs this, not pack 03's categories. Revised after remediation; numbering unchanged. |
 | [03b](03b-remediation-diff.md) | *(companion to 03)* | **The re-review packet.** Rule 03 came back DEFECTIVE; this is the before/after for the thirty claims that changed, so a focused re-review covers 30 rather than 182. |
 | [04](04-nutrition-no-single-food-disease-claims.md) | `nutrition.no-single-food-disease-claims` | Do the nutrition standards avoid attributing complex disease causation or cure to single foods? |
+| [04a](04a-single-food-claims-corpus.md) | *(companion to 04)* | An exhaustive inventory of every named food in the repository, plus the prohibition and the structural position that makes it self-enforcing. This rule asks whether a class of claim is *absent*, which quoting cannot establish. |
 
 Results are recorded in [dispositions.md](dispositions.md).
 

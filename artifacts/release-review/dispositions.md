@@ -64,13 +64,39 @@ the rule. Corrected on its own merits:
 
 ---
 
-## `escalation.tier-language-calibrated` — DEFECTIVE, remediated, awaiting re-review
+## `escalation.tier-language-calibrated` — ESTABLISHABLE
 
 ```text
 escalation.tier-language-calibrated
 
 Independent content-review disposition:
+ESTABLISHABLE
+
+Initial review:
 DEFECTIVE
+
+Remediation reviewed:
+d47e389
+
+Basis:
+The four-tier calibration series was reviewed as a whole.
+The initial Tier 4 example improperly softened temporal urgency
+while attempting to preserve a calm register.
+The remediation now separates tone from action horizon:
+calm is constant; urgency is not.
+Tier 4 gives unconditional immediate-action guidance for the
+worked presentation, does not infer safety from symptom resolution,
+and places reassurance after the action.
+Tier 2 now separates prompt proper remeasurement and professional
+contact from completion of the longer monitoring series.
+No governing rule, tier definition, detector, or evaluator was
+weakened to obtain this disposition.
+```
+
+The initial disposition, for the record:
+
+```text
+Initial: DEFECTIVE
 
 Established:
 - normative four-tier model
@@ -109,16 +135,32 @@ standard distinguished the two.
 appears. The label was always correct — *potentially urgent*. The defect was entirely in what the
 record then told the reader to do. That is what `assurance: none` means on this rule.
 
-Awaiting focused re-review of [pack 01b](01b-remediation-diff.md).
+The reviewer endorsed the absence of a detector explicitly, and the reasoning is worth keeping: a
+check asserting that words like `now` or `emergency services` occur would be *worse* than none,
+because it would manufacture partial assurance over something whose correctness depends on the whole
+presentation. `manual-review` at `assurance: none` is the epistemically stronger position, not a gap
+to be closed later.
 
-## `trend.trends-over-events` — not yet reviewed
+## Release consequence of the first two dispositions
 
-Material in [pack 02](02-trend-trends-over-events.md).
+Two of the four rules are now **substantively establishable, pending human attestation**. Neither
+disposition is an attestation, neither supplies a `reviewedBy` identity, and `standards check .` is
+unchanged at exit 4.
 
 ## `nutrition.no-single-food-disease-claims` — not yet reviewed
 
-Material in [pack 04](04-nutrition-no-single-food-disease-claims.md). Pack 04 records one gap in
-advance: the prohibition has no worked violating example anywhere in the repository.
+Next in the queue. Material in [pack 04](04-nutrition-no-single-food-disease-claims.md) and
+[pack 04a](04a-single-food-claims-corpus.md).
+
+The concrete question, stated in advance: this prohibition has **no worked violating example anywhere
+in the repository**. Whether that is a documentation gap or a corpus failure — whether the prohibition
+is demonstrated clearly enough for release — is the reviewer's call, and the example has deliberately
+not been written, because writing it would answer the question.
+
+## `trend.trends-over-events` — not yet reviewed
+
+Last of the four. Material in [pack 02](02-trend-trends-over-events.md); a corpus companion will be
+built before review, on the pattern packs 03a and 01a established.
 
 ---
 
