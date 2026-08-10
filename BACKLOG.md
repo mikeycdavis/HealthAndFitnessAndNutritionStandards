@@ -60,6 +60,147 @@ to Standard 2 changes the 59-rule inventory only if it becomes a catalogued rule
 existing standard it does not. Decide which before starting — the frozen baseline is
 42 standards / 59 rules / 34 prohibitions, and it is not changed casually.
 
+## Post-1.0 workstream — adoption and enforcement
+
+**Dormant until v1.0.0 certification.** This workstream creates no obligation to release, does not
+modify the current certification candidate, and must not begin implementation until the
+human-attestation and release process for 1.0.0 has completed successfully. `7f59f8b` remains the
+baseline against which the eventual certification diff must first be explained.
+
+**It is the first post-1.0 work, ahead of adding more health rules.** The gap this closes is not
+coverage of the domain; it is that adherence currently depends on someone remembering to consult the
+standards on every project. The end state:
+
+> A project can contain health, fitness, or nutrition work while non-compliant. It cannot
+> accidentally represent itself as standards-compliant, and it cannot cross a release boundary
+> without satisfying these standards.
+
+The design principle: **centrally governed, locally declared, automatically enforced.** This
+repository owns normative truth. An adopter owns applicability, evidence, permitted exceptions, and
+attestations — and never a copy of the standards themselves, or there will eventually be twenty
+subtly different versions of "the standards".
+
+### Requirements
+
+**1. Organisation-level discovery is mandatory.** Repository-local detection is defence-in-depth
+*after* adoption; it is not the mechanism that finds non-adopters. A repo that never adopted has no
+policy, no workflow, and no required check — so there is nothing to fail, and local detection is
+detecting scope in a project that already opted in.
+
+The org-level process enumerates repositories, identifies potential health/fitness/nutrition
+capability, detects absence of adoption, and creates an obligation for an explicit applicability
+determination. Candidate signals: health measurement or interpretation, symptoms or health trends,
+exercise programming, recovery or readiness, heart rate / blood pressure / sleep / weight / body
+composition, dietary or nutrient guidance, hydration, weight change, health predictions, AI-generated
+wellness guidance.
+
+**Detection proposes applicability; it never establishes it.** A false-negative detector must not be
+able to silently exempt a project, so the output is an obligation to answer, not an answer:
+
+```text
+Potential health/fitness/nutrition scope detected.
+HealthAndFitnessAndNutritionStandards applicability must be explicitly established.
+```
+
+**2. Enforcement must be structurally self-protecting.** The standards status check is required
+through branch protection. Code Owner review is required — *and branch protection's "Require review
+from Code Owners" must be enabled*, or `CODEOWNERS` documents an expectation and blocks nothing.
+`CODEOWNERS` must own itself as well as the policy and workflow surfaces, or the first line of any
+bypass is deleting the line that would have caught it.
+
+Prefer GitHub's missing-required-check behaviour to bespoke logic for detecting deletion of the
+enforcement workflow: a required check that never reports leaves the pull request permanently
+pending, which blocks by construction rather than by a diff-inspecting rule that could itself be
+wrong.
+
+Policy semantics — including false-not-applicable handling — remain centrally defined here. An
+adopter's CI inherits `BLOCKED_BY_INVARIANT` on an `applicable: true → false` edit for free, which is
+an argument for the policy schema staying owned by this repository rather than re-specified per
+adopter. The highest-risk change in an adopting repo is not a softened sentence of guidance; it is a
+one-line applicability flip.
+
+**3. Any future umbrella has exactly one normative operation: composition.** Specify it before
+implementing it. No averaging, no synthesised cross-domain compliance score, no invented intermediate
+verdict. Individual domain results are preserved and reported; the aggregate is used only for the
+release decision.
+
+`BLOCKED_BY_INVARIANT` from any single domain dominates everything, including other domains'
+failures, because a manipulated evaluation makes its downstream result untrustworthy.
+
+**The rest of the precedence ordering is deliberately NOT frozen here.** Only the dominance of
+`BLOCKED_BY_INVARIANT` is justified by what is currently known. Writing a complete ordering into this
+backlog — `BLOCKED > NON_COMPLIANT > NOT_EVALUATED > COMPLIANT` or any other — would be making
+exactly the cross-domain normative decision this requirement warns against, and would do it in a
+backlog entry rather than in a design. Derive the remaining precedence from the participating
+repositories' actual semantics when the umbrella is designed, and do not infer it from the numeric
+order of exit codes.
+
+The composition rule is roughly twenty lines of code and is the entire normative surface of an
+umbrella. Its tests should be mostly about that rule.
+
+**4. Releases need machine-readable migration classification.** A pin plus a newer release is not
+enough information: a safety correction and a documentation improvement produce identical staleness
+under a plain semver pin. An adopter pinned to an older release must not silently become
+non-compliant merely because a newer one exists, and must not silently stay green through a
+correction that matters.
+
+The reportable state:
+
+```text
+COMPLIANT with Health/Fitness/Nutrition Standards v1.0.0
+Latest available: v1.1.0
+Upgrade evaluation: NOT PERFORMED
+```
+
+Post-1.0 design should investigate classes along the lines of `editorial`, `normative`, and `safety`,
+including each class's precise adopter obligation — a safety release may make upgrade evaluation
+release-blocking where an editorial change should not. **Do not commit to those three names until
+their semantics are specified.** This is the piece of the workstream that cannot live in adopter
+tooling; it is a change to this repository's release process.
+
+**5. Development and release execute the identical evaluation.** Same command, same policy, same
+rule states, same exit codes. Only the external gate's accepted result set differs — `NOT_EVALUATED`
+may be tolerated during ordinary development and must not be tolerated at a release gate. **No
+`check-dev` versus `check-release` semantic fork.** Two commands drift; one command with two
+acceptance sets cannot. This is the same reason `plan()` and `apply()` share one code path here, so a
+dry run structurally cannot diverge from the apply it predicts.
+
+**6. Adoption must pin an actual immutable release.** No tooling may treat `1.0.0-dev`, `main`, or the
+current certification candidate as adoptable merely because the implementation is otherwise complete.
+Certification is what makes a version adoptable, not completeness.
+
+**7. Bootstrap is idempotent and non-authoritative about applicability.** An eventual `init` may
+install the policy structure, agent instructions, CI workflow, evidence and attestation locations,
+and the version pin; identify applicable standards; identify prohibitions **before** implementation;
+produce an honest initial `NOT_EVALUATED`; and state exactly what evidence or review is missing.
+Running it again reconciles the integration rather than overwriting project decisions.
+
+It must not convert heuristic detection into an applicability judgement — see requirement 1.
+
+**8. Protect the actionable surfaces first.** Adoption testing prioritises policy files, the CI
+workflow, branch-protection assumptions, `CODEOWNERS`, attestation instructions, version and
+migration metadata, and agent instructions — before descriptive documentation.
+
+The reason is evidence, not architecture. Both defects found late in 1.0.0 certification were on
+surfaces someone acts on: `project-policy.yml`'s attestations comment named a rule that is not
+attestable, which would have sent a certifier to trigger `BLOCKED_BY_INVARIANT`; and the README's
+verdict table stated a false definition of `COMPLIANT`. The drift test that existed covered
+`PROJECT.md` and `CHANGELOG.md` — files that describe — and caught neither. Both are recorded in
+[CHANGELOG.md](CHANGELOG.md).
+
+### Agent instructions, as a deliverable of this workstream
+
+Requirement 7's `init` should *generate* the adopting repository's agent instructions rather than
+expecting a human to paste them correctly. The substance, to be specified properly during design:
+determine applicability, run the check, identify prohibitions before implementing, refuse to
+implement anything violating a prohibition or invariant, never weaken or reclassify a standard to
+permit a desired implementation, preserve `NOT_EVALUATED` rather than manufacture compliance, re-run
+the check afterwards, and never claim compliance merely because automated checks passed.
+
+The workflow that produces is `applicability → prohibition scan → plan → code → check → evidence`,
+rather than `code → maybe remember the standards later`. The difference is the point of the
+workstream.
+
 ## Deferred from earlier
 
 ### 3. A worked violating example for `nutrition.no-single-food-disease-claims`
