@@ -94,7 +94,7 @@ Remediation required:
 [pack 01a](01a-tier-language-corpus.md) supplied the four records complete, in tier order ·
 [pack 01b](01b-remediation-diff.md) is the before/after.
 
-**Remediation:** `86bd6d0`. All four items addressed. The reviewer's central formulation — *calm is
+**Remediation:** `d47e389`. All four items addressed. The reviewer's central formulation — *calm is
 constant, urgency is not* — was added to Standard 3 R4 itself, to `docs/escalation-tiers.md`, and to
 the example's own note, because R4's prose is what adopting projects imitate and a miscalibration
 there propagates.
