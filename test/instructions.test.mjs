@@ -206,6 +206,55 @@ test("the documented count of rules awaiting review matches what the tool report
   }
 });
 
+/**
+ * The same drift, in the file where it does the most damage.
+ *
+ * project-policy.yml's attestations comment listed the rules a human must establish, and it was
+ * wrong twice over: it named integrity.no-standards-manipulation, which is not attestable, and it
+ * omitted nutrition.no-single-food-disease-claims. A human following it would have written an
+ * attestation against the invariant, which does not produce a green — it produces
+ * BLOCKED_BY_INVARIANT and exit 3.
+ *
+ * The earlier drift test covers PROJECT.md and CHANGELOG.md, which describe the repository. This
+ * one covers the file someone acts on.
+ */
+test("project-policy.yml names exactly the rules the tool is waiting on", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const cli = path.join(REPO, "scripts", "standards.mjs");
+  const r = spawnSync(process.execPath, [cli, "status", `--dir=${REPO}`, "--json"], { encoding: "utf8" });
+  const awaiting = JSON.parse(r.stdout).missingEvidence;
+
+  const policyText = await readFile(path.join(REPO, "project-policy.yml"), "utf8");
+  const comment = policyText.slice(policyText.indexOf("# Recorded human judgement."));
+
+  for (const id of awaiting) {
+    assert.ok(
+      comment.includes(id),
+      `project-policy.yml's attestations comment does not name ${id}, which awaits evidence`,
+    );
+  }
+
+  // The invariant is never attestable, so naming it as something to attest is the specific error
+  // this test exists to prevent. It may be mentioned — but only to say it needs no attestation.
+  const invariantMentions = [...comment.matchAll(/integrity\.no-standards-manipulation/g)];
+  for (const _ of invariantMentions) {
+    assert.match(
+      comment,
+      /needs no attestation|NOT attestable|not attestable/,
+      "if the comment names the invariant it must say the invariant is not attestable",
+    );
+  }
+
+  // And no rule the comment presents as awaiting evidence may be one the tool is not waiting on.
+  const listed = [...comment.matchAll(/^#\s{3}((?:health|fitness|nutrition|escalation|trend)\.[a-z0-9-]+)$/gm)]
+    .map((m) => m[1]);
+  assert.deepEqual(
+    [...listed].sort(),
+    [...awaiting].sort(),
+    "the comment's indented list must be exactly the tool's awaiting-evidence set",
+  );
+});
+
 test("the changelog records what the guards caught, not only what was added", () => {
   assert.match(changelog, /### Found while building/);
   assert.match(changelog, /### Dogfooded/);

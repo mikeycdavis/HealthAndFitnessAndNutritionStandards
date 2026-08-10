@@ -180,3 +180,25 @@ Stated because a limitation that is not written down reads as a claim.
 - The guards make manipulation loud, not impossible. Anyone with commit access can edit them.
 - No `.svg` renders are committed. The `.mmd` sources are canonical and the absence is declared
   (ADR 0006).
+- `health.evidence-quality-noted` — a recommendation — applies here and has no evidence. Because it
+  is a recommendation it does not force `NOT_EVALUATED` and does not enter the score, so a
+  `COMPLIANT` verdict for this repository would be reached with one applicable rule carrying no
+  evidence at all. Designed behaviour, disclosed rather than left to be discovered.
+- Deferred work is in [BACKLOG.md](BACKLOG.md) with the reason for each deferral, so that a decision
+  not to do something is distinguishable later from having forgotten it.
+
+### Independent review completed, attestation not
+
+All four human-review rules now carry an independent content-review disposition — **all four
+ESTABLISHABLE**, two of them only after real defects were found and remediated. Recorded with their
+evidence chains in [artifacts/release-review/dispositions.md](artifacts/release-review/dispositions.md).
+
+A disposition is not an attestation. None carries a human `reviewedBy` identity, `attestations` is
+still `{}`, and `standards check .` still exits 4. The decision to record the four attestations
+belongs to a human reviewer and to nobody else.
+
+A dry run in a scratch copy — deleted afterwards, the repository's own policy untouched — confirms
+the release condition the reviewer set: with exactly those four attestations and nothing else
+changed, `check` reports `COMPLIANT` at exit 0, the integrity invariant reports `screened` rather
+than passed or attested, and every mechanical gate stays green. The full output is in the
+dispositions record.

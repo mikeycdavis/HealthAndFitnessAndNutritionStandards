@@ -227,26 +227,145 @@ Prohibited:
   makes this an evidence rule rather than a nutrition one. Standard 37 R5 supplies enough
   discoverability from the nutrition domain, and the rule is not duplicated into a second standard.
 
-## `trend.trends-over-events` — not yet reviewed
+## `trend.trends-over-events` — ESTABLISHABLE
 
-Last of the four. Material in [pack 02](02-trend-trends-over-events.md) and
-[pack 02a](02a-trend-corpus.md).
+```text
+trend.trends-over-events
 
-Two things a reviewer should know before starting. **The two worked records that bear most on this
-rule were both edited at `d47e389`**, for the `escalation.tier-language-calibrated` review, and
-neither change was made with this rule in mind — but both bear on it. The tier-four record now
-exercises the single-event override harder, and the tier-two record no longer uses "we need a trend"
-as a reason to defer professional contact. Read the current text rather than pack 02's description.
+Independent content-review disposition:
+ESTABLISHABLE
 
-Pack 02a also surfaces a **third tension** pack 02 mentioned only in passing: places where trend
-reasoning *increases* urgency rather than decreasing it (Standard 24 R6, Standard 20 R5, Standard 8
-R6). It runs in the opposite direction from the single-event override, and the repository asserts
-rather than argues that both follow from the same rule.
+Reviewed:
+- artifacts/release-review/02-trend-trends-over-events.md
+- artifacts/release-review/02a-trend-corpus.md
+- current worked records after d47e389
+
+Basis:
+The repository consistently distinguishes observations from patterns
+and limits the conclusions each can support.
+
+The red-flag single-event override is coherent because it establishes
+an action obligation under asymmetric consequences, not an underlying
+diagnosis or physiological trend.
+
+Short-term body-mass change as a rough fluid proxy and longer-term
+body-weight interpretation are not contradictory: they have different
+inferential targets, explicitly cross-reference one another, and state
+the relevant caveats.
+
+Accumulated individually weak observations can legitimately increase
+concern because their trend carries evidence that no individual
+observation carries.
+
+Frequent observation is also compatible with trend-based reasoning:
+measurement cadence and interpretation/decision cadence are distinct.
+
+No governing rule, exception, detector, or evaluator requires
+modification to obtain this disposition.
+```
+
+**No remediation.** The reviewer's unifying reading, worth preserving because it resolves all three
+tensions at once and is sharper than anything the standards themselves say:
+
+> The principle governs what a body of evidence is sufficient to establish — not how slowly the
+> system must respond.
+
+**An unintended consequence of the tier remediation, noted by the reviewer.** The `d47e389` changes
+were made for `escalation.tier-language-calibrated` and strengthened *this* rule. The old tier-two
+record risked using the trend principle as permission to delay an independently justified action —
+"we don't have a trend, therefore wait". It no longer does. And the tier-four record now demonstrates
+the inverse: requiring a trend where the action threshold is already crossed would itself violate the
+framework.
 
 ---
 
-## Release state
+# Summary
 
-Three of four rules remain unreviewed, so `standards check .` reports `NOT_EVALUATED` and exits 4.
-That is the correct state and it is left that way. No attestation has been recorded, and nothing is
-tagged.
+| Rule | Initial review | Final disposition |
+| --- | --- | --- |
+| `health.no-fabricated-medical-facts` | **DEFECTIVE** | **ESTABLISHABLE** after remediation (`79d39d1`) |
+| `escalation.tier-language-calibrated` | **DEFECTIVE** | **ESTABLISHABLE** after remediation (`d47e389`) |
+| `nutrition.no-single-food-disease-claims` | — | **ESTABLISHABLE** |
+| `trend.trends-over-events` | — | **ESTABLISHABLE** |
+
+Two reviews found real defects, including a safety-significant one in tier-four escalation language.
+**The content moved. The rules and the verdict machinery did not.** The other two survived
+substantive challenge without any work being invented to manufacture a pass.
+
+---
+
+# What a human must now decide
+
+The dispositions above are **not attestations**. Each was produced by an agent, none carries a human
+`reviewedBy` identity, and no agent may supply one — writing a human's name into an attestation they
+did not give is the "falsify evidence for" clause of the invariant being attested.
+
+A human reviewer decides whether these four dispositions and their evidence chains are sufficient to
+record four attestations in `project-policy.yml`. `INSTRUCTIONS.md` describes the shape; each needs a
+real `reviewedBy`, a `reviewedAt`, non-empty `evidence`, and `reviewedAgainst.paths` naming both the
+reviewed material and the pack that framed it.
+
+## The attestation dry run
+
+Run in a scratch copy of the repository at `0acc6cc`, with four attestations added and **nothing else
+changed**. The repository's own `project-policy.yml` was not touched; the scratch copy was deleted
+afterwards. Recorded here because the reviewer set the correct release test — not whether `check`
+turns green, but whether it turns green *for exactly those four inputs*.
+
+```text
+Status: COMPLIANT
+Score:  100%  (rules at required strength that were evaluated: 6)
+Rules:  7 passed, 0 failed, 0 warning(s), 51 skipped
+Cover:  3 automated, 4 manual-review, 1 not-evaluated, 1 screened
+
+Integrity: integrity.no-standards-manipulation — screened
+  9 integrity check(s) ran; none detected a violation.
+
+Framework: 59 rules across 31 of 42 standards;
+           21 have an implemented check; 3 standards are fully machine-represented.
+exit: 0
+```
+
+Per-rule, everything not declared not-applicable:
+
+```text
+passed    evaluated        escalation.scope-disclosed
+passed    evaluated        escalation.tier-model-documented
+passed    attested         escalation.tier-language-calibrated
+passed    attested         health.no-fabricated-medical-facts
+skipped   not-evaluated    health.evidence-quality-noted
+screened  screened         integrity.no-standards-manipulation
+passed    attested         nutrition.no-single-food-disease-claims
+passed    attested         trend.trends-over-events
+```
+
+**What this confirms.** Exactly the four attestations move the verdict. The invariant reports
+`screened` rather than `passed` or `attested`, which is the only state it can reach. All mechanical
+gates stay green. Nothing else moved.
+
+**What it also discloses, and a human should weigh before recording anything.**
+`health.evidence-quality-noted` remains `not-evaluated` in the COMPLIANT state. It is a
+*recommendation*, so it does not force `NOT_EVALUATED` and does not enter the score — that is the
+designed behaviour, not a bug. But it means **`COMPLIANT` here would be reached with one applicable
+rule still carrying no evidence at all**, and anyone recording the attestations should know that
+rather than discover it later. It is the clearest live illustration of the repository's own warning:
+a verdict says what was checked passed; it does not say everything was checked.
+
+## After attestation, if it is recorded
+
+1. `VERSION` moves from `1.0.0-dev`.
+2. The `|| [ $? -eq 4 ]` condition comes out of the CI `check` step, along with the comment
+   explaining it.
+3. `PROJECT.md`, `CHANGELOG.md`, and `project-policy.yml`'s attestation comment all describe a
+   repository with zero rules awaiting evidence — and two tests compare that prose to
+   `standards status` output, so getting it wrong fails the suite rather than shipping.
+4. Tag 1.0.0.
+
+None of that is an agent's decision to make.
+
+---
+
+## Release state as of `0acc6cc`
+
+All four rules have an independent disposition; none has an attestation. `standards check .` reports
+`NOT_EVALUATED` and exits 4. That is the correct state and it is left that way. Nothing is tagged.

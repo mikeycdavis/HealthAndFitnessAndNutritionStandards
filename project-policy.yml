@@ -342,13 +342,29 @@ exceptions: []
 #
 # THIS SECTION IS DELIBERATELY EMPTY, and that is why `standards check` reports this repository as
 # NOT_EVALUATED rather than COMPLIANT. Four rules apply here that only a human can establish:
-# integrity.no-standards-manipulation, escalation.tier-language-calibrated, trend.trends-over-events,
-# and health.no-fabricated-medical-facts.
 #
-# No attestation appears for them because no human has reviewed them yet. Writing one anyway — an
-# agent recording a review that did not happen — would be the "falsify evidence for" clause of the
-# very invariant being attested. The honest state of this repository is that it cannot yet
-# demonstrate compliance, and the system says so.
+#   escalation.tier-language-calibrated
+#   health.no-fabricated-medical-facts
+#   nutrition.no-single-food-disease-claims
+#   trend.trends-over-events
 #
-# See INSTRUCTIONS.md for what an attestation looks like and what evidence it must carry.
+# That list is what `standards status .` reports under "Rules awaiting evidence", and a test asserts
+# the two agree. Do not maintain it by hand against memory — this comment was wrong once, and the
+# way it was wrong mattered: it named integrity.no-standards-manipulation, which is NOT attestable.
+# Attempting to attest the invariant does not produce a green; it stops evaluation with
+# BLOCKED_BY_INVARIANT and exit code 3. A comment that sent someone to do that was worse than no
+# comment.
+#
+# The invariant needs no attestation. Since ADR 0007 it reports `screened` when every integrity
+# check bound to it has run and none fired, which is a narrower claim than human attestation and is
+# the only state it can reach. See artifacts/adr/0007-screened-as-a-distinct-invariant-state.md.
+#
+# No attestation appears for the four because no human has reviewed them yet. Independent content
+# review has produced a disposition for each — recorded in artifacts/release-review/dispositions.md,
+# all four ESTABLISHABLE, two of them only after real defects were found and fixed. A disposition is
+# not an attestation: it carries no human reviewedBy identity, and an agent recording one on a
+# human's behalf would be the "falsify evidence for" clause of the very invariant being attested.
+#
+# The honest state of this repository is that it cannot yet demonstrate compliance, and the system
+# says so. See INSTRUCTIONS.md for what an attestation looks like and what evidence it must carry.
 attestations: {}
