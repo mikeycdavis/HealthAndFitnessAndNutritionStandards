@@ -15,8 +15,9 @@ Applies to any project that plans training or diet over time.
 ### R1 — A plan nobody follows is a worse plan
 
 The comparison that matters is not between an optimal plan and a suboptimal one; it is between a
-suboptimal plan performed and an optimal one abandoned. Over any horizon long enough to matter, the
-first wins by a margin that no programming refinement approaches.
+suboptimal plan performed and an optimal one abandoned. A suboptimal plan that is consistently
+performed can outperform an optimal plan that is abandoned, and over a long enough horizon it
+usually does.
 
 This makes adherence a design constraint rather than a personal virtue, and it reframes what a
 "better" plan means: one someone will still be doing in six months usually is one.
