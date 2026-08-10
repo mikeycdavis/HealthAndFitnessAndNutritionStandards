@@ -64,11 +64,52 @@ the rule. Corrected on its own merits:
 
 ---
 
-## `escalation.tier-language-calibrated` — not yet reviewed
+## `escalation.tier-language-calibrated` — DEFECTIVE, remediated, awaiting re-review
 
-Next in the queue, and placed there because its potentially-urgent worked example carries the highest
-consequence in the repository if the calibration is wrong. Material in
-[pack 01](01-escalation-tier-language-calibrated.md) and [pack 01a](01a-tier-language-corpus.md).
+```text
+escalation.tier-language-calibrated
+
+Independent content-review disposition:
+DEFECTIVE
+
+Established:
+- normative four-tier model
+- anti-alarmism principle
+- Tier 1 calibration
+- Tier 3 calibration
+- Tier 2 classification itself
+
+Remediation required:
+1. Tier 4 must direct immediate evaluation rather than
+   making "today" the primary action horizon.
+2. Emergency/EMS language must not depend solely on
+   symptoms recurring at rest or acquiring additional features.
+3. Preserve reassurance only after immediate action is clear.
+4. Tighten Tier 2 so repeated properly measured ~148/94
+   readings prompt professional contact without requiring
+   completion of a 1–2 week series.
+```
+
+**Evidence chain.** [Pack 01](01-escalation-tier-language-calibrated.md) framed the review ·
+[pack 01a](01a-tier-language-corpus.md) supplied the four records complete, in tier order ·
+[pack 01b](01b-remediation-diff.md) is the before/after.
+
+**Remediation:** `86bd6d0`. All four items addressed. The reviewer's central formulation — *calm is
+constant, urgency is not* — was added to Standard 3 R4 itself, to `docs/escalation-tiers.md`, and to
+the example's own note, because R4's prose is what adopting projects imitate and a miscalibration
+there propagates.
+
+**Why this finding was worse in kind than the first.** `health.no-fabricated-medical-facts` failed on
+claims stated past their evidence. This failed on a principle correctly stated and then over-applied,
+in the highest-consequence document in the repository, by the author who wrote the principle. R4 said
+do not create alarmism; the record removed alarm and removed urgency with it, because nothing in the
+standard distinguished the two.
+
+**No test was added, and none could be.** The tier detector checks that exactly one canonical label
+appears. The label was always correct — *potentially urgent*. The defect was entirely in what the
+record then told the reader to do. That is what `assurance: none` means on this rule.
+
+Awaiting focused re-review of [pack 01b](01b-remediation-diff.md).
 
 ## `trend.trends-over-events` — not yet reviewed
 

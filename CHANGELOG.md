@@ -123,6 +123,38 @@ The rule was not weakened, the evaluator was not touched, no numeric target was 
 the standards appear better-evidenced, and `check` still exits 4. The repository failed its own
 release criterion and nobody changed the criterion.
 
+### The tier-four record under-escalated
+
+The second independent review, of `escalation.tier-language-calibrated`, returned **DEFECTIVE** on
+the highest-consequence document in this repository.
+
+`docs/examples/interpretation-potentially-urgent.md` handles new exertional chest discomfort with
+disproportionate breathlessness. It said *"Please arrange it today"*, and reserved emergency services
+for the symptom recurring at rest or acquiring further features. [Standard 3](standards/03-safety-and-escalation-tiers.md)
+R1 defines tier four as asking the reader to seek evaluation **now** rather than at the next
+convenient time. "Today" is weaker than now, so the record failed the tier definition it was written
+to illustrate.
+
+The mechanism is the part worth recording. R4 says escalation language must not create alarmism. The
+record removed the alarm correctly and removed some of the temporal urgency along with it, because
+**nothing in the standard distinguished tone from timeframe.** The reviewer's formulation is the
+distinction that was missing: *calm is constant across the tiers; urgency is not.* That now sits in
+R4 itself, in `docs/escalation-tiers.md`, and in the example's own note, so an adopting project
+imitating this repository inherits the correction rather than the defect.
+
+The record now directs emergency services immediately and unconditionally, keeps its calm register,
+and places its reassurance after the instruction rather than in a closing footnote — reassurance
+ahead of an instruction competes with it. A second correction decoupled tier two's professional
+contact from the completion of a one-to-two-week measurement series.
+
+**No test was added, and none could be.** The tier detector checks that exactly one canonical label
+appears in a record. The label here was always correct — *potentially urgent*. The entire defect was
+in what the record then told the reader to do. That is what `assurance: none` means on this rule, and
+it is the clearest demonstration in this repository of why a mechanical green would have been worse
+than no check at all.
+
+Before and after: [pack 01b](artifacts/release-review/01b-remediation-diff.md).
+
 ### Dogfooded
 
 This repository carries its own `project-policy.yml` and is evaluated by its own CI.

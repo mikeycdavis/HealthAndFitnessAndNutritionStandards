@@ -5,10 +5,23 @@ the deliberate exception to the trend-over-event principle.
 
 *Fictional illustration. Not a record of any real person, and not guidance to anyone.*
 
-**Note on this example.** It is included to show what tier-four language sounds like. Readers usually
-expect it to be more emphatic than it is. It is deliberately calm, specific, and short: someone
-reading a message like this may already be frightened, and the writing's job is to say what to do,
-not to add to it ([Standard 12](../../standards/12-red-flags.md) R5).
+**Note on this example.** It is included to show what tier-four language sounds like. The register is
+deliberately calm and short: someone reading a message like this may already be frightened, and the
+writing's job is to say what to do, not to add to it
+([Standard 12](../../standards/12-red-flags.md) R5).
+
+**Calm is not the same as unhurried, and this record was wrong about that until the 1.0.0 release
+review.** It previously made *today* the action horizon for a presentation that warrants emergency
+evaluation — anti-alarmism correctly removed the emotional alarm and incorrectly took some of the
+temporal urgency with it. Anti-alarmism governs **tone**. It never governs the timeframe. Across the
+four tiers the tone stays constant and only the urgency moves:
+
+| Tier | Tone | Action |
+| --- | --- | --- |
+| Normal variation | calm | none, stated definitively |
+| Worth monitoring | calm | remeasure, concretely |
+| Worth discussing | calm | a professional, at the next reasonable opportunity |
+| Potentially urgent | calm | **now** |
 
 ## Observation
 
@@ -58,33 +71,41 @@ guidance may do ([Standard 1](../../standards/01-wellness-vs-medical-assessment.
 wrong name could send someone to the wrong place.
 
 What is being said is narrower and firmer than a guess: **this symptom set is one that warrants
-prompt assessment, and that is true regardless of which explanation turns out to be right.**
+immediate assessment, and that is true regardless of which explanation turns out to be right.** The
+fact that the discomfort eased with rest does not narrow it either — distinguishing a stable pattern
+from an acute one is exactly the clinical judgement this guidance may not make
+([Standard 12](../../standards/12-red-flags.md) R2).
 
 ## Escalation Tier
 
 **potentially urgent**
 
-New chest discomfort brought on by exertion and relieved by rest, with disproportionate
-breathlessness, warrants prompt medical assessment. Please arrange it today rather than waiting to
-see whether it recurs.
+New chest discomfort brought on by exertion, with disproportionate breathlessness, warrants immediate
+medical evaluation.
 
-Contact your GP for an urgent appointment, or an urgent care service if you cannot be seen today.
+**Call emergency services now.** Do not drive yourself, and do not wait to see whether it happens
+again. This holds even though the discomfort has settled: it easing with rest does not establish that
+it was harmless, and nothing available here can tell the difference.
 
-If the discomfort returns at rest, lasts more than a few minutes, or comes with sweating, nausea,
-faintness, or pain spreading to the arm, jaw, neck, or back — call emergency services rather than
-arranging an appointment.
+If you have already been medically assessed for this specific symptom and given a plan for it, follow
+that plan instead.
 
 Worth mentioning when you are seen: that it came on during exertion and eased with rest, how long it
 lasted, that breathlessness accompanied it, that it was the first such episode, and your age and
 training history.
 
-Until you have been seen, do not train.
+Do not train until you have been assessed.
+
+Many causes of chest discomfort turn out not to be dangerous. The reason to seek evaluation
+immediately is that the symptoms alone cannot safely separate those from the ones that are, and that
+separation is not something this guidance — or you — can perform from a description.
 
 ---
 
 *Why this escalates on one observation: for most measurements a single reading supports very little,
 and this record's own reasoning reflects that — a normal heart rate here establishes nothing. Red
-flags are the exception, and the reason is asymmetry rather than probability. Most presentations like
-this turn out to be something manageable. The decision does not turn on that, because the cost of
-being wrong in one direction is very much larger than in the other
-([Standard 12](../../standards/12-red-flags.md) R1).*
+flags are the exception, and the reason is asymmetry rather than probability: the cost of being wrong
+in one direction is very much larger than in the other
+([Standard 12](../../standards/12-red-flags.md) R1). That the likely explanation is often a
+manageable one is stated above, deliberately after the action rather than before it. Reassurance
+placed ahead of an instruction competes with it.*

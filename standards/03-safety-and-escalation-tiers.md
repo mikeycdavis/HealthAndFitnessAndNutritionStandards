@@ -85,6 +85,23 @@ What this asks:
 - No tier implies a diagnosis ([Standard 1](01-wellness-vs-medical-assessment.md)). Escalation says
   *someone should look at this*, never *you have this*.
 
+**This requirement governs tone. It never governs the timeframe.** Calm stays constant across all
+four tiers; urgency does not, and a tier-four message that reads calmly while asking for action
+*today* has softened the wrong variable:
+
+| Tier | Tone | Action |
+| --- | --- | --- |
+| Normal variation | calm | none, stated definitively |
+| Worth monitoring | calm | remeasure, concretely |
+| Worth discussing | calm | a professional, at the next reasonable opportunity |
+| Potentially urgent | calm | **now** |
+
+That distinction is stated because the failure it names is easy to commit while following every other
+bullet above, and this repository committed it: the worked tier-four record made *today* its action
+horizon until the 1.0.0 release review. Where the appropriate action is emergency care, tier-four
+language says so plainly and does not make it conditional on the symptom recurring or acquiring
+further features. Reassurance may follow the instruction; it must not precede or dilute it.
+
 Rule [`escalation.tier-language-calibrated`](../PROHIBITIONS.md).
 
 ### R5 — Both directions of error are real
@@ -132,6 +149,10 @@ The counterpart prohibitions on false reassurance and on dismissing symptoms liv
   reassuring number.
 - R4's specific language discipline. The source says these rules must not create alarmism and does
   not say how; the argument that alarm in the lower tiers degrades the top tier is this standard's.
+- R4's tone-versus-timeframe separation, added after the 1.0.0 release review found this repository's
+  own tier-four example under-escalating. It is the correction most worth having here, because R4's
+  prose is what adopting projects imitate: a miscalibration in it propagates to every adopter, and
+  this one was invisible from the inside precisely because the record satisfied every other clause.
 - R5's framing of the two errors as symmetrical, and the observation that treating one as the only
   risk produces the other.
 

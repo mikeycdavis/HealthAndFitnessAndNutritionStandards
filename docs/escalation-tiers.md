@@ -56,6 +56,11 @@ The observation is consistent with something where delay carries real cost.
 Say what kind of care and what to mention. Then stop. Someone reading this may already be frightened,
 and piling on consequences does not increase the chance they act — past a point it reduces it.
 
+**Calm register, immediate action.** Where the appropriate response is emergency care, say so
+plainly, and do not make it conditional on the symptom recurring or acquiring further features. "Get
+this looked at today" is not this tier. Anti-alarmism is about tone, and softening the timeframe is
+not a way of applying it.
+
 This tier escalates on a single observation. That is the deliberate exception to the trend-over-event
 principle, and it exists because the cost of being wrong is asymmetric here in a way it is not
 anywhere else ([Standard 12](../standards/12-red-flags.md) R1).

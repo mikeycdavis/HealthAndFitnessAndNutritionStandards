@@ -66,7 +66,7 @@ Not because the number is reassuring — it is not — but because this measurem
 conclusion, and the right next step is a better measurement rather than an interpretation of a poor
 one.
 
-What to do, over the next one to two weeks:
+Take a proper reading in the next day or so, then begin a short series over one to two weeks:
 
 - Sit quietly for five minutes first, back supported, feet flat, arm supported at heart height.
 - No caffeine, exercise, or smoking for thirty minutes beforehand.
@@ -75,8 +75,14 @@ What to do, over the next one to two weeks:
 
 Then look at the average, not at any single reading.
 
-If that average remains elevated, that is a pattern rather than a reading, and it moves to *worth
-discussing with a professional*. Bring the full record.
+**If properly taken readings stay around this level, contact a health professional at that point —
+do not wait for the monitoring period to finish.** Readings in this range are something to discuss
+with a clinician. The purpose of the series is to establish whether they are real, not to postpone
+the conversation, and once two or three good readings agree the question has been answered well
+enough to raise.
 
-Sooner than that, and regardless of the numbers: severe headache, visual disturbance, chest pain,
-breathlessness, or neurological symptoms warrant prompt evaluation.
+If the series settles well below this reading, that is the answer. Record what the average was and
+keep it as a baseline.
+
+Sooner than any of that, and regardless of the numbers: severe headache, visual disturbance, chest
+pain, breathlessness, or neurological symptoms warrant prompt evaluation.
