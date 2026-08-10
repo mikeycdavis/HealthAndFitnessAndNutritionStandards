@@ -147,7 +147,7 @@ claims it while being human-evaluated.
 
 | Verdict | Exit | Means |
 | --- | --- | --- |
-| `COMPLIANT` | 0 | Every applicable rule was established and passed, and the integrity screen detected nothing |
+| `COMPLIANT` | 0 | Every applicable *obligation* was established and passed, and the integrity screen detected nothing. See the caveat below — this is narrower than "every applicable rule" |
 | `COMPLIANT_WITH_EXCEPTIONS` | 0 | As above, with approved time-bounded waivers |
 | `NON_COMPLIANT` | 1 | Evaluated, and something that applies is failing |
 | — | 2 | Configuration or schema error, including no policy |
@@ -156,6 +156,20 @@ claims it while being human-evaluated.
 
 **4 is not a worse 0.** Mapping it to 0 would let a project that evaluated nothing pass a gate;
 mapping it to 1 would call a project non-compliant when nothing is known to be wrong with it.
+
+**`COMPLIANT` is narrower than it sounds, and the gap is a recommendation.** Only rules that can
+block — requirements at required strength, prohibitions, the invariant — must be established for the
+verdict. An applicable **recommendation** with no evidence stays `not-evaluated`, reports as a
+warning, enters neither the score's numerator nor its denominator, and does not stop the verdict
+reaching `COMPLIANT`. So the word means:
+
+> every applicable obligation capable of blocking compliance has been satisfactorily established,
+> with recommendations reported separately
+
+and not *every applicable rule has been established*. This repository is its own example: a
+`COMPLIANT` verdict here would be reached with `health.evidence-quality-noted` — applicable, and a
+recommendation — carrying no evidence at all. Read the per-rule counts beside the verdict, not the
+word alone.
 
 The integrity invariant has a state of its own, **`screened`** — every bound integrity check ran and
 none fired. It is not a pass: absence of detected manipulation is weak evidence, whereas detected
