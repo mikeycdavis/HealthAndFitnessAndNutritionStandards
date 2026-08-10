@@ -147,20 +147,101 @@ Two of the four rules are now **substantively establishable, pending human attes
 disposition is an attestation, neither supplies a `reviewedBy` identity, and `standards check .` is
 unchanged at exit 4.
 
-## `nutrition.no-single-food-disease-claims` — not yet reviewed
+## `nutrition.no-single-food-disease-claims` — ESTABLISHABLE
 
-Next in the queue. Material in [pack 04](04-nutrition-no-single-food-disease-claims.md) and
-[pack 04a](04a-single-food-claims-corpus.md).
+```text
+nutrition.no-single-food-disease-claims
 
-The concrete question, stated in advance: this prohibition has **no worked violating example anywhere
-in the repository**. Whether that is a documentation gap or a corpus failure — whether the prohibition
-is demonstrated clearly enough for release — is the reviewer's call, and the example has deliberately
-not been written, because writing it would answer the question.
+Independent content-review disposition:
+ESTABLISHABLE
+
+Reviewed:
+- artifacts/release-review/04-nutrition-no-single-food-disease-claims.md
+- artifacts/release-review/04a-single-food-claims-corpus.md
+- relevant material previously reviewed through the rule-03 evidence chain
+
+Basis:
+No single-food causal or curative complex-disease claim was identified
+in the repository.
+
+The prohibition itself defines the prohibited boundary and explicitly
+distinguishes it from legitimate discussion of diet and disease.
+
+The nutrition domain reinforces the boundary through its pattern-based
+account of dietary quality and its cross-reference to Standard 14.
+
+The finite named-food scan is corroborating evidence rather than proof
+of absence.
+
+Standard 35 R2 does not cross the boundary: it describes fibre as a
+qualified proxy for dietary-pattern characteristics, not a food as a
+cause or cure of disease.
+
+The absence of a worked violating example is a documentation
+opportunity, not a release-blocking failure to operationalise the rule.
+```
+
+**No remediation.** This is the first of the four rules to establish on first review.
+
+### The missing worked example — resolved as an opportunity, not a defect
+
+The distinction the reviewer drew: a defect would mean an adopter cannot reliably determine the
+prohibited boundary without the example. They can — Standard 14 R3 defines the prohibited structure
+and distinguishes it from permitted discussion, Standard 37 R1 supplies the pattern-based model,
+Standard 37 R5 reconnects the two and names toxic/curative framing as the error, and Standard 36
+routes supplement claims through the same machinery. **Examples should demonstrate semantics, not
+create them.**
+
+**No example will be added before 1.0.** Adding one solely to clear a review that did not require it
+would be release work invented by the review process rather than by the standard.
+
+**A release invariant was explicitly not created.** Three other prohibitions also lack worked
+violating examples — `nutrition.no-starvation-approaches`,
+`nutrition.no-identical-response-assumption`, `nutrition.no-scale-change-as-fat-change`. The reviewer
+declined to let this review generate a new rule that every prohibition must carry a worked negative
+example. That was not part of the reviewed architecture and this review produced no evidence that it
+needs to become one. Recorded here so a later reader does not reconstruct the invariant from the
+finding.
+
+If an example is written later, the reviewer's suggested shape — illustrative future documentation,
+not a release condition:
+
+```text
+Acceptable:
+"Dietary patterns are associated with cardiovascular risk."
+
+Potentially acceptable with strong evidence:
+"Regular consumption of X is associated with Y outcome."
+
+Prohibited:
+"X prevents heart disease."  /  "X cures diabetes."
+```
+
+### Two secondary questions, both resolved without change
+
+- **Standard 35 R2** contains neither side of the prohibited construction. It is
+  nutrient → dietary-pattern proxy, qualified in the same paragraph, and was already reviewed for
+  evidence strength under rule 03 (C137, C138). Left alone.
+- **Catalog placement against Standard 14 is correct.** The operative phrase is *without strong
+  evidence*; a sufficiently well-supported single-food claim is deliberately not prohibited, which
+  makes this an evidence rule rather than a nutrition one. Standard 37 R5 supplies enough
+  discoverability from the nutrition domain, and the rule is not duplicated into a second standard.
 
 ## `trend.trends-over-events` — not yet reviewed
 
-Last of the four. Material in [pack 02](02-trend-trends-over-events.md); a corpus companion will be
-built before review, on the pattern packs 03a and 01a established.
+Last of the four. Material in [pack 02](02-trend-trends-over-events.md) and
+[pack 02a](02a-trend-corpus.md).
+
+Two things a reviewer should know before starting. **The two worked records that bear most on this
+rule were both edited at `d47e389`**, for the `escalation.tier-language-calibrated` review, and
+neither change was made with this rule in mind — but both bear on it. The tier-four record now
+exercises the single-event override harder, and the tier-two record no longer uses "we need a trend"
+as a reason to defer professional contact. Read the current text rather than pack 02's description.
+
+Pack 02a also surfaces a **third tension** pack 02 mentioned only in passing: places where trend
+reasoning *increases* urgency rather than decreasing it (Standard 24 R6, Standard 20 R5, Standard 8
+R6). It runs in the opposite direction from the single-event override, and the repository asserts
+rather than argues that both follow from the same rule.
 
 ---
 
