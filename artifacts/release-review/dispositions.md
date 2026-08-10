@@ -11,6 +11,94 @@ disposition and its evidence chain when deciding whether to record an attestatio
 
 ---
 
+# Certification baseline and verification order
+
+**Read this before the dispositions below, and act on it before inspecting any verdict.**
+
+The prediction recorded later in this file answers *what states should result*. It does not, on its
+own, preserve *what procedure makes observing those states trustworthy*. Without the second, a
+certifier can follow every written instruction and still perform the validation in the epistemically
+weaker order — checking the verdict first, then reading the diff as confirmation of a conclusion
+already reached.
+
+```text
+Certification baseline: 7f59f8b
+
+Before inspecting or comparing the candidate repository's resulting
+per-rule states or overall verdict:
+
+1. Diff the certification candidate against 7f59f8b.
+2. Explain every post-baseline change and determine whether it can
+   affect standards content, applicability, evidence, attestations,
+   evaluation, integrity screening, or verdict computation.
+3. Verify that reviewed evidence named by the dispositions has not
+   changed since review.
+4. Only after the diff has been independently explained, run/inspect
+   the evaluation and compare its per-rule states with the prediction
+   recorded below.
+5. Only after the per-rule states match may the overall verdict be
+   considered as release evidence.
+
+A benign post-baseline commit does not advance the certification
+baseline. It remains part of the diff and must be explained.
+
+A COMPLIANT verdict or matching predicted state is not evidence that
+an unexplained diff is acceptable.
+
+If an unexplained or verdict-affecting change is found outside the
+intended human attestations and later explicitly authorized release
+mechanics, certification stops until that change is resolved or
+reviewed.
+```
+
+**The baseline does not move.** `7f59f8b` is valuable precisely because it predates the benign
+changes below, and therefore forces a certifier to demonstrate that they are benign. Advancing it
+would erase the first evidence that this procedure works.
+
+## Known post-baseline changes
+
+Each must still be explained by the certifier under step 2; listing them here is a starting point,
+not a substitute for the diff.
+
+```text
+cc0c6de
+BACKLOG.md only.
+Dormant post-1.0 adoption/enforcement design.
+Does not alter reviewed content or verdict inputs.
+
+<the commit that added this section>
+dispositions.md only.
+Adds the previously precommitted certification baseline and
+verification procedure.
+Does not alter a substantive disposition, reviewed content,
+or verdict input.
+```
+
+The second entry names no hash because it could not: the commit did not exist when the text was
+written, and inventing one would be the same defect as the hash that was corrected at `6c57a12`.
+Find it with:
+
+```bash
+git log --oneline -- artifacts/release-review/dispositions.md
+```
+
+Recording it at all matters because otherwise the procedure's own introduction becomes an unexplained
+change under the procedure it introduces.
+
+### Why this section exists
+
+It was missing. The four dispositions, the frozen prediction, and the five post-attestation steps
+were all recorded; the baseline commit, the diff-before-verdict ordering, and the non-advancement
+rule existed only in conversation. That is an operational instruction absent from the surface a
+certifier acts on — the third instance in this release of the same failure class, after
+`project-policy.yml`'s attestation comment and the README's definition of `COMPLIANT`.
+
+It is a further concrete instance supporting requirement 8 of the post-1.0 workstream in
+[BACKLOG.md](../../BACKLOG.md), and deliberately not a new requirement: actionable-surface priority
+is already recorded there.
+
+---
+
 ## `health.no-fabricated-medical-facts` — ESTABLISHABLE
 
 ```text
