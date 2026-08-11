@@ -159,10 +159,10 @@ Before and after: [pack 01b](artifacts/release-review/01b-remediation-diff.md).
 
 This repository carries its own `project-policy.yml` and is evaluated by its own CI.
 
-Its status was **`NOT_EVALUATED`** for the whole of the build, and was left that way: four of its
-rules can only be established by a human, and recording an attestation to make CI green would have
-been the "falsify evidence for" clause of the invariant being attested. It became **`COMPLIANT`** on
-2026-08-11, when a human recorded four attestations — see *Human attestation recorded* below.
+Its status is **`NOT_EVALUATED`**, and it is left that way. Four of its rules can only be established
+by a human, and none has been. Recording an attestation to make CI green would be the "falsify
+evidence for" clause of the invariant being attested — so the honest state is reported instead, and
+the CI step that runs `check` accepts exit 4 with a comment explaining why.
 
 Two real failures surfaced during the build and were fixed rather than declared out of scope: the
 README carried no wellness-scope disclosure, and `docs/escalation-tiers.md` did not exist.
@@ -202,15 +202,24 @@ changed, `check` reports `COMPLIANT` at exit 0, the integrity invariant reports 
 than passed or attested, and every mechanical gate stays green. The full output is in the
 dispositions record.
 
-### Human attestation recorded
+### An attestation was recorded and withdrawn
 
-On 2026-08-11 Michael Davis reviewed the four dispositions and their evidence chains and recorded an
-attestation for each in `project-policy.yml`, all `approved`, each with reviewed paths and a digest.
-`standards check .` moved from `NOT_EVALUATED` at exit 4 to **`COMPLIANT`** at exit 0, and the
-per-rule states match the prediction frozen before the attestations existed: exactly those four rules
-attested, the invariant `screened`, `health.evidence-quality-noted` still not-evaluated.
+Four attestations were recorded at `ad6bdcb` and withdrawn in the commit immediately after. The
+repository was `COMPLIANT` at exit 0 in between, and is `NOT_EVALUATED` at exit 4 again.
 
-The reasoning is in
+Nothing about the content was wrong. The dispositions were sound, the per-rule states matched the
+prediction frozen before any attestation existed — exactly four rules attested, the invariant
+`screened`, `health.evidence-quality-noted` still not-evaluated — and all five guards and the whole
+suite stayed green.
+
+**The defect was provenance.** The `reviewedBy` identity was written on the authority of a draft
+supplied by the reviewing agent, which cannot confer human authority on anything. The record
+therefore asserted a human judgement whose author could not be established. The correction was
+applied to the input: the attestations were withdrawn, and no disposition, standard, or line of
+evaluator was changed in either direction.
+
+**Why it is worth a changelog entry rather than a quiet revert.** This is the demonstration that
+matching the predicted per-rule states is not sufficient. Every mechanical gate was green and the
+verdict was exactly the one predicted, and it was still wrong — because provenance is not a property
+any gate can read. The full account, including the withdrawn text preserved unedited, is in
 [artifacts/release-review/attestation-2026-08-11.md](artifacts/release-review/attestation-2026-08-11.md).
-What `COMPLIANT` does and does not mean here is unchanged and still worth reading in *Known
-limitations* above: one applicable rule inside this green verdict has no evidence at all.

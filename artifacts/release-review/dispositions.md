@@ -107,15 +107,44 @@ against the old state. None of those files is read by the
 evaluator.
 No standards content, catalog, schema, detector, evaluator,
 applicability declaration, or exception changed.
+
+WITHDRAWN by the commit immediately after it. Do not certify
+ad6bdcb. See the entry below.
+
+<the commit that withdrew them>
+VERDICT-AFFECTING. Returns the verdict to where it was.
+attestations back to {}; COMPLIANT/exit 0 -> NOT_EVALUATED/
+exit 4; the four rules back to awaiting evidence.
+Reason: the reviewedBy identity at ad6bdcb was written on the
+authority of a draft supplied by the reviewing agent, which
+cannot confer human authority. The attestations asserted a
+human judgement whose author could not be established.
+The content was NOT the defect: the dispositions were sound,
+the per-rule states matched the frozen prediction exactly,
+and every gate was green.
+Correction applied to the input, not the machinery. No
+disposition, standard, catalog entry, detector, or evaluator
+line changed in either direction.
+Also here, and not verdict-affecting: PROJECT.md, CHANGELOG.md,
+the attestations comment, two tests, and the backlog, all
+returned to describing a repository awaiting human review.
 ```
 
-The last entry is the one this procedure was written for, and it is the only one where "explain the
-diff" is real work rather than a formality. The others could not have moved the verdict; this one was
-supposed to. Step 4's question is not *did it turn green* but **did it turn green for exactly this
-evidence** — four attestations, the invariant still `screened`,
-`health.evidence-quality-noted` still carrying no evidence at all, and every mechanical gate
-unchanged. A certifier who confirms the verdict without isolating the cause has not performed this
-step.
+The last two entries are the ones this procedure was written for, and they are the only ones where
+"explain the diff" was real work rather than a formality. The others could not have moved the verdict.
+
+**And the procedure as written was still not enough.** At `ad6bdcb` it turned green for exactly the
+four expected inputs: the invariant stayed `screened`, `health.evidence-quality-noted` still carried
+no evidence, every mechanical gate was unchanged, and the per-rule states matched the frozen
+prediction line for line. It was wrong anyway. The `reviewedBy` identity rested on a draft rather
+than on the person named, so the input was the expected *kind* of input without being the expected
+*thing*.
+
+Step 4 therefore has a second half. It is not only **did it turn green for exactly this evidence**
+but **is this evidence what it claims to be** — and for an attestation that means: did the named
+person decide, personally, and does the record derive its authority from them rather than from
+anything written on their behalf. No gate in this repository can answer that. A certifier who
+confirms the verdict, confirms the states, and stops, would have certified `ad6bdcb`.
 
 The second, third, and fourth entries name no hash because they could not: no such commit existed
 when its own text was written, and inventing one would be the same defect as the hash that was
@@ -501,13 +530,17 @@ None of that is an agent's decision to make.
 All four rules have an independent disposition; none has an attestation. `standards check .` reports
 `NOT_EVALUATED` and exits 4. That is the correct state and it is left that way. Nothing is tagged.
 
-## Release state as of the attestation commit
+## Release state after the withdrawal
 
-All four rules have an independent disposition **and** a human attestation, recorded 2026-08-11 by
-Michael Davis. `standards check .` reports `COMPLIANT` and exits 0, matching the frozen prediction
-above rule for rule.
+All four rules have an independent disposition and **no** attestation. `standards check .` reports
+`NOT_EVALUATED` and exits 4. `VERSION` is `1.0.0-dev`, CI still tolerates exit 4, nothing is tagged.
+That is the same state as at `0acc6cc`, reached by a different route.
 
-Still true, and deliberately so: `VERSION` is `1.0.0-dev`, CI still tolerates exit 4, and nothing is
-tagged. Recording human judgement and cutting a release are separate acts, and the second has not
-been authorized. The certification procedure at the top of this document has not yet been run by an
-independent certifier against this commit — the attestations are its subject, not its substitute.
+`ad6bdcb` remains in history and must not be certified. It is kept because it is the strongest
+evidence this repository has produced about its own procedure: a candidate can satisfy every
+mechanical gate, match every predicted per-rule state, and still be uncertifiable on the provenance of
+its inputs.
+
+What a valid attestation now requires is unchanged and stated at *What a human must now decide*
+above, with one addition learned here: the record must derive its authority from the accountable
+person, not from any text written on their behalf — including text they were offered to adopt.
