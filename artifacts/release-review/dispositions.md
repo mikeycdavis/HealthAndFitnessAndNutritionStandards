@@ -72,11 +72,30 @@ Adds the previously precommitted certification baseline and
 verification procedure.
 Does not alter a substantive disposition, reviewed content,
 or verdict input.
+
+<the commit that added this entry>
+artifacts/backlog/** and dispositions.md only.
+Introduces a 35-item backlog representing work that already
+exists: completed 1.0.0 build and review, blocked human
+attestation and release mechanics, deferred post-1.0 and
+content work.
+Does not alter reviewed standards content or any disposition.
+Does not alter policy, applicability, attestations, evidence,
+the evaluator, or any other verdict input.
+Backfills existing state; creates no new pre-1.0 obligation.
+The certification feature remains blocked on the human steps;
+post-1.0 work remains deferred.
+
+Backlog validation passes and all recorded evidence resolves.
+Reconciliation is INCOMPLETE, not clean: this repository has
+no merged-PR history, so the PR-dependent reconciliation
+checks cannot establish agreement with merged work. Do not
+read "no inconsistencies" as "reconciled".
 ```
 
-The second entry names no hash because it could not: the commit did not exist when the text was
-written, and inventing one would be the same defect as the hash that was corrected at `6c57a12`.
-Find it with:
+The second and third entries name no hash because they could not: neither commit existed when its
+text was written, and inventing one would be the same defect as the hash that was corrected at
+`6c57a12`. Find them with:
 
 ```bash
 git log --oneline -- artifacts/release-review/dispositions.md
