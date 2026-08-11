@@ -21,7 +21,7 @@ catalog entry — so the evidence-quality rules apply here in full and are decla
 
 ## Standards
 
-This repository is evaluated against its own standards, version `1.0.0-dev`, declared in
+This repository is evaluated against its own standards, version `1.0.0`, declared in
 [`project-policy.yml`](project-policy.yml).
 
 Its current status is **`COMPLIANT`**. No rules apply here that are still awaiting evidence: the four
@@ -68,12 +68,13 @@ npm run rules       # has a rule been dropped, downgraded, or reclassified?
 npm run fidelity    # is quoted source text still the source's?
 npm run policy      # is this repository's own policy well-formed?
 npm run diagrams    # does each embedded diagram match its Mermaid source?
-npm test            # 130 tests, including a mutation test per guard
+npm test            # 160 tests, including a mutation test per guard
 npm run audit       # evidence, not a verdict
 npm run check       # the verdict; the CI gate
 ```
 
-CI runs them in that order. `check` is the gate.
+CI runs them in that order. `check` is the gate, and since the 1.0.0 release mechanics it accepts
+only exit 0 — the transitional `|| [ $? -eq 4 ]` allowance is gone.
 
 ## Architectural rules
 
@@ -103,8 +104,8 @@ CI runs them in that order. `check` is the gate.
 
 ## Current state
 
-**Complete for 1.0.0-dev.** All 42 standards written, 59 rules catalogued, the CLI implemented with
-five subcommands, 130 tests passing, all guards green.
+**Complete for 1.0.0.** All 42 standards written, 59 rules catalogued, the CLI implemented with
+five subcommands, 160 tests passing, all guards green.
 
 **Known gaps**, stated rather than left to be discovered:
 
@@ -113,8 +114,8 @@ five subcommands, 130 tests passing, all guards green.
 - The allergen check of Standard 41 R2 is deliberately unbuilt — see INSTRUCTIONS.md §10.
 - No `.svg` renders are committed; the `.mmd` sources are canonical and the absence is declared in
   ADR 0006.
-- The version is `1.0.0-dev`. At a release version the inventory guard additionally requires every
-  standard to exist, which it now does.
+- The version is `1.0.0`. A release version makes the inventory guard additionally require every
+  standard to exist, which it does.
 - Detector paths are fixed. A project using a different layout must declare the affected rules
   not-applicable rather than configure the paths.
 

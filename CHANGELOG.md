@@ -13,7 +13,7 @@ because it can make a compliant project non-compliant — that is the intended b
 regression. A new recommendation is **minor**. Documentation, detector fixes, and clarifications that
 do not change what a rule means are **patch**.
 
-## 1.0.0-dev
+## 1.0.0
 
 The first release. Built in ten milestones, each with a gate that had to be green before the next
 began.
@@ -38,7 +38,7 @@ began.
   domain it is the expected first result.
 - **Five guards** — the standards series inventory, the rule inventory, source fidelity, policy
   validation, and diagram freshness — each with a mutation test.
-- **130 tests**, including a fire and do-not-fire pair for every detector.
+- **160 tests**, including a fire and do-not-fire pair for every detector.
 - **Templates, worked examples, and fixtures**, with the fixtures built from the examples so an
   example that stopped satisfying the standards fails the build.
 
@@ -163,8 +163,9 @@ Its status is **`COMPLIANT`**. It reported `NOT_EVALUATED` for most of this repo
 four of its rules can only be established by a human and none had been; recording an attestation to
 make CI green would have been the "falsify evidence for" clause of the invariant being attested. The
 four attestations now recorded were decided by a named reviewer, not manufactured to reach a verdict.
-The CI step that runs `check` still accepts exit 4 with a comment explaining why, and that allowance
-is removed only as part of the 1.0.0 release mechanics.
+The CI step that runs `check` accepted exit 4 for most of that time, with the reason written into the
+workflow rather than hidden in a flag. That allowance was removed as part of the 1.0.0 release
+mechanics; the gate is now `npm run check` and nothing else.
 
 Two real failures surfaced during the build and were fixed rather than declared out of scope: the
 README carried no wellness-scope disclosure, and `docs/escalation-tiers.md` did not exist.
@@ -243,3 +244,37 @@ disposition.
 The verdict moved to `COMPLIANT` at exit 0 — the same verdict `ad6bdcb` reached and was refused. What
 changed is not the machinery and not the content. It is that the identity in `reviewedBy` is the
 person who made the decision, because they made it.
+
+### The certification pass found a defect the diff could not
+
+An independent certification pass ran from the immutable baseline `7f59f8b` against candidate
+`eb9a0f8`. It stopped before comparing per-rule states, on a defect in `.github/workflows/ci.yml`.
+
+The comment above the release gate said this repository was `NOT_EVALUATED`, and said the exit-4
+allowance could never be removed by recording reviews, because the integrity invariant permanently
+prevents any project from reaching `COMPLIANT`. The second claim stopped being true at ADR 0007,
+whose entire purpose was to make `COMPLIANT` reachable via `screened`. It sat directly above the line
+the release mechanics exist to remove, and it said not to remove it.
+
+**It was not findable by diffing.** The workflow had not changed since the baseline. It was found by
+reading the surface an operator acts on and asking whether it was *true*, rather than whether it had
+*moved*. Corrected at `9809afc`, comments only, gate line byte-identical. The limit it exposes is now
+written into the certification procedure itself: diff-first protects against unexamined change; it
+cannot establish that unchanged baseline content was ever correct.
+
+### 1.0.0 release mechanics
+
+Certification passed against `9809afc`. The mechanics then ran as a separate change, which is the
+distinction this repository has kept throughout: authorization to perform release mechanics is not
+evidence that they succeeded.
+
+- `VERSION`, `package.json`, and the policy's `standardVersion` move from `1.0.0-dev` to `1.0.0`.
+- CI's `|| [ $? -eq 4 ]` allowance and its transitional comment are removed. The gate is now
+  `npm run check`, and exit codes 1, 2, 3, and 4 all fail the build.
+- Derived surfaces updated: this file, `PROJECT.md`, the release-review ledger, and the backlog.
+
+**No tag is cut here.** GitHub Actions cannot currently execute — the account's Actions billing or
+spending limit blocks every run before a runner is acquired, so the workflow reports failure having
+run zero steps. That is infrastructure not executed, not evidence about this repository. Because CI is
+treated here as an enforcement surface rather than a formality, `v1.0.0` waits for an actual green
+Actions run on the release commit.

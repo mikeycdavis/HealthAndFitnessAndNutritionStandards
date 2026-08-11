@@ -181,6 +181,37 @@ establish that unchanged baseline content was ever correct.
 That is a limit of this procedure, not a lapse in following it.
 Fourth instance of the same failure family, and the first where
 the defect was inherited from the frozen baseline itself.
+
+<the release-mechanics commit>
+NOT verdict-affecting, and the first commit in this window that
+is allowed to change release state.
+Independent certification PASSED against 9809afc: diff
+explained, no reviewed evidence moved, attestation provenance
+valid, no unexpected verdict inputs, per-rule states matching
+the frozen prediction, invariant screened, COMPLIANT/exit 0.
+ST-06 authorized on that basis, and only then.
+VERSION, package.json, and the policy's standardVersion move
+from 1.0.0-dev to 1.0.0. CI's || [ $? -eq 4 ] allowance and its
+transitional comment are removed; the gate is now `npm run
+check` and exit 1, 2, 3, and 4 all fail the build.
+Derived surfaces: CHANGELOG.md, PROJECT.md, this ledger, the
+backlog. Two stale counts corrected in passing (130 -> 160
+tests), found by the same read-the-surface sweep that found the
+CI comment.
+The verdict does not move: COMPLIANT/exit 0 before and after.
+No standard, catalog entry, schema, rule strength, applicability
+declaration, exception, attestation, detector, or evaluator line
+changed. standardVersion is a declaration of which standards
+version this project is evaluated against; it is not a strength,
+and no attestation digest covers project-policy.yml.
+NO TAG. GitHub Actions cannot execute at all - the account's
+Actions billing or spending limit stops every run before a
+runner is acquired, so the workflow reports failure having run
+zero steps. That is infrastructure NOT EXECUTED, not evidence
+about this repository. Since CI is an enforcement surface here,
+v1.0.0 waits for a genuinely green Actions run on this commit.
+Authorization to perform release mechanics is not evidence that
+they succeeded.
 ```
 
 The last two entries are the ones this procedure was written for, and they are the only ones where
@@ -566,15 +597,24 @@ a verdict says what was checked passed; it does not say everything was checked.
 
 ## After attestation, if it is recorded
 
-1. `VERSION` moves from `1.0.0-dev`.
+The five steps as written before any of it happened, kept unedited, with what actually occurred
+against each:
+
+1. `VERSION` moves from `1.0.0-dev`. — **Done**, along with `package.json` and `standardVersion`.
 2. The `|| [ $? -eq 4 ]` condition comes out of the CI `check` step, along with the comment
-   explaining it.
+   explaining it. — **Done.** The comment had to be *corrected* first, at `9809afc`, because it told
+   an operator this step was impossible.
 3. `PROJECT.md`, `CHANGELOG.md`, and `project-policy.yml`'s attestation comment all describe a
    repository with zero rules awaiting evidence — and two tests compare that prose to
-   `standards status` output, so getting it wrong fails the suite rather than shipping.
-4. Tag 1.0.0.
+   `standards status` output, so getting it wrong fails the suite rather than shipping. — **Done, and
+   the tests did exactly that**: three failed the moment the verdict moved and had to be corrected
+   against tool output rather than against memory.
+4. Tag 1.0.0. — **Not done.** Blocked externally: GitHub Actions cannot execute at all, so no run on
+   the release commit exists to be green. The tag waits for one.
 
-None of that is an agent's decision to make.
+None of that is an agent's decision to make. Steps 1–3 were performed after an independent
+certification pass explicitly authorized ST-06; step 4 has not been authorized and is separately
+blocked.
 
 ---
 
@@ -608,10 +648,19 @@ The addition learned there stands as a permanent requirement of this procedure: 
 derive its authority from the accountable person, not from any text written on their behalf,
 including text they were offered to adopt.
 
-**Release mechanics remain unauthorized.** `VERSION` is `1.0.0-dev`, CI still tolerates exit 4,
-nothing is tagged. ST-05 is closed; ST-06 is a separate decision that a green verdict does not make.
+**Certification passed against `9809afc`**, and the release mechanics then ran as their own commit.
+`VERSION`, `package.json`, and `standardVersion` are `1.0.0`; CI's exit-4 allowance and its
+transitional comment are gone; the gate is `npm run check` alone.
 
-The comment above CI's gate now says so, having previously said the opposite — that the allowance
-could never be removed. The allowance is transitional, not load-bearing, and removing it is ST-06's
-work rather than forbidden work. See the seventh ledger entry, and note where the defect came from:
-not from any post-baseline change, but from the baseline itself, unchanged and wrong.
+The comment above that gate had previously said the allowance could never be removed, which was
+false and was corrected at `9809afc` before any of this. Note where that defect came from: not from
+any post-baseline change, but from the baseline itself, unchanged and wrong. It is the reason this
+procedure now says in its own text that diff-first cannot establish that unchanged content was
+correct.
+
+**`v1.0.0` is not tagged, and the reason is external.** GitHub Actions cannot execute — the account's
+Actions billing or spending limit stops every run before a runner is acquired, so the workflow reports
+failure having run zero steps. That is infrastructure not executed, not a finding about this
+repository; the full gate is green locally. Because CI is treated here as an enforcement surface, the
+tag waits for a genuinely green Actions run on the release commit. Authorization to perform release
+mechanics is not evidence that they succeeded.
