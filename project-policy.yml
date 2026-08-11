@@ -340,31 +340,80 @@ exceptions: []
 
 # Recorded human judgement.
 #
-# THIS SECTION IS DELIBERATELY EMPTY, and that is why `standards check` reports this repository as
-# NOT_EVALUATED rather than COMPLIANT. Four rules apply here that only a human can establish:
+# THIS SECTION WAS DELIBERATELY EMPTY until 2026-08-11, and that is why `standards check` reported
+# this repository as NOT_EVALUATED rather than COMPLIANT for the whole of the build. Four rules
+# apply here that only a human can establish, and until that date no human had.
 #
-#   escalation.tier-language-calibrated
-#   health.no-fabricated-medical-facts
-#   nutrition.no-single-food-disease-claims
-#   trend.trends-over-events
-#
-# That list is what `standards status .` reports under "Rules awaiting evidence", and a test asserts
-# the two agree. Do not maintain it by hand against memory — this comment was wrong once, and the
-# way it was wrong mattered: it named integrity.no-standards-manipulation, which is NOT attestable.
-# Attempting to attest the invariant does not produce a green; it stops evaluation with
-# BLOCKED_BY_INVARIANT and exit code 3. A comment that sent someone to do that was worse than no
-# comment.
+# `standards status .` reports what still awaits evidence under "Rules awaiting evidence" — it now
+# reports none — and a test asserts that this comment and the tool agree. Do not maintain any such
+# list here by hand against memory. This comment was wrong once, and the way it was wrong mattered:
+# it named integrity.no-standards-manipulation, which is NOT attestable. Attempting to attest the
+# invariant does not produce a green; it stops evaluation with BLOCKED_BY_INVARIANT and exit code 3.
+# A comment that sent someone to do that was worse than no comment.
 #
 # The invariant needs no attestation. Since ADR 0007 it reports `screened` when every integrity
 # check bound to it has run and none fired, which is a narrower claim than human attestation and is
 # the only state it can reach. See artifacts/adr/0007-screened-as-a-distinct-invariant-state.md.
 #
-# No attestation appears for the four because no human has reviewed them yet. Independent content
-# review has produced a disposition for each — recorded in artifacts/release-review/dispositions.md,
-# all four ESTABLISHABLE, two of them only after real defects were found and fixed. A disposition is
-# not an attestation: it carries no human reviewedBy identity, and an agent recording one on a
-# human's behalf would be the "falsify evidence for" clause of the very invariant being attested.
+# All four were attested on 2026-08-11 by Michael Davis, who reviewed the dispositions and their
+# evidence chains in artifacts/release-review/ and took responsibility for the judgement. The
+# detailed reasoning lives in artifacts/release-review/attestation-2026-08-11.md; these entries
+# record who decided, when, what was reviewed, and where that evidence lives.
 #
-# The honest state of this repository is that it cannot yet demonstrate compliance, and the system
-# says so. See INSTRUCTIONS.md for what an attestation looks like and what evidence it must carry.
-attestations: {}
+# A disposition is not an attestation. The four dispositions were produced by an agent and carry no
+# human reviewedBy identity; an agent writing one on a human's behalf would be the "falsify evidence
+# for" clause of the very invariant being attested. What changed here is that a human decided.
+#
+# These attestations establish four rules. They do not certify the release. See
+# artifacts/release-review/dispositions.md for the verification procedure that does, and note that
+# health.evidence-quality-noted remains not-evaluated: a verdict says what was checked passed, not
+# that everything was checked.
+attestations:
+  escalation.tier-language-calibrated:
+    status: approved
+    reviewedBy: "Michael Davis"
+    reviewedAt: "2026-08-11"
+    evidence: "Reviewed the four-tier calibration series as a whole against packs 01/01a/01b and the d47e389 remediation. Calm is constant across tiers; urgency is not. Tier 4 directs immediate evaluation unconditionally; Tier 2 separates prompt remeasurement and professional contact from completion of the monitoring series. No rule, tier definition, detector, or evaluator was weakened to reach this."
+    reviewedAgainst:
+      paths:
+        - artifacts/release-review/01-escalation-tier-language-calibrated.md
+        - artifacts/release-review/01a-tier-language-corpus.md
+        - artifacts/release-review/01b-remediation-diff.md
+        - standards/03-safety-and-escalation-tiers.md
+        - docs/escalation-tiers.md
+      digest: "22206f56796832aa530410140c264127"
+  health.no-fabricated-medical-facts:
+    status: approved
+    reviewedBy: "Michael Davis"
+    reviewedAt: "2026-08-11"
+    evidence: "Reviewed at claim granularity: 191 entries, 182 distinct, per pack 03a rather than the earlier incomplete 73-claim summary. No fabricated physiological mechanism was found. Claims stated past their evidence were remediated in the content at 79d39d1, not by weakening the rule or evaluator, and the thirty changed claims were re-reviewed."
+    reviewedAgainst:
+      paths:
+        - artifacts/release-review/03-health-no-fabricated-medical-facts.md
+        - artifacts/release-review/03a-claim-extract.md
+        - artifacts/release-review/03b-remediation-diff.md
+        - standards/14-evidence-quality.md
+      digest: "9ddb00bf5e2423a738d476de1e521628"
+  nutrition.no-single-food-disease-claims:
+    status: approved
+    reviewedBy: "Michael Davis"
+    reviewedAt: "2026-08-11"
+    evidence: "Reviewed packs 04/04a and the nutrition corpus previously read through the rule-03 chain. No single-food causal or curative complex-disease claim was identified. The named-food scan is corroborating evidence, not proof of absence. The absent worked violating example is a documentation opportunity; no invariant requiring one is created by this approval."
+    reviewedAgainst:
+      paths:
+        - artifacts/release-review/04-nutrition-no-single-food-disease-claims.md
+        - artifacts/release-review/04a-single-food-claims-corpus.md
+        - standards/14-evidence-quality.md
+        - standards/37-dietary-quality.md
+      digest: "2a7f57c42d427faa15584d7c3ad5ff08"
+  trend.trends-over-events:
+    status: approved
+    reviewedBy: "Michael Davis"
+    reviewedAt: "2026-08-11"
+    evidence: "Reviewed packs 02/02a and the worked records after d47e389. Observations inform decisions; trends establish patterns. The red-flag override is coherent because it establishes a decision obligation under asymmetric consequences, not the underlying pattern. Observation cadence and decision cadence are distinct choices."
+    reviewedAgainst:
+      paths:
+        - artifacts/release-review/02-trend-trends-over-events.md
+        - artifacts/release-review/02a-trend-corpus.md
+        - standards/02-trend-over-event.md
+      digest: "9e25610c1ca252102049e9dba092f3aa"

@@ -24,11 +24,17 @@ catalog entry — so the evidence-quality rules apply here in full and are decla
 This repository is evaluated against its own standards, version `1.0.0-dev`, declared in
 [`project-policy.yml`](project-policy.yml).
 
-Its current status is **`NOT_EVALUATED`**. Four rules apply here that no machine evaluates —
-`escalation.tier-language-calibrated`, `trend.trends-over-events`,
-`health.no-fabricated-medical-facts`, and `nutrition.no-single-food-disease-claims` — and no human
-has reviewed them. Recording an attestation anyway would be the "falsify evidence for" clause of the
-integrity invariant.
+Its current status is **`COMPLIANT`**. It was `NOT_EVALUATED` until 2026-08-11, when Michael Davis
+reviewed the four rules here that no machine evaluates — `escalation.tier-language-calibrated`,
+`trend.trends-over-events`, `health.no-fabricated-medical-facts`, and
+`nutrition.no-single-food-disease-claims` — and recorded an attestation for each. Two of the four
+were found defective on independent review first and the content was changed; the rules and the
+evaluator were not. See [`artifacts/release-review/`](artifacts/release-review/).
+
+**`COMPLIANT` does not mean everything here was checked.** `health.evidence-quality-noted` applies
+to this repository and still has no evidence at all: it is a recommendation, so it neither forces
+`NOT_EVALUATED` nor enters the score. One applicable rule is unestablished inside a green verdict,
+which is the designed behaviour and worth knowing rather than discovering.
 
 The integrity invariant itself reports **`screened`**: all nine bound integrity checks executed and
 none detected a violation (ADR 0007). Screened is not passed — absence of detected manipulation is

@@ -153,10 +153,25 @@ test("the README carries the not-medical-advice statement escalation.scope-discl
 // Honesty about this repository's own state
 // ---------------------------------------------------------------------------------------------
 
-test("PROJECT.md reports this repository's own status honestly", () => {
+test("PROJECT.md reports this repository's own status honestly", async () => {
+  const { spawnSync } = await import("node:child_process");
+  const cli = path.join(REPO, "scripts", "standards.mjs");
+  const r = spawnSync(process.execPath, [cli, "check", `--dir=${REPO}`, "--json"], { encoding: "utf8" });
+  const result = JSON.parse(r.stdout);
+
   const flat = project.replace(/\s+/g, " ");
-  assert.match(flat, /NOT_EVALUATED/);
-  assert.match(flat, /no human has reviewed them/i);
+
+  // The verdict is read from the tool rather than written into this test. It was NOT_EVALUATED for
+  // the whole of the build and became COMPLIANT when four attestations were recorded; either way,
+  // what PROJECT.md must not do is describe a different repository than the one that exists.
+  assert.match(flat, new RegExp(`current status is \\*\\*\`${result.status}\`\\*\\*`));
+
+  // A green verdict has to be reported with what it does not cover, or the honesty is decorative.
+  const unevaluated = result.results.filter((x) => x.disposition === "not-evaluated").map((x) => x.ruleId);
+  for (const id of unevaluated) {
+    assert.ok(project.includes("`" + id + "`"), `PROJECT.md does not name ${id}, which has no evidence`);
+  }
+
   assert.match(project, /## Current state/);
   assert.match(flat, /Known gaps/i);
   assert.match(flat, /screened/, "the invariant's state must be reported, not folded into the verdict");
@@ -174,14 +189,13 @@ test("the documented count of rules awaiting review matches what the tool report
   const r = spawnSync(process.execPath, [cli, "status", `--dir=${REPO}`, "--json"], { encoding: "utf8" });
   const status = JSON.parse(r.stdout);
   const actual = status.missingEvidence;
-  assert.ok(actual.length > 0, "this repository should have rules awaiting review");
 
-  const WORDS = { 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven" };
+  const WORDS = { 0: "no", 1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven" };
   const expected = WORDS[actual.length];
 
   for (const [name, text] of [["PROJECT.md", project], ["CHANGELOG.md", changelog]]) {
     const flattened = text.replace(/\s+/g, " ");
-    const claims = [...flattened.matchAll(/\b(one|two|three|four|five|six|seven) rules apply here|\b(One|Two|Three|Four|Five|Six|Seven) rules apply here/gi)];
+    const claims = [...flattened.matchAll(/\b(no|one|two|three|four|five|six|seven) rules apply here/gi)];
     for (const claim of claims) {
       assert.match(
         claim[0].toLowerCase(),
@@ -253,6 +267,21 @@ test("project-policy.yml names exactly the rules the tool is waiting on", async 
     [...awaiting].sort(),
     "the comment's indented list must be exactly the tool's awaiting-evidence set",
   );
+
+  // Once attestations exist, the awaiting list is empty and the assertions above go quiet. What
+  // replaces them: the attestations actually recorded in this file must be exactly the rules the
+  // evaluator reports as attested. An entry that establishes a rule nobody can see here, or a
+  // recorded attestation the evaluator ignores, is the same drift in the other direction.
+  const check = spawnSync(process.execPath, [cli, "check", `--dir=${REPO}`, "--json"], { encoding: "utf8" });
+  const attested = JSON.parse(check.stdout).results
+    .filter((x) => x.disposition === "attested")
+    .map((x) => x.ruleId)
+    .sort();
+  const block = policyText.slice(policyText.indexOf("\nattestations:"));
+  const recorded = [...block.matchAll(/^ {2}((?:health|fitness|nutrition|escalation|trend|integrity)\.[a-z0-9-]+):$/gm)]
+    .map((m) => m[1])
+    .sort();
+  assert.deepEqual(recorded, attested, "the recorded attestations and the attested rules must be the same set");
 });
 
 test("the changelog records what the guards caught, not only what was added", () => {

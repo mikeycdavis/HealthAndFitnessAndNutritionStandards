@@ -91,11 +91,35 @@ Reconciliation is INCOMPLETE, not clean: this repository has
 no merged-PR history, so the PR-dependent reconciliation
 checks cannot establish agreement with merged work. Do not
 read "no inconsistencies" as "reconciled".
+
+<the commit that recorded the attestations>
+VERDICT-AFFECTING BY DESIGN. The only one of these entries
+that is.
+Four attestations added to project-policy.yml by Michael
+Davis, 2026-08-11, all approved, each with reviewed paths
+and a digest. Reasoning in attestation-2026-08-11.md.
+NOT_EVALUATED/exit 4 -> COMPLIANT/exit 0.
+Also in this commit, and NOT verdict-affecting: PROJECT.md,
+CHANGELOG.md, and project-policy.yml's attestations comment,
+each of which became false when the verdict moved; three
+tests updated to assert against tool output rather than
+against the old state. None of those files is read by the
+evaluator.
+No standards content, catalog, schema, detector, evaluator,
+applicability declaration, or exception changed.
 ```
 
-The second and third entries name no hash because they could not: neither commit existed when its
-text was written, and inventing one would be the same defect as the hash that was corrected at
-`6c57a12`. Find them with:
+The last entry is the one this procedure was written for, and it is the only one where "explain the
+diff" is real work rather than a formality. The others could not have moved the verdict; this one was
+supposed to. Step 4's question is not *did it turn green* but **did it turn green for exactly this
+evidence** — four attestations, the invariant still `screened`,
+`health.evidence-quality-noted` still carrying no evidence at all, and every mechanical gate
+unchanged. A certifier who confirms the verdict without isolating the cause has not performed this
+step.
+
+The second, third, and fourth entries name no hash because they could not: no such commit existed
+when its own text was written, and inventing one would be the same defect as the hash that was
+corrected at `6c57a12`. Find them with:
 
 ```bash
 git log --oneline -- artifacts/release-review/dispositions.md
@@ -476,3 +500,14 @@ None of that is an agent's decision to make.
 
 All four rules have an independent disposition; none has an attestation. `standards check .` reports
 `NOT_EVALUATED` and exits 4. That is the correct state and it is left that way. Nothing is tagged.
+
+## Release state as of the attestation commit
+
+All four rules have an independent disposition **and** a human attestation, recorded 2026-08-11 by
+Michael Davis. `standards check .` reports `COMPLIANT` and exits 0, matching the frozen prediction
+above rule for rule.
+
+Still true, and deliberately so: `VERSION` is `1.0.0-dev`, CI still tolerates exit 4, and nothing is
+tagged. Recording human judgement and cutting a release are separate acts, and the second has not
+been authorized. The certification procedure at the top of this document has not yet been run by an
+independent certifier against this commit — the attestations are its subject, not its substitute.

@@ -296,8 +296,23 @@ test("this repository has no failing rules under its own policy", () => {
     [],
     "the standards repository must satisfy the standards it publishes",
   );
-  assert.equal(result.status, "NOT_EVALUATED", "expected while no human review is recorded — see project-policy.yml");
-  assert.equal(r.status, 4, "NOT_EVALUATED exits 4, which is not a worse 0");
+  assert.equal(result.status, "COMPLIANT", "four attestations were recorded on 2026-08-11 — see project-policy.yml");
+  assert.equal(r.status, 0);
+
+  // The verdict moved because a human recorded evidence, and for no other reason. This asserts the
+  // shape of that transition rather than its outcome: exactly the four manual-review rules are
+  // attested, the invariant is screened rather than passed or attested, and the one applicable rule
+  // nobody has evidence for is still reported as having none. A COMPLIANT verdict that quietly
+  // included a fifth attested rule, or that let the invariant read as passed, would fail here.
+  const by = (s) => result.results.filter((x) => x.disposition === s).map((x) => x.ruleId).sort();
+  assert.deepEqual(by("attested"), [
+    "escalation.tier-language-calibrated",
+    "health.no-fabricated-medical-facts",
+    "nutrition.no-single-food-disease-claims",
+    "trend.trends-over-events",
+  ]);
+  assert.deepEqual(by("not-evaluated"), ["health.evidence-quality-noted"]);
+  assert.deepEqual(by("screened"), ["integrity.no-standards-manipulation"]);
 });
 
 test("this repository's audit findings are all absences, never violations", () => {

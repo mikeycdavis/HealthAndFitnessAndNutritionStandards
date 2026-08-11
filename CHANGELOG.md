@@ -159,10 +159,10 @@ Before and after: [pack 01b](artifacts/release-review/01b-remediation-diff.md).
 
 This repository carries its own `project-policy.yml` and is evaluated by its own CI.
 
-Its status is **`NOT_EVALUATED`**, and it is left that way. Four rules apply here that only a human
-can establish, and no human has reviewed them. Recording an attestation to make CI green would be the
-"falsify evidence for" clause of the invariant being attested — so the honest state is reported
-instead, and the CI step that runs `check` accepts exit 4 with a comment explaining why.
+Its status was **`NOT_EVALUATED`** for the whole of the build, and was left that way: four of its
+rules can only be established by a human, and recording an attestation to make CI green would have
+been the "falsify evidence for" clause of the invariant being attested. It became **`COMPLIANT`** on
+2026-08-11, when a human recorded four attestations — see *Human attestation recorded* below.
 
 Two real failures surfaced during the build and were fixed rather than declared out of scope: the
 README carried no wellness-scope disclosure, and `docs/escalation-tiers.md` did not exist.
@@ -193,12 +193,24 @@ All four human-review rules now carry an independent content-review disposition 
 ESTABLISHABLE**, two of them only after real defects were found and remediated. Recorded with their
 evidence chains in [artifacts/release-review/dispositions.md](artifacts/release-review/dispositions.md).
 
-A disposition is not an attestation. None carries a human `reviewedBy` identity, `attestations` is
-still `{}`, and `standards check .` still exits 4. The decision to record the four attestations
-belongs to a human reviewer and to nobody else.
+A disposition is not an attestation. None carries a human `reviewedBy` identity, and the decision to
+record an attestation belonged to a human reviewer and to nobody else.
 
-A dry run in a scratch copy — deleted afterwards, the repository's own policy untouched — confirms
+A dry run in a scratch copy — deleted afterwards, the repository's own policy untouched — established
 the release condition the reviewer set: with exactly those four attestations and nothing else
 changed, `check` reports `COMPLIANT` at exit 0, the integrity invariant reports `screened` rather
 than passed or attested, and every mechanical gate stays green. The full output is in the
 dispositions record.
+
+### Human attestation recorded
+
+On 2026-08-11 Michael Davis reviewed the four dispositions and their evidence chains and recorded an
+attestation for each in `project-policy.yml`, all `approved`, each with reviewed paths and a digest.
+`standards check .` moved from `NOT_EVALUATED` at exit 4 to **`COMPLIANT`** at exit 0, and the
+per-rule states match the prediction frozen before the attestations existed: exactly those four rules
+attested, the invariant `screened`, `health.evidence-quality-noted` still not-evaluated.
+
+The reasoning is in
+[artifacts/release-review/attestation-2026-08-11.md](artifacts/release-review/attestation-2026-08-11.md).
+What `COMPLIANT` does and does not mean here is unchanged and still worth reading in *Known
+limitations* above: one applicable rule inside this green verdict has no evidence at all.
