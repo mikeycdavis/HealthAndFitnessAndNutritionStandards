@@ -296,8 +296,8 @@ test("this repository has no failing rules under its own policy", () => {
     [],
     "the standards repository must satisfy the standards it publishes",
   );
-  assert.equal(result.status, "NOT_EVALUATED", "expected while no human review is recorded — see project-policy.yml");
-  assert.equal(r.status, 4, "NOT_EVALUATED exits 4, which is not a worse 0");
+  assert.equal(result.status, "COMPLIANT", "four human attestations are recorded — see project-policy.yml");
+  assert.equal(r.status, 0, "COMPLIANT exits 0");
 
   // The shape of the state, not only its verdict. This survived a false green once: at ad6bdcb four
   // attestations were recorded, every gate stayed green, and the per-rule states matched the frozen
@@ -306,14 +306,15 @@ test("this repository has no failing rules under its own policy", () => {
   // assertions do is make the *set* of established rules explicit, so that a rule quietly moving
   // into or out of it is visible in a diff rather than absorbed into a verdict.
   const by = (s) => result.results.filter((x) => x.disposition === s).map((x) => x.ruleId).sort();
-  assert.deepEqual(by("attested"), [], "no attestation stands; see artifacts/release-review/attestation-2026-08-11.md");
-  assert.deepEqual(by("not-evaluated"), [
+  assert.deepEqual(by("attested"), [
     "escalation.tier-language-calibrated",
-    "health.evidence-quality-noted",
     "health.no-fabricated-medical-facts",
     "nutrition.no-single-food-disease-claims",
     "trend.trends-over-events",
-  ]);
+  ], "exactly the four rules a human decided; see artifacts/release-review/attestation-2026-08-11.md");
+  assert.deepEqual(by("not-evaluated"), [
+    "health.evidence-quality-noted",
+  ], "a recommendation with no evidence, which COMPLIANT does not require and does not hide");
   assert.deepEqual(by("screened"), ["integrity.no-standards-manipulation"]);
 });
 

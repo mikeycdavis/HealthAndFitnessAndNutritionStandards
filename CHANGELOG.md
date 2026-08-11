@@ -159,10 +159,12 @@ Before and after: [pack 01b](artifacts/release-review/01b-remediation-diff.md).
 
 This repository carries its own `project-policy.yml` and is evaluated by its own CI.
 
-Its status is **`NOT_EVALUATED`**, and it is left that way. Four of its rules can only be established
-by a human, and none has been. Recording an attestation to make CI green would be the "falsify
-evidence for" clause of the invariant being attested — so the honest state is reported instead, and
-the CI step that runs `check` accepts exit 4 with a comment explaining why.
+Its status is **`COMPLIANT`**. It reported `NOT_EVALUATED` for most of this repository's life, because
+four of its rules can only be established by a human and none had been; recording an attestation to
+make CI green would have been the "falsify evidence for" clause of the invariant being attested. The
+four attestations now recorded were decided by a named reviewer, not manufactured to reach a verdict.
+The CI step that runs `check` still accepts exit 4 with a comment explaining why, and that allowance
+is removed only as part of the 1.0.0 release mechanics.
 
 Two real failures surfaced during the build and were fixed rather than declared out of scope: the
 README carried no wellness-scope disclosure, and `docs/escalation-tiers.md` did not exist.
@@ -181,20 +183,21 @@ Stated because a limitation that is not written down reads as a claim.
 - No `.svg` renders are committed. The `.mmd` sources are canonical and the absence is declared
   (ADR 0006).
 - `health.evidence-quality-noted` — a recommendation — applies here and has no evidence. Because it
-  is a recommendation it does not force `NOT_EVALUATED` and does not enter the score, so a
-  `COMPLIANT` verdict for this repository would be reached with one applicable rule carrying no
-  evidence at all. Designed behaviour, disclosed rather than left to be discovered.
+  is a recommendation it does not force `NOT_EVALUATED` and does not enter the score, so this
+  repository's `COMPLIANT` verdict is reached with one applicable rule carrying no evidence at all.
+  Designed behaviour, disclosed rather than left to be discovered.
 - Deferred work is in [BACKLOG.md](BACKLOG.md) with the reason for each deferral, so that a decision
   not to do something is distinguishable later from having forgotten it.
 
-### Independent review completed, attestation not
+### Independent review completed
 
-All four human-review rules now carry an independent content-review disposition — **all four
+All four human-review rules carry an independent content-review disposition — **all four
 ESTABLISHABLE**, two of them only after real defects were found and remediated. Recorded with their
 evidence chains in [artifacts/release-review/dispositions.md](artifacts/release-review/dispositions.md).
 
 A disposition is not an attestation. None carries a human `reviewedBy` identity, and the decision to
-record an attestation belonged to a human reviewer and to nobody else.
+record an attestation belonged to a human reviewer and to nobody else. That decision was made
+separately, and is recorded below.
 
 A dry run in a scratch copy — deleted afterwards, the repository's own policy untouched — established
 the release condition the reviewer set: with exactly those four attestations and nothing else
@@ -223,3 +226,19 @@ matching the predicted per-rule states is not sufficient. Every mechanical gate 
 verdict was exactly the one predicted, and it was still wrong — because provenance is not a property
 any gate can read. The full account, including the withdrawn text preserved unedited, is in
 [artifacts/release-review/attestation-2026-08-11.md](artifacts/release-review/attestation-2026-08-11.md).
+
+### The four attestations were then recorded validly
+
+The reviewer stated the four decisions themselves. All four **approved**, recorded under their own
+identity on 2026-08-11, each with a `reviewedAgainst` digest fixing exactly the material read — so an
+edit to any of those files returns the rule to not-evaluated rather than leaving an approval standing
+over text nobody reviewed.
+
+Two of the four approve **remediated** material rather than the versions first reviewed: the tier
+corpus and the medical-claims corpus each returned `DEFECTIVE` on first review, and both were fixed in
+the content. Neither rule, nor the evaluator, nor the policy's strengths were touched to obtain a
+disposition.
+
+The verdict moved to `COMPLIANT` at exit 0 — the same verdict `ad6bdcb` reached and was refused. What
+changed is not the machinery and not the content. It is that the identity in `reviewedBy` is the
+person who made the decision, because they made it.

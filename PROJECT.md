@@ -24,23 +24,25 @@ catalog entry — so the evidence-quality rules apply here in full and are decla
 This repository is evaluated against its own standards, version `1.0.0-dev`, declared in
 [`project-policy.yml`](project-policy.yml).
 
-Its current status is **`NOT_EVALUATED`**. Four rules apply here that no machine evaluates —
-`escalation.tier-language-calibrated`, `trend.trends-over-events`,
-`health.no-fabricated-medical-facts`, and `nutrition.no-single-food-disease-claims` — and no human
-has reviewed them. Recording an attestation anyway would be the "falsify evidence for" clause of the
-integrity invariant. All four carry an independent content-review disposition, all four
-`ESTABLISHABLE`; a disposition is evidence offered to a decision-maker and is not the decision.
+Its current status is **`COMPLIANT`**. No rules apply here that are still awaiting evidence: the four
+that no machine can evaluate — `escalation.tier-language-calibrated`, `trend.trends-over-events`,
+`health.no-fabricated-medical-facts`, and `nutrition.no-single-food-disease-claims` — now carry
+attestations recorded by a named human reviewer on 2026-08-11, each fixed to the material reviewed by
+a content digest. Two of them approve remediated material: the first review of the tier corpus and of
+the medical-claims corpus each returned `DEFECTIVE`, and the defects were fixed in the content rather
+than in the rule that found them.
 
-`health.evidence-quality-noted` also applies here and has no evidence at all. It is a recommendation,
-so it neither forces `NOT_EVALUATED` nor enters the score — which means a future `COMPLIANT` verdict
-here would be reached with one applicable rule unestablished. Designed behaviour, disclosed rather
-than left to be discovered.
+`health.evidence-quality-noted` applies here and still has no evidence. It is a recommendation, so it
+neither forces `NOT_EVALUATED` nor enters the score — which means this `COMPLIANT` verdict is reached
+with one applicable rule unestablished. Designed behaviour, disclosed here rather than left to be
+discovered.
 
-**This status was `COMPLIANT` once, briefly and wrongly.** Four attestations were recorded at
-`ad6bdcb` and withdrawn immediately: the content was sound and the per-rule states matched the frozen
+**This status was `COMPLIANT` once before, briefly and wrongly.** Four attestations were recorded at
+`ad6bdcb` and withdrawn at `7b650f2`: the content was sound and the per-rule states matched the frozen
 prediction exactly, but the `reviewedBy` identity was written on the authority of a draft rather than
 of the person named. Every gate stayed green throughout, because provenance is not a property any of
-them can read. See
+them can read. The current attestations differ from the withdrawn ones in the one respect that
+mattered — the reviewer stated the decision. See
 [`artifacts/release-review/attestation-2026-08-11.md`](artifacts/release-review/attestation-2026-08-11.md).
 
 The integrity invariant itself reports **`screened`**: all nine bound integrity checks executed and

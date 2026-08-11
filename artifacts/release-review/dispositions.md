@@ -128,6 +128,30 @@ line changed in either direction.
 Also here, and not verdict-affecting: PROJECT.md, CHANGELOG.md,
 the attestations comment, two tests, and the backlog, all
 returned to describing a repository awaiting human review.
+
+<the commit that recorded them validly>
+VERDICT-AFFECTING. The same four attestations, approved, with
+digests. NOT_EVALUATED/exit 4 -> COMPLIANT/exit 0.
+The four rules move to `attested`; the invariant stays
+`screened`; health.evidence-quality-noted stays not-evaluated.
+What differs from ad6bdcb is neither the machinery nor the
+content. It is that the accountable reviewer stated the four
+decisions personally, and reviewedBy names them for that
+reason. The dispositions below are unchanged, and were the
+evidence considered, not the decision.
+Two of the four approve REMEDIATED material (79d39d1 for
+health, d47e389 for escalation), not the versions first
+reviewed and found DEFECTIVE. A certifier must read them that
+way; approving the corpus as first delivered would be wrong.
+Also here, and NOT verdict-affecting: PROJECT.md, CHANGELOG.md,
+the attestations comment, and two test assertions, each of
+which became false when the verdict moved. None is read by
+the evaluator.
+No standards content, catalog entry, schema, detector,
+evaluator line, applicability declaration, exception, or rule
+strength changed. The correction that made this commit
+possible was applied to the input at 7b650f2 and nothing was
+relaxed to obtain the verdict.
 ```
 
 The last two entries are the ones this procedure was written for, and they are the only ones where
@@ -146,7 +170,7 @@ person decide, personally, and does the record derive its authority from them ra
 anything written on their behalf. No gate in this repository can answer that. A certifier who
 confirms the verdict, confirms the states, and stops, would have certified `ad6bdcb`.
 
-The second, third, and fourth entries name no hash because they could not: no such commit existed
+The second, third, fourth, and sixth entries name no hash because they could not: no such commit existed
 when its own text was written, and inventing one would be the same defect as the hash that was
 corrected at `6c57a12`. Find them with:
 
@@ -530,17 +554,30 @@ None of that is an agent's decision to make.
 All four rules have an independent disposition; none has an attestation. `standards check .` reports
 `NOT_EVALUATED` and exits 4. That is the correct state and it is left that way. Nothing is tagged.
 
-## Release state after the withdrawal
+## Release state after the withdrawal, and after the valid attestation
 
-All four rules have an independent disposition and **no** attestation. `standards check .` reports
-`NOT_EVALUATED` and exits 4. `VERSION` is `1.0.0-dev`, CI still tolerates exit 4, nothing is tagged.
-That is the same state as at `0acc6cc`, reached by a different route.
+The withdrawal returned the repository to the state at `0acc6cc` by a different route: four
+dispositions, no attestation, `NOT_EVALUATED` at exit 4.
+
+**All four attestations were then recorded validly**, on the accountable reviewer's own stated
+decision, under their own identity, each carrying a `reviewedAgainst` digest over exactly the material
+read. `standards check .` now reports `COMPLIANT` at exit 0, the invariant `screened`,
+`health.evidence-quality-noted` still not-evaluated — the frozen prediction, reached a second time and
+this time on evidence that is what it claims to be.
+
+Two of the four approve **remediated** material: `79d39d1` for `health.no-fabricated-medical-facts`
+and `d47e389` for `escalation.tier-language-calibrated`. A certifier who reads them as approving the
+corpora as first delivered has read them wrong — both first reviews returned `DEFECTIVE`.
 
 `ad6bdcb` remains in history and must not be certified. It is kept because it is the strongest
 evidence this repository has produced about its own procedure: a candidate can satisfy every
 mechanical gate, match every predicted per-rule state, and still be uncertifiable on the provenance of
-its inputs.
+its inputs. That it reached the same verdict the valid commit reaches is the point, not a coincidence
+— the verdict never distinguished them.
 
-What a valid attestation now requires is unchanged and stated at *What a human must now decide*
-above, with one addition learned here: the record must derive its authority from the accountable
-person, not from any text written on their behalf — including text they were offered to adopt.
+The addition learned there stands as a permanent requirement of this procedure: the record must
+derive its authority from the accountable person, not from any text written on their behalf,
+including text they were offered to adopt.
+
+**Release mechanics remain unauthorized.** `VERSION` is `1.0.0-dev`, CI still tolerates exit 4,
+nothing is tagged. ST-05 is closed; ST-06 is a separate decision that a green verdict does not make.

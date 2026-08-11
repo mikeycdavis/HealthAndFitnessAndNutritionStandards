@@ -340,44 +340,103 @@ exceptions: []
 
 # Recorded human judgement.
 #
-# THIS SECTION IS EMPTY, and that is why `standards check` reports this repository as
-# NOT_EVALUATED rather than COMPLIANT. Four rules apply here that only a human can establish:
+# Four rules apply here that no detector can establish. Each carries an attestation below because a
+# person read the review material and decided, per rule, that the standard is met. `standards status`
+# lists them under "Rules awaiting evidence" while they are unattested; a test asserts that list and
+# the keys recorded here are the same set, so neither can drift from the other by hand.
 #
-#   escalation.tier-language-calibrated
-#   health.no-fabricated-medical-facts
-#   nutrition.no-single-food-disease-claims
-#   trend.trends-over-events
+# The invariant is not among them. It is NOT attestable and needs no attestation: since ADR 0007 it
+# reports `screened` when every
+# integrity check bound to it has run and none fired, which is a narrower claim than human
+# attestation and is the only state it can reach. Attempting to attest it does not produce a green;
+# it stops evaluation with BLOCKED_BY_INVARIANT and exit code 3. An earlier version of this comment
+# named it here, and a certifier who followed that instruction would have read the system's refusal
+# as their own error. See artifacts/adr/0007-screened-as-a-distinct-invariant-state.md.
 #
-# That list is what `standards status .` reports under "Rules awaiting evidence", and a test asserts
-# the two agree. Do not maintain it by hand against memory — this comment was wrong once, and the
-# way it was wrong mattered: it named integrity.no-standards-manipulation, which is NOT attestable.
-# Attempting to attest the invariant does not produce a green; it stops evaluation with
-# BLOCKED_BY_INVARIANT and exit code 3. A comment that sent someone to do that was worse than no
-# comment.
+# WHAT THESE ENTRIES ARE, AND WHAT THEY ARE NOT. Independent content review produced a disposition
+# for each of the four — recorded in artifacts/release-review/dispositions.md, all four
+# ESTABLISHABLE, two of them only after real defects were found and fixed at the content layer. A
+# disposition is evidence offered to a decision-maker. It is not the decision. The `reviewedBy`
+# below is the person who made the decision, and it is here because that person stated it.
 #
-# The invariant needs no attestation. Since ADR 0007 it reports `screened` when every integrity
-# check bound to it has run and none fired, which is a narrower claim than human attestation and is
-# the only state it can reach. See artifacts/adr/0007-screened-as-a-distinct-invariant-state.md.
+# THAT DISTINCTION WAS LEARNED THE EXPENSIVE WAY. Four attestations were recorded at ad6bdcb and
+# withdrawn at 7b650f2. Nothing about their content was wrong: the dispositions were the same ones
+# cited below, the per-rule states matched the frozen prediction exactly, and every mechanical gate
+# stayed green. The defect was provenance — the reviewedBy identity had been written on the
+# authority of a draft supplied by the reviewing agent, which cannot confer human authority on
+# anything, so the record asserted a judgement whose author could not be established. That is the
+# "falsify evidence for" clause of integrity.no-standards-manipulation, and it holds regardless of
+# whether the named person would have agreed, which in the end they did.
 #
-# IT WAS NOT ALWAYS EMPTY. Four attestations were recorded at ad6bdcb and withdrawn immediately
-# afterwards. Nothing about their content was wrong: the four dispositions were sound, the per-rule
-# states matched the frozen prediction exactly, and every mechanical gate stayed green. The defect
-# was provenance. The `reviewedBy` identity was written on the authority of a draft supplied by the
-# reviewing agent, which cannot confer human authority on anything, so the attestations asserted a
-# human judgement whose author could not be established. That is the "falsify evidence for" clause
-# of integrity.no-standards-manipulation, regardless of whether the named person would have agreed.
+# The lesson to carry forward is not "do not do that again". It is that matching the predicted
+# per-rule states is NOT sufficient evidence that a verdict-affecting input is what it claims to be.
+# ad6bdcb reached exactly the predicted COMPLIANT state and was uncertifiable. Provenance is not a
+# property any gate can read. Read artifacts/release-review/attestation-2026-08-11.md before
+# recording, amending, or certifying anything in this block.
 #
-# Read the episode before recording anything here: artifacts/release-review/attestation-2026-08-11.md
-# records both the decision and its withdrawal. The lesson it carries is that matching the predicted
-# per-rule states is NOT sufficient — that repository reached exactly the predicted COMPLIANT state
-# through evidence whose claimed authority was not what the record said it was.
-#
-# No attestation appears here because no human has recorded one. Independent content review has
-# produced a disposition for each of the four — recorded in artifacts/release-review/dispositions.md,
-# all four ESTABLISHABLE, two of them only after real defects were found and fixed. A disposition is
-# not an attestation: it carries no human reviewedBy identity, and an agent writing one on a human's
-# behalf — including one drafted for them — is the failure described above.
-#
-# The honest state of this repository is that it cannot yet demonstrate compliance, and the system
-# says so. See INSTRUCTIONS.md for what an attestation looks like and what evidence it must carry.
-attestations: {}
+# Each entry's reviewedAgainst.paths fixes what was actually read. If any of those files changes,
+# the digest stops matching and the rule returns to not-evaluated rather than silently carrying an
+# approval of text nobody reviewed. `standards status` reports such an attestation as stale.
+attestations:
+  escalation.tier-language-calibrated:
+    status: approved
+    reviewedBy: "Michael Davis"
+    reviewedAt: "2026-08-11"
+    evidence: "Approved on the remediated four-tier corpus, not the version initially reviewed and found DEFECTIVE for softening Tier 4's action horizon. The remediation at d47e389 separates tone from urgency: calm is constant across tiers, the timeframe is not. Reasoning in artifacts/release-review/dispositions.md."
+    reference: "artifacts/release-review/dispositions.md"
+    reviewedAgainst:
+      digest: "d029db2315b5f3539bc6d793bd34f607"
+      paths:
+        - "artifacts/release-review/01-escalation-tier-language-calibrated.md"
+        - "artifacts/release-review/01a-tier-language-corpus.md"
+        - "artifacts/release-review/01b-remediation-diff.md"
+        - "docs/escalation-tiers.md"
+        - "docs/examples/interpretation-potentially-urgent.md"
+        - "docs/examples/interpretation-worth-monitoring.md"
+        - "standards/03-safety-and-escalation-tiers.md"
+  health.no-fabricated-medical-facts:
+    status: approved
+    reviewedBy: "Michael Davis"
+    reviewedAt: "2026-08-11"
+    evidence: "Approved on the remediated corpus, not the version initially reviewed and found DEFECTIVE. 191 claims / 182 distinct assertions were reviewed at claim granularity; no fabricated physiology was found, and the thirty claims that stated a real finding past its evidence were narrowed at 79d39d1 without touching the rule, evaluator, or policy. Reasoning in artifacts/release-review/dispositions.md."
+    reference: "artifacts/release-review/dispositions.md"
+    reviewedAgainst:
+      digest: "8890ce84994531e8527a229095a74f72"
+      paths:
+        - "artifacts/release-review/03-health-no-fabricated-medical-facts.md"
+        - "artifacts/release-review/03a-claim-extract.md"
+        - "artifacts/release-review/03b-remediation-diff.md"
+        - "standards/14-evidence-quality.md"
+        - "standards/30-adherence.md"
+  nutrition.no-single-food-disease-claims:
+    status: approved
+    reviewedBy: "Michael Davis"
+    reviewedAt: "2026-08-11"
+    evidence: "Approved on the single-food claims corpus. No claim credits a single food with causing or curing complex disease absent strong evidence. The mechanical food-name scan is finite and was treated as corroborating the read, not as proof of absence. Reasoning in artifacts/release-review/dispositions.md."
+    reference: "artifacts/release-review/dispositions.md"
+    reviewedAgainst:
+      digest: "867dddbfa854b7c2410558f0a7690064"
+      paths:
+        - "artifacts/release-review/04-nutrition-no-single-food-disease-claims.md"
+        - "artifacts/release-review/04a-single-food-claims-corpus.md"
+        - "standards/14-evidence-quality.md"
+        - "standards/37-dietary-quality.md"
+        - "rules/nutrition.json"
+  trend.trends-over-events:
+    status: approved
+    reviewedBy: "Michael Davis"
+    reviewedAt: "2026-08-11"
+    evidence: "Approved on the trend corpus. Individual observations inform decisions and trends establish patterns, including the two hard cases: a red flag creates an immediate decision obligation without establishing a diagnosis or a trend, and accumulated observations establish a pattern no single observation carries. Reasoning in artifacts/release-review/dispositions.md."
+    reference: "artifacts/release-review/dispositions.md"
+    reviewedAgainst:
+      digest: "a75df23e00acd97a4472e3bdf6ab11e5"
+      paths:
+        - "artifacts/release-review/02-trend-trends-over-events.md"
+        - "artifacts/release-review/02a-trend-corpus.md"
+        - "standards/02-trend-over-event.md"
+        - "standards/08-trends.md"
+        - "standards/12-red-flags.md"
+        - "standards/20-recovery.md"
+        - "standards/24-pain-injury-signals.md"
+        - "standards/29-hydration-fitness.md"
+        - "standards/32-energy-balance.md"

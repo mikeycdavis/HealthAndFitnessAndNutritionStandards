@@ -1,6 +1,9 @@
-# Attestation attempt — WITHDRAWN
+# Attestation attempt — WITHDRAWN, and the valid recording that followed
 
 > **STATUS: WITHDRAWN. These attestations do not stand and must not be reinstated as written.**
+> Four attestations *were* subsequently recorded validly, by a different route and on a different
+> authority — see **The valid recording** at the end of this file. This notice governs the text
+> below it, which is the withdrawn version preserved unedited.
 >
 > They were recorded at `ad6bdcb` and withdrawn immediately afterwards. **Nothing about their content
 > was wrong.** The four dispositions were sound, the resulting per-rule states matched the prediction
@@ -195,3 +198,52 @@ throughout that its analysis was evidence offered to a human decision-maker. The
 decision is not a decision. Text that says what a reviewer would conclude, however accurate, is not
 that reviewer concluding it. The question `reviewedBy` answers is *who is accountable*, and the only
 valid source of that answer is the accountable person.
+
+---
+
+## The valid recording
+
+**Reviewer of record:** Michael Davis. **Review date:** 2026-08-11.
+
+The same four rules. **All four approved.** Recorded because the reviewer stated the four decisions
+themselves, in their own words, having been asked for exactly that and nothing else.
+
+| Rule | Decision |
+| --- | --- |
+| `escalation.tier-language-calibrated` | approved |
+| `health.no-fabricated-medical-facts` | approved |
+| `nutrition.no-single-food-disease-claims` | approved |
+| `trend.trends-over-events` | approved |
+
+**Two of the four approve remediated material.** `health.no-fabricated-medical-facts` was first
+reviewed `DEFECTIVE` on six blocking findings and remediated at `79d39d1`;
+`escalation.tier-language-calibrated` was first reviewed `DEFECTIVE` for softening Tier 4's action
+horizon and remediated at `d47e389`. Both defects were fixed in the content. Neither the rule that
+found them, nor the evaluator, nor any policy strength was touched. Anyone reading these attestations
+as approval of the corpora as first delivered has read them wrong.
+
+**Each entry carries a `reviewedAgainst` digest** over exactly the files read. If any of those files
+changes, the digest stops matching, `standards status` reports the attestation stale, and the rule
+returns to not-evaluated. An approval cannot silently outlive the text it approved.
+
+`artifacts/release-review/dispositions.md` is deliberately **not** among those files. It is the
+living post-baseline ledger and is edited by later entries — including the entry recording this
+commit. Including it would stale all four attestations the moment the record described them. It is
+carried as `reference` instead, which is not digested.
+
+### What changed between the withdrawn version and this one
+
+Nothing in the machinery. Nothing in the content. Nothing in the four dispositions, which were the
+same in both cases and were sound in both cases. The verdict is the same verdict: `COMPLIANT` at exit
+0, invariant `screened`, `health.evidence-quality-noted` still carrying no evidence.
+
+What changed is that the person named made the decision. That is the entire difference between a
+record that must not be certified and one that may be, and no gate in this repository can see it.
+
+### For the certifier
+
+`ad6bdcb` and the commit recording this section reach the identical mechanical state. Comparing
+per-rule states against the frozen prediction cannot tell them apart, and confirming the verdict
+cannot either. The question that separates them is asked of the record, not of the tool: does the
+attestation derive its authority from the accountable person, or from something written on their
+behalf?
