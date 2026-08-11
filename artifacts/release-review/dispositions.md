@@ -152,6 +152,35 @@ evaluator line, applicability declaration, exception, or rule
 strength changed. The correction that made this commit
 possible was applied to the input at 7b650f2 and nothing was
 relaxed to obtain the verdict.
+
+<the commit that corrected the CI comment>
+NOT verdict-affecting. Comments only, plus two prose fixes.
+.github/workflows/ci.yml: the comment block above the gate said
+this repository is NOT_EVALUATED, and said the exit-4 allowance
+could never be removed by recording reviews because the
+invariant permanently prevents COMPLIANT. Both false. The
+second stopped being true at ADR 0007, which introduced
+`screened` for exactly that reason.
+The executable line is BYTE-IDENTICAL:
+  run: npm run check || [ $? -eq 4 ]
+The allowance is not removed here. It is removed under ST-06,
+which certification authorizes and this commit does not.
+Also: PROJECT.md's "Resolved during release certification"
+paragraph and one CHANGELOG.md sentence, both of which asserted
+the repository still exits 4.
+No standards content, catalog, schema, policy, applicability,
+attestation, detector, or evaluator input changed.
+
+HOW THIS WAS FOUND, because it is the important part. It was
+not found by diffing against the baseline. It could not be: the
+workflow had not changed since 7f59f8b. It was found by an
+independent certifier reading the surface an operator would act
+on and asking whether it was TRUE, not whether it had MOVED.
+Diff-first protects against unexamined change. It cannot
+establish that unchanged baseline content was ever correct.
+That is a limit of this procedure, not a lapse in following it.
+Fourth instance of the same failure family, and the first where
+the defect was inherited from the frozen baseline itself.
 ```
 
 The last two entries are the ones this procedure was written for, and they are the only ones where
@@ -170,7 +199,7 @@ person decide, personally, and does the record derive its authority from them ra
 anything written on their behalf. No gate in this repository can answer that. A certifier who
 confirms the verdict, confirms the states, and stops, would have certified `ad6bdcb`.
 
-The second, third, fourth, and sixth entries name no hash because they could not: no such commit existed
+Every entry but the first and fifth names no hash, because it could not: no such commit existed
 when its own text was written, and inventing one would be the same defect as the hash that was
 corrected at `6c57a12`. Find them with:
 
@@ -581,3 +610,8 @@ including text they were offered to adopt.
 
 **Release mechanics remain unauthorized.** `VERSION` is `1.0.0-dev`, CI still tolerates exit 4,
 nothing is tagged. ST-05 is closed; ST-06 is a separate decision that a green verdict does not make.
+
+The comment above CI's gate now says so, having previously said the opposite — that the allowance
+could never be removed. The allowance is transitional, not load-bearing, and removing it is ST-06's
+work rather than forbidden work. See the seventh ledger entry, and note where the defect came from:
+not from any post-baseline change, but from the baseline itself, unchanged and wrong.

@@ -120,6 +120,6 @@ five subcommands, 130 tests passing, all guards green.
 
 **Resolved during release certification:** `COMPLIANT` was unreachable by any project, because the
 integrity invariant is required, human-evaluated, and never attestable, so it permanently sat in the
-"nothing established this" set. Fixed by ADR 0007's `screened` state. This repository still exits 4,
-which was the test of whether the fix was narrow enough — a change that turned this repository green
-would have been too broad.
+"nothing established this" set. Fixed by ADR 0007's `screened` state. The fix was deliberately narrow:
+it did not turn this repository green, which stayed at exit 4 until four human attestations were
+recorded, and the invariant still reports `screened` rather than passed or attested.

@@ -53,22 +53,29 @@ jobs:
         run: npm run audit
 
       # The gate. Exit 4 is accepted, and the acceptance is written here rather than hidden in a
-      # flag, because it is a statement about this repository's honest state rather than a relaxation
-      # of the check.
+      # flag, because it is a statement about this repository's state rather than a relaxation of
+      # the check.
       #
-      # This repository's own status is NOT_EVALUATED. Run `standards status .` for the current list
-      # of rules awaiting review — it is not repeated here, because a hand-maintained copy of it
-      # drifted once already.
+      # THIS REPOSITORY CURRENTLY REPORTS COMPLIANT. Four human attestations were recorded validly
+      # at eb9a0f8, after an earlier attempt at ad6bdcb was withdrawn for defective provenance. Run
+      # `standards status .` for the current state — it is not repeated here, because a
+      # hand-maintained copy of it drifted once already.
       #
-      # Adding an attestation to turn this green would be the "falsify evidence for" clause of the
-      # very invariant being attested, so the honest result is reported instead.
+      # THE EXIT-4 ALLOWANCE IS TRANSITIONAL AND IS NOT LOAD-BEARING. It remains only because
+      # release certification and release mechanics are separate steps: the independent
+      # certification pass runs against a candidate commit, and removing this allowance belongs to
+      # the release mechanics that certification authorizes (backlog item ST-06). Removing it is
+      # correct work, not forbidden work — do it when ST-06 is authorized, and delete this comment
+      # with it.
       #
       # Exit 0, 1, 2, and 3 are all treated as they should be: 0 passes, and 1, 2, and 3 fail the
       # build.
       #
-      # NOTE: this condition cannot currently be removed by recording reviews. The integrity
-      # invariant is required, human-evaluated, and never attestable, so it permanently reports
-      # not-evaluated and no project can reach COMPLIANT. That is an open semantics question found
-      # during release certification — see PROJECT.md, Known gaps.
+      # THE INVARIANT DOES NOT FORCE NOT_EVALUATED. An earlier version of this comment said the
+      # allowance could never be removed by recording reviews, because integrity.no-standards-
+      # manipulation is required, human-evaluated, and never attestable. That stopped being true at
+      # ADR 0007, which introduced `screened` precisely so COMPLIANT is reachable without passing or
+      # attesting the invariant. The comment was inherited unchanged from the certification baseline
+      # and would have told an operator not to do exactly the cleanup ST-06 requires.
       - name: Check this repository (the gate)
         run: npm run check || [ $? -eq 4 ]

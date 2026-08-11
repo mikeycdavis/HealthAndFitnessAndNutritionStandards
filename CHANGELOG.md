@@ -208,7 +208,8 @@ dispositions record.
 ### An attestation was recorded and withdrawn
 
 Four attestations were recorded at `ad6bdcb` and withdrawn in the commit immediately after. The
-repository was `COMPLIANT` at exit 0 in between, and is `NOT_EVALUATED` at exit 4 again.
+repository was `COMPLIANT` at exit 0 in between, and returned to `NOT_EVALUATED` at exit 4 — where it
+stayed until the valid attestations recorded below.
 
 Nothing about the content was wrong. The dispositions were sound, the per-rule states matched the
 prediction frozen before any attestation existed — exactly four rules attested, the invariant
