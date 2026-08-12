@@ -238,3 +238,39 @@ test("mermaidBlocks extracts whole fenced blocks", () => {
   const md = "text\n\n```mermaid\nflowchart TB\n  a --> b\n```\n\nmore\n";
   assert.deepEqual(mermaidBlocks(md), ["flowchart TB\n  a --> b\n"]);
 });
+
+/**
+ * The test suite is itself an actionable surface, and it lied for the entire life of this
+ * repository. `npm test` was `node --test "test/*.test.mjs"`. Glob expansion inside `--test`
+ * arrived in Node 21; the quotes stop the shell expanding it first. On the maintainer's Node 24 it
+ * ran all 160 tests. On CI's Node 20 — and on any Node inside the declared `engines: >=18` range —
+ * it resolved the pattern as a literal path, found nothing, and exited 1.
+ *
+ * Nothing caught it, because everything that could have caught it was one of the tests that never
+ * ran. It was found by executing the workflow on a real runner for the first time, which is the same
+ * lesson as the CI comment corrected at 9809afc: an actionable surface has to be RUN, not read.
+ *
+ * This guard is narrower than "the tests pass". It asserts that every test file on disk is named in
+ * the command that runs them, so a new test file that is never executed fails the suite instead of
+ * silently contributing nothing.
+ */
+test("every test file is named in the command that runs the tests", async () => {
+  const { readdir } = await import("node:fs/promises");
+  const onDisk = (await readdir(path.join(REPO, "test")))
+    .filter((f) => f.endsWith(".test.mjs"))
+    .sort();
+
+  const pkg = JSON.parse(await readFile(path.join(REPO, "package.json"), "utf8"));
+  const script = pkg.scripts.test;
+
+  assert.ok(
+    !/[*?[\]]/.test(script),
+    "no glob: `node --test` only expands patterns from Node 21, below the declared engines floor",
+  );
+
+  const named = [...script.matchAll(/test\/([a-z-]+\.test\.mjs)/g)].map((m) => m[1]).sort();
+  assert.deepEqual(named, onDisk, "a test file exists that `npm test` would never run");
+
+  const engines = pkg.engines.node;
+  assert.equal(engines, ">=18", "if this floor moves, re-check that the test invocation still works there");
+});

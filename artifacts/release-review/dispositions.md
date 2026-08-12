@@ -212,6 +212,39 @@ about this repository. Since CI is an enforcement surface here,
 v1.0.0 waits for a genuinely green Actions run on this commit.
 Authorization to perform release mechanics is not evidence that
 they succeeded.
+
+<the commit that fixed the test invocation>
+NOT verdict-affecting. SUPERSEDES 83d799b as the release
+candidate: 83d799b cannot be tagged, because its own CI run
+fails.
+Actions billing was fixed and the run on 83d799b executed for
+the first time. Five guards green; Tests FAILED:
+  Could not find '.../test/*.test.mjs'
+npm test was `node --test "test/*.test.mjs"`. Glob expansion in
+--test arrived in Node 21; the quotes stop the shell expanding
+first. Maintainer runs Node 24, CI pins 20, engines says >=18.
+The suite had NEVER run anywhere but one machine.
+Fixed by naming the nine test files explicitly - version
+independent - rather than raising CI's Node to match the bug.
+New guard: the set named in package.json must equal the set of
+test/*.test.mjs on disk, and the command must contain no glob.
+Mutation-tested. 160 -> 161 tests.
+Also: the two test counts in PROJECT.md and CHANGELOG.md.
+No standard, catalog entry, schema, policy, applicability,
+attestation, detector, or evaluator line changed. The verdict is
+COMPLIANT/exit 0 before and after, and the four attestations are
+untouched and non-stale.
+A NEW CERTIFICATION PASS IS REQUIRED against this commit. The
+prior pass certified 83d799b, and 83d799b is not the commit that
+will be tagged.
+
+WHY IT MATTERED. Every guarantee this repository makes through
+its tests was remotely unverified for its entire life. Nothing
+detected it because everything that could have was one of the
+tests that never ran. Same family as the CI comment at 9809afc
+and now the fifth instance: an actionable surface is verified
+only by EXECUTING it, in the environment that will execute it.
+Diff-first finds neither. Reading finds neither.
 ```
 
 The last two entries are the ones this procedure was written for, and they are the only ones where
@@ -658,9 +691,17 @@ any post-baseline change, but from the baseline itself, unchanged and wrong. It 
 procedure now says in its own text that diff-first cannot establish that unchanged content was
 correct.
 
-**`v1.0.0` is not tagged, and the reason is external.** GitHub Actions cannot execute — the account's
-Actions billing or spending limit stops every run before a runner is acquired, so the workflow reports
-failure having run zero steps. That is infrastructure not executed, not a finding about this
-repository; the full gate is green locally. Because CI is treated here as an enforcement surface, the
-tag waits for a genuinely green Actions run on the release commit. Authorization to perform release
-mechanics is not evidence that they succeeded.
+**`v1.0.0` is not tagged, and the reason is no longer external.** Actions billing was fixed and the
+run on `83d799b` executed for the first time in this repository's history. It failed — not on
+infrastructure, but on the **Tests** step, because `npm test` used a glob that only Node 21 and above
+expands while CI pins Node 20 and `engines` declares `>=18`. The suite had never run anywhere except
+the maintainer's machine.
+
+That is the strongest available argument for treating CI as an enforcement surface rather than a
+formality. Had the tag been cut while Actions was merely unable to start, an immutable 1.0.0 would
+have been pinned to a commit whose test suite could not execute in the environment that was supposed
+to enforce it.
+
+`83d799b` is therefore superseded as the release candidate, and the certification that passed against
+it does not carry over. The tag goes on a commit that has both a passing certification pass and a
+genuinely green Actions run — the same commit, and no other.

@@ -68,7 +68,7 @@ npm run rules       # has a rule been dropped, downgraded, or reclassified?
 npm run fidelity    # is quoted source text still the source's?
 npm run policy      # is this repository's own policy well-formed?
 npm run diagrams    # does each embedded diagram match its Mermaid source?
-npm test            # 160 tests, including a mutation test per guard
+npm test            # 161 tests, including a mutation test per guard
 npm run audit       # evidence, not a verdict
 npm run check       # the verdict; the CI gate
 ```
@@ -105,7 +105,7 @@ only exit 0 — the transitional `|| [ $? -eq 4 ]` allowance is gone.
 ## Current state
 
 **Complete for 1.0.0.** All 42 standards written, 59 rules catalogued, the CLI implemented with
-five subcommands, 160 tests passing, all guards green.
+five subcommands, 161 tests passing, all guards green.
 
 **Known gaps**, stated rather than left to be discovered:
 

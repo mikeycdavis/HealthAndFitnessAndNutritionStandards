@@ -38,7 +38,7 @@ began.
   domain it is the expected first result.
 - **Five guards** — the standards series inventory, the rule inventory, source fidelity, policy
   validation, and diagram freshness — each with a mutation test.
-- **160 tests**, including a fire and do-not-fire pair for every detector.
+- **161 tests**, including a fire and do-not-fire pair for every detector.
 - **Templates, worked examples, and fixtures**, with the fixtures built from the examples so an
   example that stopped satisfying the standards fails the build.
 
@@ -278,3 +278,33 @@ spending limit blocks every run before a runner is acquired, so the workflow rep
 run zero steps. That is infrastructure not executed, not evidence about this repository. Because CI is
 treated here as an enforcement surface rather than a formality, `v1.0.0` waits for an actual green
 Actions run on the release commit.
+
+### The first real CI run found that CI had never run the tests
+
+GitHub Actions had been unable to acquire a runner for the whole life of this repository — an account
+billing limit — so all thirteen workflow runs failed in about four seconds having executed zero
+steps. When that cleared, the run on the release commit `83d799b` executed for real and failed at the
+**Tests** step:
+
+```
+Could not find '/home/runner/work/.../test/*.test.mjs'
+```
+
+`npm test` was `node --test "test/*.test.mjs"`. Glob expansion inside `--test` arrived in Node 21, and
+the quotes stop the shell expanding the pattern first. On the maintainer's Node 24 it ran all 160
+tests. On CI's Node 20 — and on every Node in the declared `engines: ">=18"` range — it resolved the
+pattern as a literal filename, found nothing, and exited 1.
+
+**So the suite had never executed anywhere except one developer's machine.** Every guarantee this
+repository makes about itself through its tests was, remotely, unverified. Nothing detected it,
+because everything that could have detected it was one of the tests that never ran.
+
+The fix is version-independent rather than a bump of CI's Node to match the bug: `npm test` now names
+its nine test files explicitly. A new guard asserts that the set named in `package.json` equals the
+set of `test/*.test.mjs` on disk and that the command contains no glob, so a test file that would
+never run fails the suite. It has a mutation test, like every other guard.
+
+**The lesson is the one this release keeps relearning.** The CI comment corrected at `9809afc` was
+wrong for months and no diff could find it. The test invocation was broken from the first commit and
+no local run could find it. An actionable surface is only verified by executing it, in the environment
+that will execute it.
