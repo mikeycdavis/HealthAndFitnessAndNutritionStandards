@@ -48,6 +48,12 @@ import { fileURLToPath } from "node:url";
  * assert, and FE-13 does not close while this marker is still here — removing it is part of the
  * remedy, not a separate cleanup. What is lost is the build going red, and that is the part worth
  * losing.
+ *
+ * THE ONLY LEGITIMATE WAY THIS MARKER DISAPPEARS is that the false green has been removed and these
+ * three assertions — unchanged — pass. They may not be deleted, weakened, rewritten to assert
+ * something easier, or moved out of the default test run. Doing any of that to reach a green build
+ * is the "falsify evidence for" clause of `integrity.no-standards-manipulation`, applied to this
+ * repository's own maintenance rather than to an adopter's.
  */
 const TODO = { todo: "FE-13: release identity is not established; remove this marker with the remedy" };
 
