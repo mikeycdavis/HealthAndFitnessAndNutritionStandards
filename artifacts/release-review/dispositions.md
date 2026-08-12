@@ -702,6 +702,24 @@ formality. Had the tag been cut while Actions was merely unable to start, an imm
 have been pinned to a commit whose test suite could not execute in the environment that was supposed
 to enforce it.
 
-`83d799b` is therefore superseded as the release candidate, and the certification that passed against
-it does not carry over. The tag goes on a commit that has both a passing certification pass and a
+`83d799b` was therefore superseded as the release candidate, and the certification that passed against
+it did not carry over. The tag goes on a commit that has both a passing certification pass and a
 genuinely green Actions run — the same commit, and no other.
+
+## Released
+
+**`v1.0.0` is an annotated tag at `570c45b`.** The three pre-tag conditions were established in order,
+and none was inferred from another:
+
+1. Actions run `31625046364`, attached to that exact commit, in which every enforcement step actually
+   executed — five guards, 161 tests, audit, and the strict `check` gate with no exit-4 allowance.
+2. A fresh independent certification pass against that same commit, from the same immutable baseline
+   `7f59f8b`, nine commits explained.
+3. A final confirmation that HEAD had not moved and no attestation had gone stale.
+
+The tag was created on the accountable person's explicit authorization, which is the fourth condition
+and the only one no procedure can supply.
+
+**The baseline stays `7f59f8b` even now.** It is the record of what could be known before any of this
+was demonstrated, and advancing it would erase the evidence that the procedure worked — including the
+two occasions on which it stopped a release that every mechanical signal said was ready.

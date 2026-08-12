@@ -5,19 +5,18 @@
 Work on this project classified with the Extended Agile Hierarchy. Every item is a file in
 [`items/`](./items/); its YAML frontmatter is the source of truth and this page is derived from it.
 
-**10 of 23 leaf items complete — 43%**
+**11 of 23 leaf items complete — 48%**
 
 ```
-█████████████████░░░░░░░░░░░░░░░░░░░░░░░  43%
+███████████████████░░░░░░░░░░░░░░░░░░░░░  48%
 ```
 
 ## Status
 
 | Status | Items |
 | --- | ---: |
-| ◑ In progress | 3 |
-| ◒ Blocked | 2 |
-| ● Complete | 12 |
+| ◑ In progress | 1 |
+| ● Complete | 16 |
 | ◌ Deferred | 18 |
 | **Total** | **35** |
 
@@ -36,14 +35,10 @@ Work on this project classified with the Extended Agile Hierarchy. Every item is
 
 | Theme | Progress | Done | Remaining |
 | --- | --- | ---: | ---: |
-| [TH-01 Trustworthy health, fitness, and nutrition guidance](./items/TH-01.md) | `██████░░░░░░░░` 43% | 10 | 13 |
+| [TH-01 Trustworthy health, fitness, and nutrition guidance](./items/TH-01.md) | `███████░░░░░░░` 48% | 11 | 12 |
 
 ## In flight
 
-- ◑ [EP-02](./items/EP-02.md) — Certify 1.0.0 by independent content review
-- ◒ [FE-07](./items/FE-07.md) — Human attestation and 1.0.0 release mechanics
-- ◑ [IN-01](./items/IN-01.md) — Publish and certify version 1.0.0
-- ◒ [ST-06](./items/ST-06.md) — Release mechanics once attestations exist
 - ◑ [TH-01](./items/TH-01.md) — Trustworthy health, fitness, and nutrition guidance
 
 ## Ready to pick up
@@ -52,23 +47,23 @@ _Nothing marked ready._
 
 ## Everything
 
-- ◑ **[TH-01](./items/TH-01.md)** Trustworthy health, fitness, and nutrition guidance _(10/23)_
-  - ◑ **[IN-01](./items/IN-01.md)** Publish and certify version 1.0.0 _(10/11)_
+- ◑ **[TH-01](./items/TH-01.md)** Trustworthy health, fitness, and nutrition guidance _(11/23)_
+  - ● **[IN-01](./items/IN-01.md)** Publish and certify version 1.0.0 _(11/11)_
     - ● **[EP-01](./items/EP-01.md)** Build the 1.0.0 standards pack _(5/5)_
       - ● **[FE-01](./items/FE-01.md)** Committed sources, architecture record, and the guards that watch them
       - ● **[FE-02](./items/FE-02.md)** The kind-model catalog, the 59 rules, and the prohibition index
       - ● **[FE-03](./items/FE-03.md)** The 42 standards documents and this repository's own policy
       - ● **[FE-04](./items/FE-04.md)** The CLI, templates, worked examples, and fixtures
       - ● **[FE-05](./items/FE-05.md)** Test suite, documentation, and the CI gate
-    - ◑ **[EP-02](./items/EP-02.md)** Certify 1.0.0 by independent content review _(5/6)_
+    - ● **[EP-02](./items/EP-02.md)** Certify 1.0.0 by independent content review _(6/6)_
       - ● **[FE-06](./items/FE-06.md)** Substantive review of the four manual-review rules _(4/4)_
         - ● **[ST-01](./items/ST-01.md)** Review health.no-fabricated-medical-facts
         - ● **[ST-02](./items/ST-02.md)** Review escalation.tier-language-calibrated
         - ● **[ST-03](./items/ST-03.md)** Review nutrition.no-single-food-disease-claims
         - ● **[ST-04](./items/ST-04.md)** Review trend.trends-over-events
-      - ◒ **[FE-07](./items/FE-07.md)** Human attestation and 1.0.0 release mechanics _(1/2)_
+      - ● **[FE-07](./items/FE-07.md)** Human attestation and 1.0.0 release mechanics _(2/2)_
         - ● **[ST-05](./items/ST-05.md)** Record the four human attestations
-        - ◒ **[ST-06](./items/ST-06.md)** Release mechanics once attestations exist
+        - ● **[ST-06](./items/ST-06.md)** Release mechanics once attestations exist
   - ◌ **[IN-02](./items/IN-02.md)** Adherence enforced rather than remembered _(0/8)_
     - ◌ **[EP-03](./items/EP-03.md)** Post-1.0 adoption and enforcement workstream _(0/8)_
       - ◌ **[FE-08](./items/FE-08.md)** Organisation-level discovery of non-adopters
