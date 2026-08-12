@@ -39,7 +39,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 /**
- * WHY `todo` RATHER THAN A RED BUILD. These three were reproduced failing, and the intent was to
+ * WHY `todo` RATHER THAN A RED BUILD. All four were reproduced failing, and the intent was to
  * commit them failing. They are marked `todo` instead for one reason: this repository made CI a real
  * enforcement surface four commits before this one, and a knowingly-red `main` teaches everybody who
  * sees it that red means nothing. That erosion is the thing the whole release was built to resist.
@@ -50,7 +50,7 @@ import { fileURLToPath } from "node:url";
  * losing.
  *
  * THE ONLY LEGITIMATE WAY THIS MARKER DISAPPEARS is that the false green has been removed and these
- * three assertions — unchanged — pass. They may not be deleted, weakened, rewritten to assert
+ * falsifiers — all of them, unchanged — pass. They may not be deleted, weakened, rewritten to assert
  * something easier, or moved out of the default test run. Doing any of that to reach a green build
  * is the "falsify evidence for" clause of `integrity.no-standards-manipulation`, applied to this
  * repository's own maintenance rather than to an adopter's.
@@ -177,6 +177,55 @@ test("FALSIFIER: an unestablishable release identity must fail closed", TODO, as
     assert.notEqual(json?.standardVersion, "1.0.0", "an unidentifiable pack must not report 1.0.0");
   } finally {
     await rm(pack, { recursive: true, force: true });
+    await rm(adopter, { recursive: true, force: true });
+  }
+});
+
+/**
+ * The negative control that a string-comparison remedy would pass.
+ *
+ * Correct tag, correct VERSION, modified standards file. Every label agrees; the bytes do not. A
+ * remedy that compares `standardVersion` to `VERSION`, or even resolves the tag and stops there,
+ * goes green here — and it would be wrong, because the whole finding is about which bytes produced
+ * the verdict rather than which commit someone says they came from.
+ *
+ * This is the case that separates artifact identity from labels, which is why it is a falsifier and
+ * not a note in the backlog.
+ */
+test("FALSIFIER: correct tag and correct VERSION with a modified standard must still reject", TODO, async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "hfn-labels-agree-"));
+  const adopter = await adopterClaiming("1.0.0");
+  try {
+    // A real checkout of the release where possible, so the tag genuinely resolves. Where the tag is
+    // unavailable — a shallow CI checkout has no tags — a plain copy stands in; the requirement is
+    // identical either way, and only the strength of the "correct tag" half is reduced.
+    const cloned = spawnSync("git", ["clone", "--local", "--quiet", REPO, dir], { encoding: "utf8" });
+    const checkedOut =
+      cloned.status === 0 &&
+      spawnSync("git", ["-C", dir, "checkout", "--quiet", "v1.0.0"], { encoding: "utf8" }).status === 0;
+    if (!checkedOut) {
+      await rm(dir, { recursive: true, force: true });
+      await cp(REPO, dir, {
+        recursive: true,
+        filter: (src) => !src.includes(`${path.sep}.git`) && !src.includes("node_modules"),
+      });
+    }
+
+    // VERSION is untouched and correct. One standard is not.
+    const standard = path.join(dir, "standards", "32-energy-balance.md");
+    await writeFile(standard, (await readFile(standard, "utf8")) + "\n\nLocally added guidance.\n");
+    assert.equal((await readFile(path.join(dir, "VERSION"), "utf8")).trim(), "1.0.0");
+
+    const { exit, json } = check(dir, adopter);
+    assert.notEqual(
+      exit,
+      0,
+      `every label agrees and the standards bytes differ${checkedOut ? "" : " (tag unavailable; copy stood in)"}: ` +
+        "identity must be established over the material, not over the labels",
+    );
+    assert.notEqual(json?.standardVersion, "1.0.0", "a modified pack must not report itself as 1.0.0");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
     await rm(adopter, { recursive: true, force: true });
   }
 });
