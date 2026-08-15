@@ -308,16 +308,44 @@ test("package.json declares no dependencies, which is the policy made structural
   for (const line of commands) {
     assert.ok(!/npm ci|npm install|yarn |pnpm /.test(line), `an install step in CI means the policy changed: ${line.trim()}`);
   }
+
+  // And in the file that now holds the pipeline, where an install step would actually be executed.
+  // The same care as above about matching only executable lines: the comments in both files explain
+  // the rule, and a naive scan flags the explanation as a violation of it.
+  const pipeline = await read("ci/run-checks.sh");
+  for (const line of pipeline.split("\n").filter((l) => !/^\s*#/.test(l))) {
+    assert.ok(!/npm ci|npm install|yarn |pnpm /.test(line), `an install step in the pipeline means the policy changed: ${line.trim()}`);
+  }
 });
 
+/**
+ * The pipeline order, asserted where the pipeline now lives.
+ *
+ * This assertion used to read .github/workflows/ci.yml, because that file was the only place the
+ * stages existed. It is not weakened by moving: ci/run-checks.sh is what GitHub runs, what the local
+ * Docker pipeline runs, and what a self-hosted runner would run, so asserting the order there covers
+ * every surface at once instead of one of them. The companion assertion below — that the workflow
+ * delegates rather than enumerating — is what stops the old duplication coming back.
+ */
 test("CI runs the guards before the tests, and gates on check", async () => {
-  const ci = await read(".github/workflows/ci.yml");
+  const pipeline = await read("ci/run-checks.sh");
   const order = ["npm run inventory", "npm run rules", "npm run fidelity", "npm run policy", "npm run diagrams", "npm test", "npm run audit", "npm run check"];
   let previous = -1;
   for (const step of order) {
-    const at = ci.indexOf(step);
+    const at = pipeline.indexOf(step);
     assert.ok(at > previous, `CI must run ${step} after the previous step`);
     previous = at;
   }
-  assert.ok(!ci.includes("audit . --strict"), "audit runs without --strict; the error gate is the test suite");
+  assert.ok(!pipeline.includes("audit . --strict"), "audit runs without --strict; the error gate is the test suite");
+});
+
+test("the GitHub workflow invokes the pipeline rather than restating it", async () => {
+  const ci = await read(".github/workflows/ci.yml");
+  assert.match(ci, /ci\/run-checks\.sh/, "the workflow must invoke the authoritative pipeline");
+
+  // A second enumeration of the stages here is exactly the duplication this arrangement removes: two
+  // definitions that agree until one is edited.
+  for (const step of ["npm run inventory", "npm run rules", "npm run fidelity", "npm run diagrams", "npm run check"]) {
+    assert.ok(!ci.includes(step), `the workflow names '${step}' itself; the pipeline belongs in ci/run-checks.sh`);
+  }
 });
