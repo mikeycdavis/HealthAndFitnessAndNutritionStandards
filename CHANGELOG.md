@@ -13,6 +13,30 @@ because it can make a compliant project non-compliant — that is the intended b
 regression. A new recommendation is **minor**. Documentation, detector fixes, and clarifications that
 do not change what a rule means are **patch**.
 
+## Unreleased
+
+No standard, rule, or verdict changed, so no version moved.
+
+### Added
+
+- **Containerised CI and verified pull requests.** The whole pipeline runs in an ephemeral Docker
+  container (`ci/ci.ps1`, `ci/ci.sh`) and `ci/submit-pr.*` will only push a commit that has passed
+  it — resolving `HEAD` before and after verification and refusing if it moved. See
+  [`docs/local-ci.md`](docs/local-ci.md).
+
+### Changed
+
+- **The pipeline has one definition.** The stages moved out of `.github/workflows/ci.yml` into
+  [`ci/run-checks.sh`](ci/run-checks.sh), which the workflow now invokes. The workflow was kept and
+  still runs on its own; it is a second opinion rather than a prerequisite. Two definitions of a
+  pipeline agree until the day they matter, and this one had already drifted once.
+
+### Found while building this
+
+- The container is given no network at all, which turned the zero-dependency policy from a comment
+  in a workflow file into a property of the environment. The policy had never been enforced by
+  anything but attention.
+
 ## 1.0.0
 
 The first release. Built in ten milestones, each with a gate that had to be green before the next
