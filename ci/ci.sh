@@ -103,7 +103,7 @@ result=$([ "$status" -eq 0 ] && echo passed || echo failed)
 stages_json="$(
   grep -o '::ci-stage:: name=[a-z-]* status=[a-z]*' "$log" 2>/dev/null \
   | sed -E 's/::ci-stage:: name=([a-z-]*) status=([a-z]*)/    { "name": "\1", "status": "\2" }/' \
-  | paste -sd ',' - | sed 's/,/,\n/g'
+  | awk 'NR > 1 { printf ",\n" } { printf "%s", $0 } END { if (NR) printf "\n" }'
 )"
 
 cat > "$evidence_dir/latest.json" <<JSON
@@ -131,7 +131,7 @@ JSON
 printf '\n'
 if [ "$status" -eq 0 ]; then
   printf 'PASS  %s  %s  %s\n' "$branch" "$commit" "$completed_at"
-  printf 'Stages: %s\n' "$(grep -o '::ci-stage:: name=[a-z-]*' "$log" | sed 's/.*name=//' | paste -sd ', ' -)"
+  printf 'Stages: %s\n' "$(grep -o '::ci-stage:: name=[a-z-]*' "$log" | sed 's/.*name=//' | paste -sd ',' - | sed 's/,/, /g')"
   printf 'Evidence: artifacts/local-ci/latest.json\n'
 else
   printf 'FAIL  %s  %s  (exit %s)\n' "$branch" "$commit" "$status"

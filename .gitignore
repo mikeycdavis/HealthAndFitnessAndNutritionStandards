@@ -1,0 +1,8 @@
+# Local CI verification evidence.
+#
+# artifacts/local-ci/latest.json records which commit passed the containerised pipeline, and
+# last-run.log is the transcript. Both are per-developer, per-run facts about a machine — not
+# repository history — and committing them would put a claim about a verification in the tree
+# without the verification. Everything else under artifacts/ is deliberate, reviewed content and is
+# tracked.
+/artifacts/local-ci/
