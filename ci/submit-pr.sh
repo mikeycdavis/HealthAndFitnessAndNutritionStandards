@@ -137,7 +137,7 @@ git branch --set-upstream-to="origin/${branch}" "$branch" >/dev/null 2>&1 || tru
 
 # The stages the evidence says ran, not the stages the pipeline is configured to run. If those two
 # ever differ, the PR body should show what happened rather than what was intended.
-stages="$(sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\([a-z-]*\)".*/\1/p' "$evidence" | paste -sd ', ' -)"
+stages="$(sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\([a-z-]*\)".*/\1/p' "$evidence" | paste -sd ',' - | sed 's/,/, /g')"
 verified_at="$(sed -n 's/.*"completedAt"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$evidence" | head -1)"
 
 body_file="$(mktemp)"
