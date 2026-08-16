@@ -93,8 +93,11 @@ function establishCanonicalPack({ trustedPublicKey, trustedKeySource, packDir, r
 
   // 4. RESOLVE THE SIGNED OBJECT from the tag just authenticated. The pack does not get to say which
   //    object its signature meant.
-  const oid = (rev) => {
-    const r = git(["rev-parse", "--verify", rev]);
+  // `cwd` is a real parameter and not decoration: this helper is used against two repositories, and
+  // an earlier version silently resolved every revision in the pack — which made step 5 compare the
+  // authorised tree against the pack's own branch tip instead of against the materialised bytes.
+  const oid = (rev, cwd = packDir) => {
+    const r = git(["rev-parse", "--verify", rev], cwd);
     return r.status === 0 ? r.stdout.trim() : null;
   };
   const tagOid = oid(ref);
