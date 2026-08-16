@@ -19,6 +19,24 @@ No standard, rule, or verdict changed, so no version moved.
 
 ### Added
 
+- **`check` establishes which standards bytes produced its verdict, and refuses when it cannot**
+  (FE-13, stage 3 of 3). `standardVersion` in a policy is the release an adopter *requests*; it was
+  also what the tool reported back, with the catalog loaded from wherever the CLI happened to live
+  and no identity check anywhere in the path. A pack whose `VERSION` said `0.0.0-substituted`, with a
+  prohibition's verbatim source line reworded, still produced a report stating the project had been
+  evaluated against 1.0.0.
+
+  Identity is now established before the catalog is read, in three stages that stay in three files
+  because collapsing them is where the defect came from: resolve the tag to an immutable object
+  (`scripts/release-identity.mjs`), enumerate the bytes about to be evaluated
+  (`scripts/release-material.mjs`), and compare the two within the reviewed material boundary
+  (`scripts/release-verify.mjs`). A verdict now carries a `releaseIdentity`; a run that cannot
+  establish one exits **5** and produces no verdict at all.
+
+  The comparison is symmetric on purpose. A file the pack has and the release does not is a rejection
+  as much as a file that changed — that is the vendored patch and the extra local rule, material that
+  changes verdicts while every released byte still agrees.
+
 - **Containerised CI and verified pull requests.** The whole pipeline runs in an ephemeral Docker
   container (`ci/ci.ps1`, `ci/ci.sh`) and `ci/submit-pr.*` will only push a commit that has passed
   it — resolving `HEAD` before and after verification and refusing if it moved. See
@@ -70,6 +88,15 @@ No standard, rule, or verdict changed, so no version moved.
   the intent behind it in mind. The enforcement mechanism finding defects in itself before adoption
   makes it infrastructure is the mechanism working, and it is the reason PR #1 did not merge on the
   strength of its own description.
+- One of FE-13's four falsifiers cannot be satisfied by any change to `main`, and finding out why was
+  the most useful thing in that slice. It builds its fixture by checking out `v1.0.0` and running
+  `check` from it — so the evaluator it exercises is `v1.0.0`'s, which predates the mechanism under
+  test and cannot contain it. A released pack cannot be made to verify itself retroactively.
+- That falsifier had been passing on Windows for a reason that has nothing to do with the standards:
+  `git clone --local` hardlinks the object store, hardlinks do not cross volumes, and a repository on
+  `F:` with a temp directory on `C:` silently took the fallback path and copied the current pack
+  instead. Two environments, two different tests, one name. The tests added in this slice use
+  `--no-hardlinks` and say why in the code.
 
 ## 1.0.0
 

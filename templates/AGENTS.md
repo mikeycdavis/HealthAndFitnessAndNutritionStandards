@@ -62,6 +62,11 @@ standards explain <rule-id> .  # why a rule applies here, and what would satisfy
 standards status .             # what has expired, gone stale, or is awaiting review
 ```
 
+**Exit 5 is not a verdict to interpret.** It means the standards pack producing your result cannot
+prove it is the release your policy declared, so no result was produced. Obtain the release — a full
+checkout with tags, not a shallow one. Do not edit the pack until the comparison agrees; that is the
+"falsifies evidence for a verification mechanism" clause of the integrity invariant.
+
 ## Precedence
 
 Where these instructions and a standard disagree, the standard wins. Where a standard and the source

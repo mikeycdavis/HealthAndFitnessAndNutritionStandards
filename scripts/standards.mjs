@@ -28,9 +28,15 @@
  *
  * EXIT CODES (see docs/design/architecture.md):
  *   check:  0 compliant · 1 non-compliant · 2 config error · 3 blocked by invariant · 4 not evaluated
+ *           · 5 release identity not established
  *   audit:  0 completed · 1 --strict and something non-info found · 2 invocation error
  *   init:   0 completed · 1 conflicts, nothing written · 2 could not run
  *   others: 0 fine · 2 invocation error
+ *
+ * 5 IS ITS OWN CODE RATHER THAN A CONFIG ERROR (FE-13). "You invoked this wrongly" and "the pack
+ * running cannot prove it is the release you asked for" are different events with different remedies,
+ * and folding the second into the second-most-ignored exit code would make the system's most
+ * important refusal indistinguishable from a typo.
  */
 
 import { readFile, readdir, stat } from "node:fs/promises";
@@ -45,6 +51,9 @@ import { evaluate, envelope, STATUS, baselineStrength, INVARIANT_SCREENS, SCREEN
 import { parseYaml, YamlError } from "./yaml.mjs";
 import { validate, assertSchemaSupported, SchemaError } from "./jsonschema.mjs";
 import { plan as initPlan, apply as initApply, detectMode, render as initRender } from "./init.mjs";
+import { resolveRelease, gitIn } from "./release-identity.mjs";
+import { materialise } from "./release-material.mjs";
+import { verifyRelease } from "./release-verify.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -54,6 +63,7 @@ const EXIT = {
   INVOCATION: 2,
   BLOCKED: 3,
   NOT_EVALUATED: 4,
+  UNIDENTIFIED_RELEASE: 5,
 };
 
 /** Directories never scanned. `fixtures` is here so deliberately broken test data cannot indict the tool. */
@@ -589,13 +599,188 @@ async function commandAudit(root, { json, strict }) {
   return strict && actionable.length > 0 ? EXIT.FINDINGS : EXIT.OK;
 }
 
+// ---------------------------------------------------------------------------------------------
+// Release identity (FE-13)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * Establish that the pack producing this verdict is the immutable release the adopter asked for.
+ *
+ * Three stages, kept in three files, called in order here and nowhere else:
+ *
+ *   resolveRelease   what immutable object does the requested version designate?
+ *   materialise      what bytes are we about to evaluate?
+ *   verifyRelease    are those bytes exactly that object?
+ *
+ * IDENTITY COMES BEFORE RULES, and the ordering is the whole design. A run that evaluated first and
+ * appended "by the way, identity was unverified" would be offering a verdict it has no authority to
+ * reach; there would be nothing for the caveat to attach to. So this returns before the catalog is
+ * loaded, and a refusal carries no compliance result at all.
+ *
+ * `policy.standardVersion` is the REQUESTED identity throughout. It is what the adopter claims, it is
+ * never evidence, and after this function returns the reported version comes from what was verified
+ * rather than from what was asked.
+ */
+const SELF_MAINTENANCE = "self-maintenance";
+
+async function establishRelease(root, policy) {
+  const requested = policy.standardVersion;
+  const isPack = path.resolve(root) === ROOT;
+  const declaredSelf = policy.packSelfMaintenance === "this-project-is-the-pack";
+
+  // THE PACK MAINTAINING ITSELF IS NOT AN ADOPTION, and pretending otherwise would be the false green
+  // in the other direction: a development pack cannot be a release, so requiring it to prove it is one
+  // would make the repository's own gate unachievable and the requirement would be relaxed instead.
+  //
+  // Two conditions, both necessary. The declaration makes the claim visible in a reviewed file; the
+  // structural test makes it true. Neither alone is worth anything: a flag any policy could set is a
+  // bypass, and inferring the mode from the directory alone would let a fork acquire it silently.
+  if (declaredSelf && !isPack) {
+    return {
+      ok: false,
+      exit: EXIT.BLOCKED,
+      releaseIdentity: {
+        established: false,
+        stage: "declaration",
+        reason: "not-the-pack",
+        requestedRelease: requested ?? null,
+        detail:
+          `this policy declares packSelfMaintenance, which exempts the standards pack from proving it ` +
+          `is a release — but ${path.resolve(root)} is not the pack. Claiming to be the thing an ` +
+          `exemption was written for is a manipulation of an applicability determination ` +
+          `(integrity.no-standards-manipulation, Standard 42), not a configuration mistake.`,
+      },
+    };
+  }
+  if (declaredSelf && isPack) {
+    const packVersion = (await readFile(path.join(ROOT, "VERSION"), "utf8").catch(() => "")).trim();
+    return {
+      ok: true,
+      standardVersion: packVersion || null,
+      releaseIdentity: {
+        established: false,
+        mode: SELF_MAINTENANCE,
+        packRoot: ROOT,
+        packVersion: packVersion || null,
+        detail:
+          "the pack is evaluating itself, so no independent release identity exists to establish. " +
+          "This run says whether the working tree satisfies its own standards; it is not an adoption " +
+          "and carries no authority for one.",
+      },
+    };
+  }
+
+  const git = gitIn(ROOT);
+
+  const resolved = resolveRelease(requested, git);
+  if (resolved.ok === false) {
+    return unidentified("resolution", resolved.reason, resolved.detail, requested);
+  }
+
+  const material = await materialise(ROOT);
+  if (material.ok === false) {
+    return unidentified("materialisation", material.reason, material.detail, requested);
+  }
+
+  const verified = verifyRelease({ identity: resolved.identity, material: material.material, git });
+  if (verified.ok === false) {
+    return unidentified("verification", verified.reason, verified.detail, requested, {
+      resolvedCommit: resolved.identity.resolvedCommit,
+      resolvedTree: resolved.identity.resolvedTree,
+      differences: verified.differences ?? [],
+      differenceCount: verified.differenceCount ?? 0,
+      releaseDigest: verified.releaseDigest ?? null,
+      materialDigest: verified.materialDigest ?? null,
+    });
+  }
+
+  return {
+    ok: true,
+    // Reported from what was verified, not from what was claimed. That substitution is the entire
+    // finding FE-13 was opened for: `standardVersion: policy.standardVersion ?? version` let the
+    // adopter's own assertion become the tool's answer.
+    standardVersion: requested,
+    releaseIdentity: { established: true, ...verified.verification },
+  };
+}
+
+function unidentified(stage, reason, detail, requested, extra = {}) {
+  return {
+    ok: false,
+    exit: EXIT.UNIDENTIFIED_RELEASE,
+    releaseIdentity: {
+      established: false,
+      stage,
+      reason,
+      requestedRelease: requested ?? null,
+      detail,
+      ...extra,
+    },
+  };
+}
+
+/**
+ * The refusal document. It is a JSON envelope so that a machine reading `--json` gets an answer
+ * rather than a parse error, and it deliberately has no `status`, `score`, or `results`: there is no
+ * verdict here to report, and an empty results array beside a compliance-shaped status is exactly the
+ * "nothing failed, therefore compliant" reading this repository refuses everywhere else.
+ */
+function refusalEnvelope({ project, releaseIdentity, auditedAt }) {
+  return {
+    schemaVersion: "1.0",
+    standardVersion: null,
+    project: project ?? null,
+    status: "UNIDENTIFIED_RELEASE",
+    releaseIdentity,
+    auditedAt,
+    results: [],
+  };
+}
+
+function renderRefusal(r) {
+  const id = r.releaseIdentity;
+  const out = [
+    id.reason === "not-the-pack" ? "BLOCKED BY INVARIANT" : "RELEASE IDENTITY NOT ESTABLISHED",
+    "",
+    `Requested release: ${id.requestedRelease ?? "(none declared)"}`,
+    `Failed at:         ${id.stage} (${id.reason})`,
+    "",
+    ...wrap(id.detail, 96, ""),
+    "",
+  ];
+
+  if (id.differenceCount) {
+    out.push(`${id.differenceCount} file(s) of pack material differ; showing ${id.differences.length}:`);
+    for (const d of id.differences) out.push(`  ${d.difference}  ${d.path}`);
+    out.push("");
+  }
+
+  out.push("No verdict was produced. This is not a compliance failure — it is the evaluation refusing");
+  out.push("to speak for a release it cannot show it is running. Fixing the rules is not the remedy;");
+  out.push("obtaining the release is (INSTRUCTIONS.md, 'Adoption pins an immutable release').");
+  return out.join("\n") + "\n";
+}
+
 async function commandCheck(root, { json }) {
-  const catalog = await loadCatalog(path.join(ROOT, "rules"));
   const loaded = await loadPolicy(root);
   if (loaded.error) {
     process.stderr.write(`standards check: ${loaded.error}\n`);
     return EXIT.INVOCATION;
   }
+
+  // Before the catalog is read, let alone evaluated.
+  const release = await establishRelease(root, loaded.policy);
+  if (release.ok === false) {
+    const refusal = refusalEnvelope({
+      project: loaded.policy.project ?? null,
+      releaseIdentity: release.releaseIdentity,
+      auditedAt: new Date().toISOString(),
+    });
+    process.stdout.write(json ? JSON.stringify(refusal, null, 2) + "\n" : renderRefusal(refusal));
+    return release.exit;
+  }
+
+  const catalog = await loadCatalog(path.join(ROOT, "rules"));
   const findings = await runDetectors(root);
   assertBindings(catalog, findings.map((f) => f.rule).filter(Boolean));
 
@@ -608,11 +793,11 @@ async function commandCheck(root, { json }) {
     digests: await attestationDigests(root, loaded.policy),
   });
 
-  const version = (await readFile(path.join(ROOT, "VERSION"), "utf8").catch(() => "unknown")).trim();
   const result = envelope({
     verdict,
     project: loaded.policy.project ?? null,
-    standardVersion: loaded.policy.standardVersion ?? version,
+    standardVersion: release.standardVersion,
+    releaseIdentity: release.releaseIdentity,
     auditedAt: new Date().toISOString(),
     frameworkCoverage: coverage(catalog, { evaluated: EVALUATED_RULES, totalStandards: 42 }),
   });
@@ -647,6 +832,21 @@ function renderCheck(r) {
     }
     return out.join("\n") + "\n";
   }
+
+  // Which bytes produced what follows. Printed first and unconditionally: a reader who has to go
+  // looking for the identity of an evaluation will assume it, and assuming it is the defect.
+  const id = r.releaseIdentity;
+  if (id?.established) {
+    out.push(`Release: ${id.requestedRelease} — MATCH (${id.files} files of pack material)`);
+    out.push(`         ${id.resolvedCommit}`);
+    out.push(`         ${id.materialDigest}`);
+  } else if (id?.mode === SELF_MAINTENANCE) {
+    out.push(`Release: none established — the pack is evaluating itself (VERSION ${id.packVersion ?? "?"}).`);
+    out.push("         This is maintenance of the standards, not an adoption of them.");
+  } else {
+    out.push("Release: none established.");
+  }
+  out.push("");
 
   const s = r.summary;
   out.push(`Status: ${r.status}`);

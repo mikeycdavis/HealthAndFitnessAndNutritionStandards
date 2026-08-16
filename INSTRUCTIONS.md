@@ -211,6 +211,40 @@ that an obstruction goes away.
 
 ## 8. Upgrading
 
+### Adoption pins an immutable release
+
+`standardVersion` in your policy is a **request**, not a record. It says which release you want to be
+evaluated against; it says nothing about which bytes actually produced your verdict, and for a long
+time this tool reported the first as though it were the second.
+
+`check` now establishes that before it reads a single rule, in three steps it keeps separate:
+
+| Step | Question | Fails closed when |
+| --- | --- | --- |
+| Resolution | What immutable object does `v<version>` designate? | the version is a prerelease or a branch, there is no repository, the tag is missing, ambiguous, or lightweight |
+| Materialisation | Which bytes are about to be evaluated? | pack material is missing, unreadable, or reached through a symlink |
+| Verification | Are those bytes exactly that object? | any material file differs, is absent, or is present and not in the release |
+
+A run that establishes identity reports it, and the version it reports is the one it verified rather
+than the one you asked for. A run that cannot exits **5** and produces no verdict at all — not a
+verdict with a caveat attached, because there would be nothing for the caveat to qualify.
+
+Two consequences worth knowing before you meet them:
+
+- **A shallow checkout cannot do this.** `refs/tags/v1.0.0` does not exist in a one-commit clone, so
+  CI needs full history and tags (`fetch-depth: 0` for `actions/checkout`). Missing history is not a
+  smaller checkout; it is an identity that cannot be proven.
+- **Vendoring or caching the pack is allowed; skipping the check is not.** A cache hit can avoid a
+  download. It cannot avoid re-establishing that the cached material is still the release.
+
+The one case that is exempt is the standards pack maintaining itself, which declares
+`packSelfMaintenance` in its own policy. It is not a waiver: the evaluator honours it only when the
+directory being evaluated is the pack the evaluator was loaded from, any other policy declaring it
+stops the run at exit 3 under Standard 42, and a run in that mode reports
+`releaseIdentity.established: false` so it can never be read as an adoption.
+
+### Versions
+
 Compare the version in your `standardVersion` against `VERSION` here and read the changelog. A new
 requirement or prohibition is a major change and may make a compliant project non-compliant; that is
 the intended behaviour, not a regression.
@@ -231,6 +265,9 @@ mean what its author intended.
 - **Do not treat the score as proof.** Status is the verdict; the percentage is a summary statistic
   over the rules that were evaluated, which is not all of them.
 - **Do not treat exit 4 as a pass, or exit 3 as a worse failure.** They are different instructions.
+- **Do not work around exit 5 by editing the pack you are running.** It means the standards material
+  producing your verdict is not the release you declared. The remedy is to obtain the release, never
+  to change the material until the comparison agrees.
 - **Do not hand-edit a generated artifact** — a rendered diagram, or anything with a source.
 - **Do not record an attestation for a review that did not happen.**
 

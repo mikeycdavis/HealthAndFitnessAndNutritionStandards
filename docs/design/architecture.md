@@ -291,7 +291,15 @@ Three separate contracts, deliberately not merged.
 
 - `check`: `0` compliant (including with exceptions) · `1` evaluated and non-compliant · `2`
   configuration or schema error, including a missing policy · `3` blocked by invariant · `4`
-  insufficient evidence to reach a verdict.
+  insufficient evidence to reach a verdict · `5` release identity not established.
+
+  Code `5` is FE-13's, and it precedes all the others in time: it is returned before the catalog is
+  loaded, because a run that cannot show which standards bytes it is using has no authority to
+  report anything about them. It is separate from `2` for the same reason `4` is separate from `0`.
+  "You invoked this wrongly" and "the pack you are running cannot prove it is the release you asked
+  for" have different remedies, and the second is the more important refusal in the system; giving
+  it the exit code operators associate with typos would hide it. It is separate from `1` because
+  nothing was found wrong with the project — nothing was evaluated at all.
 
   Code `4` exists because `NOT_EVALUATED` is a first-class outcome here rather than an edge case,
   and folding it into either neighbour would be a lie in one direction or the other. Mapping it to

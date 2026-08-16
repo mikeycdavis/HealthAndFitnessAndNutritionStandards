@@ -595,11 +595,15 @@ function summarise(results, policy, screen) {
 }
 
 /** The output envelope. `schemaVersion` versions this format, independently of the others. */
-export function envelope({ verdict, project, standardVersion, auditedAt, frameworkCoverage }) {
+export function envelope({ verdict, project, standardVersion, releaseIdentity, auditedAt, frameworkCoverage }) {
   return {
     schemaVersion: "1.0",
     standardVersion: standardVersion ?? null,
     project: project ?? null,
+    // Which bytes produced this verdict (FE-13). `standardVersion` above says what release was
+    // evaluated; this says how that was established, and it is present on every verdict so that a
+    // genuine run and a self-maintenance run cannot be told apart only by what is missing.
+    releaseIdentity: releaseIdentity ?? null,
     status: verdict.status,
     score: verdict.score,
     summary: verdict.summary,

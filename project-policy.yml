@@ -28,6 +28,23 @@
 standardVersion: "1.0.0"
 project: "HealthAndFitnessAndNutritionStandards"
 
+# This repository is the pack, not an adopter of it (FE-13). Every other project running `check`
+# must prove that the standards bytes producing its verdict are the immutable release it declared
+# above; this one cannot, and the reason is structural rather than inconvenient. `main` is ahead of
+# v1.0.0 by construction — that is what a development branch is — so its material will never match
+# the released tree, and a pack that demanded proof of itself would have an unachievable gate, which
+# is how requirements get quietly relaxed.
+#
+# What this does NOT do. It is honoured only when the directory being evaluated is the pack the
+# evaluator was loaded from; declared anywhere else it stops the run with exit 3 under Standard 42.
+# And it establishes nothing: a run in this mode reports `releaseIdentity.established: false` and
+# says plainly that it is not an adoption. The line above remains what this repository claims; it is
+# not evidence here either.
+#
+# The value is a sentence rather than `true` on purpose: a boolean flag is something a policy can
+# acquire by copying, and this one has to be written deliberately by someone who means it.
+packSelfMaintenance: "this-project-is-the-pack"
+
 # Domains of guidance this project produces: none. The list is informational and switches nothing
 # on or off — narrowing scope is done through applicability declarations, each carrying its own
 # reason, so that a single line can never disable a category of prohibition silently.

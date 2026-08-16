@@ -20,6 +20,12 @@
       "minLength": 1
     },
 
+    "packSelfMaintenance": {
+      "description": "Declares that this project IS the standards pack rather than an adopter of it, and therefore has no independent release identity to establish (FE-13). A pack under development is not a release, so requiring it to prove it is one would make its own gate unachievable and the requirement would end up relaxed instead. This is not a waiver and cannot be used as one: the evaluator honours it only when the directory being evaluated is the pack the evaluator itself was loaded from, and a policy that declares it anywhere else stops the run with BLOCKED_BY_INVARIANT and exit 3 — claiming to be the thing an exemption was written for is a manipulation of an applicability determination (Standard 42). A run in this mode reports `releaseIdentity.established: false`, so no output of it can be mistaken for an adoption evaluation.",
+      "type": "string",
+      "enum": ["this-project-is-the-pack"]
+    },
+
     "domains": {
       "description": "Informational only: which domains of guidance this project produces. It does NOT switch rules on or off — a project narrows scope through `applicability` declarations, each of which carries its own reason and revisit trigger. A single list that silently disabled whole categories of prohibition would be a waiver mechanism with no reason attached to it.",
       "type": "array",
