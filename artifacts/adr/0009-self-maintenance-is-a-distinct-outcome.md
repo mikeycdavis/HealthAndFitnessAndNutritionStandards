@@ -2,7 +2,8 @@
 
 - **Status:** Accepted
 - **Date:** 2026-08-16
-- **Deciders:** project owner, on an independent review of PR #2 that requested changes
+- **Deciders:** project owner — on an independent review of PR #2 that requested changes, and on a
+  re-review of the remedy that narrowed the acceptance criterion (recorded below, 2026-08-16)
 
 ## Context
 
@@ -75,6 +76,34 @@ evaluation would be the bypass wearing a second costume.
 The consequence worth stating plainly: **`status: "COMPLIANT"` from `check` now means identity was
 established**, with no field anyone has to remember to consult. That is what makes the machine
 contract a contract.
+
+## The acceptance criterion this was reviewed against, and the narrower one that replaced it
+
+The remedy above was re-reviewed. It established that property 2 is met and that the copied-evaluator
+escape is closed, and that the criterion property 1 was written as — *no adopter can satisfy
+`packSelfMaintenance` structurally* — is nonetheless **still literally false**, because a fork of the
+certified lineage satisfies the eligibility conditions. What changed is that satisfying them no longer
+buys an adoption verdict.
+
+Accepting that is a scope decision about the original criterion, not a review finding, and it is
+recorded here as a decision rather than absorbed into the sections above as though the criterion had
+been met. The owner approved this replacement on 2026-08-16:
+
+> **Approved acceptance boundary:** An adopter cannot obtain a compliance verdict through
+> self-maintenance; copying the evaluator is insufficient to obtain self-maintenance eligibility;
+> exclusivity against a full fork of the certified pack is not established by FE-13 and is explicitly
+> deferred to [ST-12](../backlog/items/ST-12.md).
+
+The reason given: it preserves the security property FE-13 actually needs for adoption — **self-
+maintenance cannot be used to manufacture `COMPLIANT`**. The remaining fork case creates no adoption
+false green under the revised machine contract, and closing that residual requires a separate
+cryptographic origin/authenticity mechanism rather than more path or lineage heuristics.
+
+The absolute criterion is therefore **retired, not satisfied**. Two consequences follow, and both are
+the point of writing it down. Anything that reports property 1 as passed is reporting against a
+criterion that no longer exists. And any future change claiming to close the fork case by a further
+path, lineage, or configuration test has not met this boundary either, because the boundary states in
+advance why that class of mechanism cannot close it.
 
 ## What is not claimed
 

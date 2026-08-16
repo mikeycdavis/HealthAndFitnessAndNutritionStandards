@@ -40,6 +40,17 @@ No standard, rule, or verdict changed, so no version moved.
   identity was established**, with no field anyone has to remember to consult. This repository's own
   gate is now `npm run maintain`. See ADR 0009, which also names the residual it does not close.
 
+  **Re-review narrowed the criterion, and the narrowing is recorded as a decision rather than
+  absorbed.** The remedy closed the copied-evaluator escape; it did not make the criterion it was
+  reviewed against true, because a fork of the certified lineage still satisfies eligibility. The
+  owner retired that criterion on 2026-08-16 and approved a narrower boundary: an adopter cannot
+  obtain a compliance verdict through self-maintenance, copying the evaluator is insufficient for
+  eligibility, and exclusivity against a full fork is explicitly deferred to ST-12. The reason is
+  that the property adoption actually needs — self-maintenance cannot manufacture `COMPLIANT` — is
+  preserved, and the residual needs a cryptographic origin mechanism rather than another path or
+  lineage heuristic. Recorded in ADR 0009 and FE-13, with the original criterion kept and marked
+  retired rather than reported as passed.
+
 - **`check` establishes which standards bytes produced its verdict, and refuses when it cannot**
   (FE-13, stage 3 of 3). `standardVersion` in a policy is the release an adopter *requests*; it was
   also what the tool reported back, with the catalog loaded from wherever the CLI happened to live

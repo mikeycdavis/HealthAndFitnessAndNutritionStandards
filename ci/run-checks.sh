@@ -44,8 +44,10 @@
 # certification pass against 9809afc established that the verdict rests on evidence that is what it
 # claims to be.
 #
-# Do not put it back to make a build green. If the final stage starts failing, the repository has
-# stopped being able to demonstrate compliance, and that is the thing to fix. Restoring the allowance
+# Do not put it back to make a build green. If the final stage starts failing, this working tree has
+# stopped satisfying the standards this repository publishes, and that is the thing to fix. It has not
+# "stopped being compliant": `maintain` establishes no compliance, because compliance here is a claim
+# about an adopter against a release, and this repository is neither. Restoring the allowance
 # would convert a real signal into a permanent excuse — and it would do so on the surface an operator
 # reads first, which is how the last defect in the workflow file survived from the certification
 # baseline undetected.
