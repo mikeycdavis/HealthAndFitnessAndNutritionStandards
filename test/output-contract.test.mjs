@@ -20,6 +20,17 @@
  * drifting independently is four contracts nobody tracks. So the audit envelope's version moves too,
  * although its own shape did not change: it reports the contract it belongs to, not a changelog of
  * itself.
+ *
+ * MUTATIONS RUN AGAINST THESE, from a committed baseline. `moved` and `same` are the two falsifiers
+ * below; `one place` is the drift guard at the end of the file.
+ *
+ *   mutation                                          moved  same  one place
+ *   SCHEMA_VERSION reverted to "1.0"                   x      ok    ok
+ *   one envelope spells a version literal instead      ok     x     x
+ *
+ * The second fires two assertions rather than one, which is the same defect seen from two angles: a
+ * literal both disagrees with the constant and puts the version in a second place. Neither mutation
+ * leaves this file green.
  */
 
 import { test } from "node:test";

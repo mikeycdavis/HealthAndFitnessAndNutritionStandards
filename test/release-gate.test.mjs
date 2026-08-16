@@ -319,6 +319,16 @@ test("the documented exit codes include the one this slice added", async () => {
  *
  * The clone carries the tags, so the lineage resolves; the working tree is copied over it so the
  * code under test is this one rather than whatever the default branch holds.
+ *
+ * MUTATIONS RUN AGAINST THE PAIR, from a committed baseline:
+ *
+ *   mutation                                                      unverified  enforced
+ *   `check` validates the whole policy first again (the defect)     x          ok
+ *   the contract is never validated once identity exists            ok         x
+ *
+ * Two mutations, two signatures, and neither leaves both green — which is the property the pair was
+ * written for. The second mutation is the cheap fix for the first, and it is the reason the second
+ * test exists at all.
  */
 async function lineagePack() {
   const dir = await mkdtemp(path.join(tmpdir(), "hfn-gate-lineage-"));
