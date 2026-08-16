@@ -18,23 +18,32 @@
  * a deliberately broken module and observed to redden. Recorded here rather than left for a reviewer
  * to notice, because "the tests pass" means less when the tests came second.
  *
- * MUTATIONS RUN, and what each proved (observed, not predicted):
+ * MUTATIONS RUN. Recorded as observed, and the observations did not match the predictions — the two
+ * that matter are noted rather than tidied away, because a mutation table that agrees with its author
+ * every time is a table nobody ran.
  *
- *   M1  packOrigin checks `release` before `anchor`          → "no anchor" test red. Order is the
- *                                                              property; a later branch reaching
- *                                                              ESTABLISHED without an anchor is the
- *                                                              whole defect.
- *   M2  untrusted-signer branch compares nothing (accepts
- *       any fingerprint the verifier reports)                → attacker-fork test red. This is the
- *                                                              fork-substitutes-its-own-key case
- *                                                              exactly.
- *   M3  assertCanonicalOrigin also accepts
- *       `status === "SELF_MAINTENANCE"`                      → consumer test AND the
- *                                                              no-field-substitutes test red, both.
- *   M4  ORIGIN_REASON.TRUST_ANCHOR_ABSENT reuses the
- *       invalid-signature string                             → the distinct-reasons test red; the
- *                                                              other tests stayed green, which is
- *                                                              why that test exists separately.
+ *   M1  the destructured `anchor` defaults to a key the       → tests 1, 2 and 5 red (predicted: 1
+ *       pack supplies — i.e. ADR 0010's rejected                 only). Test 3 SURVIVED, because its
+ *       `trusted-key.json`, in one line                          verifier signs as the real trusted
+ *                                                                key, so the substituted anchor is
+ *                                                                rejected as untrusted-signer and it
+ *                                                                still refuses. A test can be right
+ *                                                                for a reason other than the one it
+ *                                                                was written for.
+ *   M2  the untrusted-signer branch compares nothing, so      → tests 2, 3 and 5 red (predicted: 2
+ *       any fingerprint the verifier reports is accepted         only). The fork case exactly.
+ *   M3  `assertCanonicalOrigin` also accepts                  → ONLY the no-field-substitutes test
+ *       `status === "SELF_MAINTENANCE"`                          red (predicted: that and test 3).
+ *                                                                Test 3 feeds it NOT_ESTABLISHED
+ *                                                                results, so it never exercises the
+ *                                                                greenest-thing-a-caller-can-find
+ *                                                                case. That is precisely why the
+ *                                                                fourth test is separate, and M3 is
+ *                                                                the evidence it earns its place.
+ *   M4  TRUST_ANCHOR_ABSENT reuses the invalid-signature      → only the distinct-reasons test red.
+ *       string                                                   Every other test stayed green, which
+ *                                                                is what a boolean-shaped collapse
+ *                                                                looks like from the outside.
  */
 
 import { test } from "node:test";
