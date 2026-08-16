@@ -35,12 +35,15 @@ import { spawnSync } from "node:child_process";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { ORIGIN, ORIGIN_REASON, packOrigin } from "../scripts/pack-origin.mjs";
 import { readSignedTag, sshTagVerifier } from "../scripts/ssh-tag-verifier.mjs";
 
-const REPO = path.join(path.dirname(new URL(import.meta.url).pathname.slice(1)), "..");
+// fileURLToPath, not `new URL(...).pathname` — the latter yields `/work/test/...` on Linux and
+// `/F:/Repos/...` on Windows, and the `.slice(1)` that makes the second right makes the first a
+// relative path. Caught by the container, which is the reason the container is the gate.
+const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const run = (cmd, args, cwd) => spawnSync(cmd, args, { cwd, encoding: "utf8" });
 const gitIn = (dir) => (args) => run("git", ["-C", dir, ...args]);
 
