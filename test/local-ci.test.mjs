@@ -424,11 +424,20 @@ test("a completed pipeline is recorded as a pass, with the stages it reported", 
  * ever touched on the `-KeepOnFailure` path. A test that omitted the switch would pass against the
  * defect and prove nothing — which is why the build-failure case below passes it.
  *
- * A Windows developer's Docker is stubbed the same way as above. This does not run inside the CI
- * container, which has neither PowerShell nor a reason to: the file it covers is the one a Windows
- * developer invokes, and the honest place to run it is there.
+ * A Windows developer's Docker is stubbed the same way as above. These do not run inside the CI
+ * container or on the hosted runner, both of which are Linux: the file they cover is the one a
+ * Windows developer invokes, and the honest place to run it is there. That is a real gap rather than
+ * a tidy one — on any Linux-only machine, ci.ps1 is still covered by nothing.
+ */
+/**
+ * Windows only, and the `win32` half of that is not incidental. PowerShell runs on Linux too — the
+ * GitHub runner has it — but `ci.ps1` is the file a Windows developer invokes, `Get-Command docker`
+ * resolves a `.cmd` shim there and an extensionless executable here, and the two are not the same
+ * test. Running these under pwsh-on-Linux exercises a configuration nobody uses; the first version
+ * of this guard checked only for pwsh and duly failed on the hosted runner.
  */
 const pwsh = (() => {
+  if (process.platform !== "win32") return null;
   for (const exe of ["pwsh", "powershell"]) {
     if (spawnSync(exe, ["-NoProfile", "-Command", "exit 0"], { encoding: "utf8" }).status === 0) return exe;
   }
@@ -490,7 +499,7 @@ function runPs(s, env = {}, args = []) {
 }
 
 test("ci.ps1 runs a pipeline to completion and records the same evidence shape", async (t) => {
-  if (!pwsh) return t.skip("no PowerShell on this host; ci.ps1 is covered where it is used");
+  if (!pwsh) return t.skip("not Windows; ci.ps1 is covered where it is invoked");
 
   const s = await psScratch();
   try {
@@ -513,7 +522,7 @@ test("ci.ps1 runs a pipeline to completion and records the same evidence shape",
  * complaint about an unset variable standing in front of it.
  */
 test("ci.ps1 reports a build failure rather than a strict-mode error, and still cleans up", async (t) => {
-  if (!pwsh) return t.skip("no PowerShell on this host; ci.ps1 is covered where it is used");
+  if (!pwsh) return t.skip("not Windows; ci.ps1 is covered where it is invoked");
 
   const s = await psScratch();
   try {
@@ -536,7 +545,7 @@ test("ci.ps1 reports a build failure rather than a strict-mode error, and still 
 });
 
 test("ci.ps1 refuses to call an unevidenced pipeline a pass", async (t) => {
-  if (!pwsh) return t.skip("no PowerShell on this host; ci.ps1 is covered where it is used");
+  if (!pwsh) return t.skip("not Windows; ci.ps1 is covered where it is invoked");
 
   const s = await psScratch();
   try {

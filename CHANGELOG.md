@@ -60,6 +60,11 @@ No standard, rule, or verdict changed, so no version moved.
 - The container is given no network at all, which turned the zero-dependency policy from a comment
   in a workflow file into a property of the environment. The policy had never been enforced by
   anything but attention.
+- The hosted workflow earned its keep the first time it was able to run. The new `ci/ci.ps1` tests
+  guarded on "is PowerShell present" rather than "is this Windows"; the CI container has no
+  PowerShell and skipped them, and the Linux runner has PowerShell and ran them against a Windows
+  `.cmd` shim. Local CI passed and GitHub failed. It is stronger about tags and weaker about anything
+  the container does not have, and "second opinion" turned out to be the literal description.
 - Three of the four defects above came from review of the pull request rather than from building it,
   and the fourth from running a deliberately failing build. None was visible to reading the code with
   the intent behind it in mind. The enforcement mechanism finding defects in itself before adoption

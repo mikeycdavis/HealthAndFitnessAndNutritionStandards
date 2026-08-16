@@ -213,8 +213,16 @@ docker rm -f <the container name it printed>
 Inside, `/work` is the copy that was tested and `/repo` is your read-only checkout. To reproduce one
 stage by hand: `cd /work && npm run fidelity`.
 
-If a stage passes locally and fails on GitHub, the difference is almost always the checkout depth
-(§5) rather than the code.
+If a stage passes locally and fails on GitHub, the difference is almost always the environment rather
+than the code, and it runs in both directions:
+
+- **Checkout depth** (§5). `actions/checkout@v4` fetches no tags, so the release-identity tests take
+  their fail-closed branch there and assert less than they do locally.
+- **Platform.** The container and the hosted runner are both Linux; the `ci.ps1` tests are Windows
+  only and are reported as skipped elsewhere. The first version of that guard checked for PowerShell
+  rather than for Windows, passed in the container that has none, and failed on the runner that has
+  it — which is the argument for keeping the hosted workflow rather than a claim that local CI is
+  strictly stronger. It is stronger about tags and weaker about anything the container does not have.
 
 ## 7. Local CI and GitHub Actions
 
