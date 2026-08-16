@@ -17,8 +17,8 @@ Work on this project classified with the Extended Agile Hierarchy. Every item is
 | --- | ---: |
 | ◑ In progress | 2 |
 | ● Complete | 16 |
-| ◌ Deferred | 18 |
-| **Total** | **36** |
+| ◌ Deferred | 19 |
+| **Total** | **37** |
 
 ## The hierarchy
 
@@ -28,7 +28,7 @@ Work on this project classified with the Extended Agile Hierarchy. Every item is
 | Initiative | `IN-` | 3 | What outcome are we pursuing there? |
 | Epic | `EP-` | 4 | What large body of work delivers it? |
 | Feature | `FE-` | 17 | What shippable slice of that epic? |
-| Story | `ST-` | 11 | What user-visible change, roughly one PR? |
+| Story | `ST-` | 12 | What user-visible change, roughly one PR? |
 | Task | `TA-` | 0 | What technical step inside a story? |
 
 ## Progress by theme
@@ -72,7 +72,8 @@ _Nothing marked ready._
       - ◌ **[FE-10](./items/FE-10.md)** Umbrella composition semantics
       - ◌ **[FE-11](./items/FE-11.md)** Machine-readable release migration classification
       - ◌ **[FE-12](./items/FE-12.md)** One evaluation path for development and release
-      - ◑ **[FE-13](./items/FE-13.md)** Adoption pins an immutable release
+      - ◑ **[FE-13](./items/FE-13.md)** Adoption pins an immutable release _(0/1)_
+        - ◌ **[ST-12](./items/ST-12.md)** Self-maintenance eligibility rests on a signature a fork cannot hold
       - ◌ **[FE-14](./items/FE-14.md)** Idempotent, non-authoritative bootstrap for adopters
       - ◌ **[FE-15](./items/FE-15.md)** Adoption testing prioritises actionable surfaces
   - ◌ **[IN-03](./items/IN-03.md)** Standards content and documentation refinement _(0/5)_

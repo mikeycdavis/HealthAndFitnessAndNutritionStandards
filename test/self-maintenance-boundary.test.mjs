@@ -39,6 +39,21 @@
  *   status is `SELF_MAINTENANCE`, never `COMPLIANT`. `check` can therefore only ever produce an
  *   adoption verdict, which is what makes `status === "COMPLIANT"` from `check` mean something.
  *
+ * MUTATION EVIDENCE. Each row was applied to source, the unchanged tests watched, and the file
+ * restored with `git checkout --` and confirmed byte-for-byte. The tests are numbered in the order
+ * they appear below.
+ *
+ *   mutation                                                         1  2  3  4  5  6
+ *   -------------------------------------------------------------------------------------
+ *   eligibility is root-coincidence again; lineage not consulted      x  x  ok ok ok ok
+ *   the recorded commit oid is not compared, only the tag name        ok x  ok ok ok ok
+ *   check answers for the pack with a compliance status and exit 0    ok ok x  ok ok ok
+ *   maintain promotes the working-tree result to the top-level status ok ok ok x  x  ok
+ *   the declaration alone is honoured; the root test is dropped       ok ok ok ok ok x
+ *
+ * Five mutations, five distinct signatures, and no row leaves every test green — which is what
+ * distinguishes these from tests that merely accompany the change that made them pass.
+ *
  * THE RESIDUAL IS NAMED RATHER THAN CLOSED, and ADR 0009 carries the argument: a genuine fork of the
  * whole lineage possesses every byte the original does, including the certified tag and the recorded
  * oid, so no check that runs inside the evaluator distinguishes it. What the fork obtains is a

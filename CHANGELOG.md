@@ -19,6 +19,27 @@ No standard, rule, or verdict changed, so no version moved.
 
 ### Added
 
+- **`standards maintain`, and the removal of the one bypass that could be mistaken for a green.**
+  Independent review of the FE-13 gate requested changes on both properties the `packSelfMaintenance`
+  exemption was claimed to have, and both rejections held.
+
+  Eligibility was `path.resolve(root) === ROOT`, and `ROOT` comes from the evaluator module's own
+  location — so it asserted "this directory is wherever the evaluator happens to be", which anyone
+  who copies the evaluator into a directory they control satisfies for free. Reproduced before the
+  remedy: a copy of this repository with its history deleted was granted the exemption and exited 0.
+  Eligibility is now membership in the certified release lineage recorded in
+  `scripts/certified-releases.json` — the tag resolving to exactly the recorded commit oid, with HEAD
+  descending from it.
+
+  Self-maintenance also ran the ordinary evaluator and emitted the ordinary envelope, so it could
+  report `COMPLIANT` with exit 0 while `releaseIdentity.established: false` sat beside it as
+  metadata. A consumer reading the exit code or the status was told an adoption had been verified
+  when none had. It is now a separate command whose status is `SELF_MAINTENANCE` and never
+  `COMPLIANT`, with the working tree's compliance result under `workingTreeStatus`; `check` refuses
+  the pack with exit **6**. The property that buys: **`COMPLIANT` from `check` means the release
+  identity was established**, with no field anyone has to remember to consult. This repository's own
+  gate is now `npm run maintain`. See ADR 0009, which also names the residual it does not close.
+
 - **`check` establishes which standards bytes produced its verdict, and refuses when it cannot**
   (FE-13, stage 3 of 3). `standardVersion` in a policy is the release an adopter *requests*; it was
   also what the tool reported back, with the catalog loaded from wherever the CLI happened to live
@@ -75,6 +96,19 @@ No standard, rule, or verdict changed, so no version moved.
 
 ### Found while building this
 
+- **`MATERIAL` is versioned with the release, and widening it retroactively breaks the past.** The
+  new lineage record was first placed under `artifacts/` and added to the material boundary, because
+  authority the evaluator consults to decide an outcome belongs inside the bytes that get verified —
+  a repository guard says exactly that and caught its absence. Four tests then went red: `materialise`
+  requires every declared path to be present, so a boundary that names a file no earlier release
+  contains makes every earlier release unmaterialisable, and the real `v1.0.0` checkout stopped
+  verifying. The record lives beside the evaluator instead. This is ADR 0008's fact wearing different
+  clothes: a boundary is a property of the release that declared it.
+- **A mutation restore destroyed an hour of uncommitted work.** `git checkout -- <file>` restores
+  from HEAD, not from the working state a mutation was applied to, so the discipline "reintroduce the
+  defect, watch the test redden, restore byte-for-byte" silently means "and discard everything not yet
+  committed". Commit first, then mutate. Recorded because the procedure is written down in three
+  places in this repository and none of them said so.
 - The container is given no network at all, which turned the zero-dependency policy from a comment
   in a workflow file into a property of the environment. The policy had never been enforced by
   anything but attention.
