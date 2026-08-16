@@ -103,6 +103,50 @@ anchor is not its to change. **If a proposed implementation passes only because 
 to replace the key file, it has not met this criterion** — it has rebuilt the problem FE-13 just
 removed, with a better vocabulary.
 
+## Where the requirement binds: `maintain` reports origin, consumers of origin require it
+
+Decided by the owner on 2026-08-16, after the question was raised as the last thing blocking
+implementation.
+
+> **Self-maintenance eligibility remains lineage-based. Canonical-origin authenticity is
+> independently evaluated and reported. Absence of an external trust anchor does not prevent
+> `maintain` from evaluating the working tree, but it must prevent any positive origin claim.**
+
+`maintain` is not an origin-authority operation. Its job is to answer whether this working tree
+satisfies the standards it publishes, under a status that is deliberately not an adoption verdict.
+Requiring an external anchor before that question may be *answered* would make ordinary development
+depend on release-owner credentials or operator trust configuration that contributors correctly
+should not possess — ADR 0009's unachievable gate, arriving from the other direction.
+
+So fail-closed binds at the origin claim, not at the evaluation:
+
+| Situation | `origin.status` | `origin.reason` |
+| --- | --- | --- |
+| externally trusted key + valid authorized signature | `ESTABLISHED` | — |
+| no external trust anchor | `NOT_ESTABLISHED` | `trust-anchor-absent` |
+| wrong signer | `NOT_ESTABLISHED` | `untrusted-signer` |
+| invalid signature | `NOT_ESTABLISHED` | `invalid-signature` |
+| required signed release cannot be resolved | `NOT_ESTABLISHED` | `release-unavailable` |
+
+None of these may silently become `ESTABLISHED`, and **none may be inferred from lineage alone** —
+lineage answers a different question and answering it well is not evidence about origin.
+
+**The state is named, not boolean.** `originVerified: false` was rejected: a boolean invites callers
+to collapse "checked and rejected", "could not check", and "no anchor was supplied" into one branch,
+and the whole reason this mechanism is worth building is that those three mean different things to
+whoever has to act on them.
+
+**Where it does bind as a requirement:** any command or umbrella operation that claims canonical pack
+origin as a prerequisite. If an enforcer eventually says "this project was evaluated against the
+canonical Health/Fitness/Nutrition pack", `origin.status !== ESTABLISHED` fails closed there. That
+consumer is making the cryptographic claim; `maintain` is not.
+
+**The separation is structural, not documented.** ADR 0009's property 2 was a true statement placed
+where consumers do not look, and appending origin metadata in the hope downstream callers read it
+would repeat that with better vocabulary. Any API making an origin-dependent assertion goes through a
+contract that requires `ESTABLISHED`, and the tests prove that reading only `status` or
+`workingTreeStatus` can never yield a positive canonical-origin result.
+
 ## What is not claimed
 
 **Signing the historical `v1.0.0` tag would not make a fork of that signed history non-canonical.** A
@@ -150,9 +194,6 @@ particular tool supplies.
 - `scripts/certified-releases.json` will need to record, per release, whether it was signed under this
   regime and against which key identity — a release predating it must be able to say so rather than
   be silently treated as unsigned-therefore-fine or unsigned-therefore-broken.
-- **The open design question implementation must answer first, recorded so it is answered rather than
-  defaulted:** whether `standards maintain` requires established origin to grant eligibility, or
-  reports origin as a distinct state beside a lineage-based eligibility decision. Requiring it makes
-  this repository's own gate red for every contributor and CI job without an externally supplied
-  anchor — the unachievable-gate failure ADR 0009 argued against. Reporting it risks the softening
-  decision 5 forbids. ST-12 carries the analysis and a recommendation; the owner decides.
+- `maintain` reports origin and does not require it; anything claiming canonical origin requires it.
+  Both invariants are preserved by that split: development stays achievable without release
+  authority, and origin authority stays impossible without an externally supplied anchor.
