@@ -21,14 +21,23 @@
  * better record than one showing only the latest, and this repository already prefers keeping
  * superseded content beside its correction to replacing it.
  *
- * MUTATIONS RUN AGAINST THESE, from a committed baseline. Columns are the tests below, in order.
+ * MUTATIONS RUN AGAINST THESE, from a committed baseline. Columns are the tests below, in order,
+ * and the last is the end-to-end submission test in `test/local-ci.test.mjs`.
  *
- *   mutation                                                  stale  prose  ambig  dup  absent  hist
- *   the existing block is left alone and the new one appended    x     ok    ok    ok    ok      x
- *   the whole body is replaced by the block                      ok    x     ok    ok    ok      x
- *   an unmarked body is rewritten by locating the heading        ok    ok    x     ok    ok      ok
- *   a second marker pair is treated as the first                 ok    ok    ok    x     ok      ok
- *   superseded rows are dropped on update                        ok    ok    ok    ok    ok      x
+ *   mutation                                                  stale prose ambig dup absent hist submit
+ *   the existing block is left alone and the new one appended    x    x    ok   ok   ok     x     x
+ *   the whole body is replaced by the block                      ok   x    ok   ok   ok     ok    x
+ *   an unmarked body is rewritten by locating the heading        ok   ok   x    ok   ok     ok    x
+ *   a second marker pair is treated as the first                 ok   ok   ok   x    ok     ok    ok
+ *   superseded rows are dropped on update                        ok   ok   ok   ok   ok     x     x
+ *
+ * Five mutations, five distinct signatures, none leaving the set green.
+ *
+ * The first row is wider than predicted, and the extra column is the useful part: appending rather
+ * than replacing also reddens the prose test, because that test asserts *exactly one* machine region
+ * rather than merely that the prose survived. Two blocks would have left the prose intact and the
+ * body ambiguous — which is the state this module refuses to touch on the next push, so a mutation
+ * that produced it would have quietly disabled every later update.
  */
 
 import { test } from "node:test";
