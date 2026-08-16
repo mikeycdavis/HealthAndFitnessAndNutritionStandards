@@ -7,7 +7,7 @@
     "standards": "scripts/standards.mjs"
   },
   "scripts": {
-    "test": "node --test test/audit.test.mjs test/catalog.test.mjs test/check.test.mjs test/claim-strength.test.mjs test/guards.test.mjs test/init.test.mjs test/instructions.test.mjs test/local-ci.test.mjs test/output-contract.test.mjs test/pack-origin.test.mjs test/policy.test.mjs test/pr-evidence.test.mjs test/release-gate.test.mjs test/release-identity.test.mjs test/release-materialisation.test.mjs test/release-resolution.test.mjs test/release-verification.test.mjs test/self-maintenance-boundary.test.mjs test/ssh-tag-verification.test.mjs test/templates.test.mjs test/trusted-execution-boundary.test.mjs",
+    "test": "node --test test/audit.test.mjs test/catalog.test.mjs test/check.test.mjs test/claim-strength.test.mjs test/guards.test.mjs test/host-verifier-conformance.test.mjs test/init.test.mjs test/instructions.test.mjs test/local-ci.test.mjs test/output-contract.test.mjs test/pack-origin.test.mjs test/policy.test.mjs test/pr-evidence.test.mjs test/release-gate.test.mjs test/release-identity.test.mjs test/release-materialisation.test.mjs test/release-resolution.test.mjs test/release-verification.test.mjs test/self-maintenance-boundary.test.mjs test/ssh-tag-verification.test.mjs test/templates.test.mjs test/trusted-execution-boundary.test.mjs",
     "audit": "node scripts/standards.mjs audit .",
     "check": "node scripts/standards.mjs check .",
     "maintain": "node scripts/standards.mjs maintain .",

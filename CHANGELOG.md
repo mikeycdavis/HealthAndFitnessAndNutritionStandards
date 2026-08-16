@@ -59,6 +59,21 @@ output schema version did, because the output format did — see below.
 
 ### Added
 
+- **The external verifier contract, and conformance vectors for somebody else's implementation.**
+  [`docs/design/external-verifier-contract.md`](docs/design/external-verifier-contract.md) freezes
+  what a trusted host must do to establish canonical origin: acquire trust independently, resolve the
+  release itself, verify authorization itself, resolve the signed object, materialise and bind the
+  exact bytes, and only then execute pack code — plus the negative contract, which is where the
+  erosion would otherwise start. **This repository owns the specification and the test vectors;
+  StandardsEnforcer owns the authoritative implementation**, because a specification can be published
+  by the thing being authenticated without weakening anything and a verdict cannot.
+  `test/host-verifier-conformance.test.mjs` implements a host from that document alone — importing
+  neither reference module, since a conformance test that reuses the implementation proves only that
+  it agrees with itself — and runs both required vectors: a hostile fork with a patched judge, a
+  patched verifier, malicious Git configuration and its own signed tag is rejected with none of its
+  nominated code executed, and a genuine signed release is accepted with the authenticated tree
+  materialised and bound.
+
 - **The boundary the cryptography does not reach.**
   [ADR 0011](artifacts/adr/0011-canonical-origin-cannot-be-asserted-by-the-pack.md) records what
   review of the SSH slice found: the anchor is external, and the judge is not. `pack-origin.mjs` and

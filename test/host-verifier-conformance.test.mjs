@@ -19,6 +19,37 @@
  * Without the second, rejection could be a mechanism incapable of accepting anything. Without the
  * first, acceptance could depend on the pack's cooperation. Together they say the answer tracks the
  * signature rather than the situation.
+ *
+ * DO THESE VECTORS CATCH A NON-CONFORMING HOST? That is the only question that matters about them,
+ * since they exist to judge somebody else's implementation. Three mutations of the host below:
+ *
+ *   H1  step 3 verifies against the allowed-signers file    → BOTH vectors red. The adversarial one
+ *       the PACK nominates                                     because the fork is then accepted, and
+ *                                                              the positive control because a genuine
+ *                                                              pack has no such file — a host that
+ *                                                              takes its trust from the evaluated
+ *                                                              tree cannot even do the honest case.
+ *   H2  step 5 materialises the branch tip instead of the   → the positive control red. This is why
+ *       authorised commit                                      the fixture commits again after
+ *                                                              tagging: with branch == tag the
+ *                                                              mutation is invisible, which is
+ *                                                              exactly how the mutable-reference
+ *                                                              failure hides in real repositories.
+ *   H3  step 5's binding comparison is removed entirely     → NOTHING RED. Recorded rather than
+ *                                                              papered over: when the host has
+ *                                                              already checked out the right object,
+ *                                                              the comparison is a self-check whose
+ *                                                              absence changes no outcome these
+ *                                                              fixtures can produce. It defends
+ *                                                              against a materialisation step that
+ *                                                              misbehaves, and Git being
+ *                                                              content-addressed, no cheap fixture
+ *                                                              makes it misbehave. So the contract's
+ *                                                              step 5 is enforced here as far as
+ *                                                              "materialise the right thing" and only
+ *                                                              specified as far as "prove it".
+ *                                                              A host implementer should not read
+ *                                                              green vectors as covering that half.
  */
 
 import { test } from "node:test";

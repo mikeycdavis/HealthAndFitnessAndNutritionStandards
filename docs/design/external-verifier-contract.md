@@ -128,3 +128,12 @@ with itself.
 Neither is sufficient alone. Without the second, rejection could be a mechanism incapable of accepting
 anything; without the first, acceptance could depend on the pack's cooperation. Together they say the
 answer tracks the signature rather than the situation.
+
+**What the vectors do not cover, stated so an implementer does not read green as more than it is.**
+Mutating the conformance host shows they catch a host that takes its trust configuration from the
+evaluated tree, and a host that materialises a mutable branch tip instead of the authorised commit.
+They do **not** catch a host that materialises the right object and then omits step 5's proof: with a
+content-addressed store and an honest clone, the comparison is a self-check whose absence changes no
+outcome these fixtures can produce. Step 5 is therefore enforced here as far as *materialise the right
+thing*, and only specified as far as *prove it*. An implementation that skips the proof will pass
+these vectors and is still non-conforming.
