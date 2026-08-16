@@ -10,21 +10,31 @@
 # NODE_VERSION is an argument rather than a literal so that the CI matrix recorded as ST-11 can be
 # added by varying it, without redesigning anything.
 ARG NODE_VERSION=20
-FROM node:${NODE_VERSION}-bookworm-slim
 
+# THE FULL IMAGE RATHER THAN -slim, AND THERE IS NO `RUN` INSTRUCTION IN THIS FILE. That is the
+# point, and it cost about 800MB.
+#
 # git is a genuine test dependency, not a convenience: release resolution asks Git what `v1.0.0`
 # designates (scripts/release-identity.mjs), materialisation checks its blob ids against
 # `git hash-object` (test/release-materialisation.test.mjs), and the FE-13 falsifiers clone this
 # repository to build a pack whose labels agree and whose bytes do not. Without it those tests would
 # take their fail-closed branch and assert far less than they appear to.
 #
+# This file used to install it with `apt-get` onto `-slim`, which meant the build needed a network
+# even though the run did not — so `network_mode: none` described execution while the build beside it
+# ran unconstrained. A review caught that the claim was broader than the mechanism. `-bookworm` ships
+# git 2.39 and ca-certificates already, so the install disappears, and with no `RUN` left there is
+# nothing for a build-time network to be needed by: compose.ci.yml sets `network: none` on the build
+# as well as the run, and the build would now fail if some future edit reintroduced a fetch.
+#
 # Nothing else is installed. A CI image that accumulates tools accumulates the ability to depend on
 # them.
-RUN apt-get update \
- && apt-get install --yes --no-install-recommends git ca-certificates \
- && rm -rf /var/lib/apt/lists/*
+FROM node:${NODE_VERSION}-bookworm
 
-COPY --chmod=0755 ci/entrypoint.sh /usr/local/bin/ci-entrypoint
+# The build context is `ci/` — not the repository — so this is the only file it can see, and the
+# checkout cannot be baked into a layer. The repository arrives at runtime, read-only, in a container
+# that has no network. See ci/.dockerignore, which narrows even that.
+COPY --chmod=0755 entrypoint.sh /usr/local/bin/ci-entrypoint
 
 # The `node` image ships an unprivileged `node` user. CI is untrusted code execution — it runs
 # whatever the branch says — so it does not run as root, and the container is given no network, no

@@ -1,0 +1,11 @@
+# The build context is `ci/`, and this narrows it to the one file the Dockerfile copies.
+#
+# Deny-by-default rather than a list of things to exclude. An exclusion list has to be updated every
+# time the repository grows a directory worth keeping out of a build layer, and it is only ever
+# updated by someone who thought of it.
+#
+# Belt to the build context's braces: `context: ci` already keeps the checkout out of reach, so a
+# Dockerfile that says `COPY . /somewhere` gets this directory rather than the repository. This file
+# makes that "gets entrypoint.sh".
+*
+!entrypoint.sh

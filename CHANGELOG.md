@@ -31,11 +31,40 @@ No standard, rule, or verdict changed, so no version moved.
   still runs on its own; it is a second opinion rather than a prerequisite. Two definitions of a
   pipeline agree until the day they matter, and this one had already drifted once.
 
+- **The build is isolated, not only the run.** `network_mode: none` governed the container and was
+  documented as though it governed CI. The build beside it took the whole repository as its context
+  and had a network, so a branch-controlled Dockerfile could bake the checkout into a layer and a
+  `RUN` could send it somewhere. The context is now `ci/` alone, narrowed further by a deny-by-default
+  `ci/.dockerignore`; the build has `network: none`; and `ci/Dockerfile` has no `RUN` at all, which is
+  what makes that free — git comes from `node:20-bookworm` instead of an `apt-get` onto `-slim`, at
+  about 800MB. A test asserts each of those and then builds a probe image to read back what Docker
+  actually hands the build.
+- **Every name a run writes is run-scoped.** The unique Compose project covered containers and
+  networks and did nothing for the image tag, so two overlapping runs both wrote
+  `hfn-local-ci:node20` and the second build could move it between the first run's build and its run.
+  The tag now carries the run id, and so does the log the stage markers are parsed out of.
+- **A pass has to be evidenced.** `run-checks.sh` prints `::ci-complete:: stages=N` only after every
+  stage passed; the wrappers refuse to record a pass unless that matches the markers they saw, and
+  `submit-pr.*` refuses evidence recording a pass over no stages. A container that exits 0 without
+  running the pipeline previously produced `result: passed` with an empty stage list.
+
+### Fixed
+
+- **`ci/ci.ps1` could mask a build failure with an error of its own.** Its `finally` read `$status`
+  before any assignment reached it, which under `Set-StrictMode` raises a second error and skips the
+  cleanup it exists to run. Visible only on the `-KeepOnFailure` path, because `-and` short-circuits
+  past the unset variable otherwise — which is why the regression test passes the switch.
+
 ### Found while building this
 
 - The container is given no network at all, which turned the zero-dependency policy from a comment
   in a workflow file into a property of the environment. The policy had never been enforced by
   anything but attention.
+- Three of the four defects above came from review of the pull request rather than from building it,
+  and the fourth from running a deliberately failing build. None was visible to reading the code with
+  the intent behind it in mind. The enforcement mechanism finding defects in itself before adoption
+  makes it infrastructure is the mechanism working, and it is the reason PR #1 did not merge on the
+  strength of its own description.
 
 ## 1.0.0
 

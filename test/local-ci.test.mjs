@@ -20,8 +20,8 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
-import { chmod, cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { spawn, spawnSync } from "node:child_process";
+import { chmod, cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -131,14 +131,83 @@ test("the CI container gets a read-only repository, no network, and nothing else
   }
 });
 
-test("the CI image runs as an unprivileged user and installs nothing beyond git", async () => {
+test("the CI image runs as an unprivileged user and installs nothing", async () => {
   const dockerfile = await read("ci/Dockerfile");
   assert.match(dockerfile, /^USER node$/m, "CI is untrusted code execution and does not run as root");
 
-  const installs = [...dockerfile.matchAll(/apt-get install[^\n]*\n(?:[^\n]*\\\n)*[^\n]*/g)].join(" ");
-  assert.match(installs, /\bgit\b/, "git is a genuine test dependency here");
+  const instructions = dockerfile
+    .split("\n")
+    .filter((l) => !/^\s*(#|$)/.test(l))
+    .join("\n");
   for (const tool of ["curl", "wget", "ssh", "sudo"]) {
-    assert.ok(!installs.includes(tool), `the CI image installs ${tool}, which nothing in the pipeline needs`);
+    assert.ok(!instructions.includes(tool), `the CI image installs ${tool}, which nothing in the pipeline needs`);
+  }
+  assert.match(instructions, /^FROM node:\$\{NODE_VERSION\}-bookworm$/m, "git and ca-certificates come from the base image");
+});
+
+// ---------------------------------------------------------------------------------------------
+// Build-time isolation
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * `network_mode: none` governs the container. It says nothing about the build that produces the
+ * image, and the build is branch-controlled too — so while the context was the repository and the
+ * build had a network, a Dockerfile could copy the checkout into a layer and a `RUN` could send it
+ * somewhere. The isolation claim was about execution and was written as though it were about CI.
+ *
+ * Both halves are asserted, because either alone leaves the hole open: a narrow context with a
+ * networked build still lets a `RUN` reach out, and a networkless build over the whole repository
+ * still bakes the checkout into a layer for anyone who later runs the image.
+ */
+test("the image build is isolated too: a narrow context, no build network, and no RUN", async () => {
+  const compose = await read("compose.ci.yml");
+  const build = compose.slice(compose.indexOf("build:"), compose.indexOf("image:"));
+
+  assert.match(build, /^\s*context:\s*ci$/m, "the build context must be ci/, not the repository");
+  assert.match(build, /^\s*network:\s*none$/m, "a build with a network is a build that can exfiltrate its context");
+
+  const dockerfile = await read("ci/Dockerfile");
+  const runInstructions = dockerfile.split("\n").filter((l) => /^\s*RUN\b/.test(l));
+  assert.deepEqual(runInstructions, [], "a Dockerfile with no RUN has nothing a build-time network could serve");
+
+  // Deny-by-default. An exclusion list is only ever updated by someone who thought of it.
+  const ignore = (await read("ci/.dockerignore")).split("\n").filter((l) => l.trim() && !l.startsWith("#"));
+  assert.deepEqual(ignore, ["*", "!entrypoint.sh"], "the build context is narrowed to the one file the Dockerfile copies");
+});
+
+/**
+ * The executed half of the claim above: build a probe image whose Dockerfile copies the entire
+ * context, and read back what it got. Static assertions describe the configuration; this one is the
+ * only thing that establishes what Docker actually hands the build.
+ *
+ * It needs a Docker daemon, so it does not run inside the CI container — which has no Docker socket,
+ * deliberately, and would be the wrong place to test this from anyway. It runs on the developer host,
+ * where `ci/ci.sh` is invoked from.
+ */
+test("the build context really does contain only entrypoint.sh", async (t) => {
+  if (spawnSync("docker", ["info"], { encoding: "utf8" }).status !== 0) {
+    t.skip("no Docker daemon reachable; this assertion runs on the host, not inside the CI container");
+    return;
+  }
+
+  const dir = await mkdtemp(path.join(tmpdir(), "hfn-ctx-"));
+  const tag = `hfn-ci-context-probe:${process.pid}`;
+  try {
+    const probe = path.join(dir, "probe.Dockerfile");
+    await writeFile(probe, "FROM busybox\nCOPY . /ctx\nRUN find /ctx -type f | sort\n");
+
+    const r = spawnSync(
+      "docker",
+      ["build", "--network", "none", "--no-cache", "--progress", "plain", "-f", probe, "-t", tag, path.join(REPO, "ci")],
+      { encoding: "utf8" },
+    );
+    assert.equal(r.status, 0, `${r.stdout}\n${r.stderr}`);
+
+    const seen = [...`${r.stdout}\n${r.stderr}`.matchAll(/^#\d+ [\d.]+ (\/ctx\/.+)$/gm)].map(([, f]) => f.trim());
+    assert.deepEqual(seen, ["/ctx/entrypoint.sh"], "anything else here is a file a malicious Dockerfile could bake into a layer");
+  } finally {
+    spawnSync("docker", ["image", "rm", "--force", tag], { encoding: "utf8" });
+    await rm(dir, { recursive: true, force: true });
   }
 });
 
@@ -148,6 +217,338 @@ test("verification evidence is ignored, not committed", async () => {
 
   const tracked = spawnSync("git", ["-C", REPO, "ls-files", "artifacts/local-ci"], { encoding: "utf8" });
   assert.equal(tracked.stdout.trim(), "", "a claim about a verification must not be committed without the verification");
+});
+
+// ---------------------------------------------------------------------------------------------
+// Concurrent runs, actually overlapped
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * A scratch repository holding a real copy of ci/ and compose.ci.yml, plus a stub `docker` first on
+ * PATH.
+ *
+ * The stub is what makes the concurrency question answerable at all: a real run takes a minute and
+ * needs a daemon, so two of them would be a demonstration rather than a test. What matters here is
+ * which names the wrapper invents and hands to Docker, and that is entirely visible from the calls
+ * it makes.
+ *
+ * The build stub is a barrier, not a sleep. It refuses to return until every expected run has
+ * entered its build, so the two runs are provably in flight at the same moment — if overlap were
+ * impossible the test would time out rather than quietly pass having run them one after the other.
+ */
+async function ciScratch({ runs = 1 } = {}) {
+  const dir = await mkdtemp(path.join(tmpdir(), "hfn-ci-run-"));
+  const work = path.join(dir, "work");
+  const bin = path.join(dir, "bin");
+  const barrier = path.join(dir, "barrier");
+
+  await mkdir(work, { recursive: true });
+  await mkdir(bin, { recursive: true });
+  await mkdir(barrier, { recursive: true });
+
+  git(work, ["init", "--quiet", "--initial-branch", "feature/concurrent"]);
+  git(work, ["config", "user.email", "scratch@invalid"]);
+  git(work, ["config", "user.name", "Scratch"]);
+  await cp(path.join(REPO, "ci"), path.join(work, "ci"), { recursive: true });
+  await cp(path.join(REPO, "compose.ci.yml"), path.join(work, "compose.ci.yml"));
+  await writeFile(path.join(work, "README.md"), "A repository that exists for one assertion.\n");
+  git(work, ["add", "-A"]);
+  git(work, ["commit", "--quiet", "-m", "Scratch"]);
+
+  const docker = path.join(bin, "docker");
+  await writeFile(
+    docker,
+    [
+      "#!/usr/bin/env bash",
+      // Every call is recorded with the image name the wrapper exported for it. That pairing is the
+      // whole question: did this run build and then run *its own* tag?
+      'printf "image=%s args=%s\\n" "${CI_IMAGE:-none}" "$*" >> "$STUB_LOG"',
+      'case " $* " in',
+      "  *\" info \"*) exit 0 ;;",
+      "  *\" build\"*)",
+      // Keyed on the run id, deliberately not on the image name: the barrier has to work
+      // identically whether or not the tags are unique, or it would detect the very defect this
+      // test is meant to catch by deadlocking instead of by asserting.
+      '    touch "$STUB_BARRIER/$STUB_RUN_ID"',
+      "    for _ in $(seq 1 300); do",
+      '      if [ "$(ls -1 "$STUB_BARRIER" | wc -l)" -ge "${STUB_BARRIER_N:-1}" ]; then exit 0; fi',
+      "      sleep 0.05",
+      "    done",
+      '    printf "stub docker: the runs never overlapped\\n" >&2',
+      "    exit 1",
+      "    ;;",
+      "  *\" run \"*)",
+      '    printf "::ci-stage:: name=inventory status=passed seconds=0\\n"',
+      '    printf "::ci-stage:: name=check status=passed seconds=0\\n"',
+      '    printf "%s\\n" "${STUB_RUN_TAIL:-::ci-complete:: stages=2}"',
+      '    exit "${STUB_RUN_STATUS:-0}"',
+      "    ;;",
+      "esac",
+      "exit 0",
+      "",
+    ].join("\n"),
+  );
+  await chmod(docker, 0o755);
+
+  return { dir, work, bin, barrier, runs };
+}
+
+/** Launch ci/ci.sh in a scratch repository, with the stub Docker ahead of any real one. */
+function launchCi(s, { id, env = {} } = {}) {
+  const child = spawn("bash", [forBash(path.join(s.work, "ci", "ci.sh"))], {
+    cwd: s.work,
+    env: {
+      ...process.env,
+      PATH: `${s.bin}${path.delimiter}${process.env.PATH}`,
+      STUB_LOG: forBash(path.join(s.dir, `docker-${id}.log`)),
+      STUB_RUN_ID: id,
+      STUB_BARRIER: forBash(s.barrier),
+      STUB_BARRIER_N: String(s.runs),
+      ...env,
+    },
+  });
+
+  let out = "";
+  child.stdout.on("data", (d) => (out += d));
+  child.stderr.on("data", (d) => (out += d));
+  return new Promise((resolve) => child.on("close", (status) => resolve({ status, out })));
+}
+
+/**
+ * THE CONCURRENCY DEFECT. Unique Compose project names scope containers and networks; they do
+ * nothing for an image tag. While every run at a given Node major wrote `hfn-local-ci:node20`, a
+ * second build could move that name between the first run's build and its `compose run` — and the
+ * first run would then execute an image built from another checkout while reporting on its own.
+ *
+ * Overlap is forced rather than hoped for: neither build returns until both have started.
+ */
+test("two overlapping runs never share an image tag, a project, or a log", async () => {
+  const s = await ciScratch({ runs: 2 });
+  try {
+    const [a, b] = await Promise.all([launchCi(s, { id: "a" }), launchCi(s, { id: "b" })]);
+
+    assert.equal(a.status, 0, a.out);
+    assert.equal(b.status, 0, b.out);
+
+    assert.equal(
+      (await readdir(s.barrier)).length,
+      2,
+      "both runs must have been inside their build at the same moment, or this proves nothing about concurrency",
+    );
+
+    const calls = async (id) => (await readFile(path.join(s.dir, `docker-${id}.log`), "utf8")).trim().split(/\r?\n/);
+    const [callsA, callsB] = [await calls("a"), await calls("b")];
+
+    const imagesOf = (lines) => new Set(lines.map((l) => l.match(/^image=(\S+)/)[1]).filter((i) => i !== "none"));
+    const [imagesA, imagesB] = [imagesOf(callsA), imagesOf(callsB)];
+
+    assert.equal(imagesA.size, 1, `a run must use exactly one image tag, saw ${[...imagesA]}`);
+    assert.equal(imagesB.size, 1, `a run must use exactly one image tag, saw ${[...imagesB]}`);
+    assert.notDeepEqual([...imagesA], [...imagesB], "two concurrent runs must not write the same image name");
+
+    const projectsOf = (lines) => new Set(lines.flatMap((l) => [...l.matchAll(/-p (\S+)/g)].map(([, p]) => p)));
+    assert.notDeepEqual([...projectsOf(callsA)], [...projectsOf(callsB)], "project names must differ too");
+
+    // The image each run executed is the image that run built — not whatever the name pointed at by
+    // then. This is the assertion the shared tag made impossible.
+    for (const [lines, images] of [[callsA, imagesA], [callsB, imagesB]]) {
+      const ran = lines.find((l) => / run /.test(l));
+      assert.ok(ran, "each run must have reached `compose run`");
+      assert.equal(ran.match(/^image=(\S+)/)[1], [...images][0]);
+    }
+
+    // Per-run logs, because the stage markers are parsed back out of them. One shared log holding
+    // two runs' markers is a run that can read a pass it did not earn.
+    const logs = (await readdir(path.join(s.work, "artifacts", "local-ci"))).filter((f) => f.startsWith("run-"));
+    assert.equal(logs.length, 2, "each run writes its own log");
+    for (const f of logs) {
+      const text = await readFile(path.join(s.work, "artifacts", "local-ci", f), "utf8");
+      assert.equal([...text.matchAll(/::ci-stage::/g)].length, 2, "a run's log must hold only its own markers");
+    }
+  } finally {
+    await rm(s.dir, { recursive: true, force: true });
+  }
+});
+
+/**
+ * A container that exits 0 without running the pipeline has proved nothing, and `compose run`
+ * reports its status faithfully. So a zero exit code is necessary and not sufficient: the runner
+ * declares how many stages it completed, and the wrapper checks that declaration against the markers
+ * it actually saw. Without this, a substituted entrypoint — or an image swapped in by the tag race
+ * above — yields `result: passed` over an empty stage list, which is the shape a pipeline that never
+ * ran produces.
+ */
+test("a container that exits 0 without completing the pipeline is not a pass", async () => {
+  const s = await ciScratch();
+  try {
+    const r = await launchCi(s, { id: "silent", env: { STUB_RUN_TAIL: "no completion marker here" } });
+
+    assert.notEqual(r.status, 0, "an unevidenced pass must not be reported as a pass");
+    assert.match(r.out, /did not report a completed pipeline/);
+
+    const evidence = JSON.parse(await readFile(path.join(s.work, "artifacts", "local-ci", "latest.json"), "utf8"));
+    assert.equal(evidence.result, "failed");
+  } finally {
+    await rm(s.dir, { recursive: true, force: true });
+  }
+});
+
+test("a completed pipeline is recorded as a pass, with the stages it reported", async () => {
+  const s = await ciScratch();
+  try {
+    const r = await launchCi(s, { id: "ok" });
+
+    assert.equal(r.status, 0, r.out);
+    const evidence = JSON.parse(await readFile(path.join(s.work, "artifacts", "local-ci", "latest.json"), "utf8"));
+    assert.equal(evidence.result, "passed");
+    assert.deepEqual(evidence.checks.map((c) => c.name), ["inventory", "check"]);
+    assert.match(evidence.environment.image, /^hfn-local-ci:node20-hfn-ci-/, "the evidence records the run-scoped tag");
+  } finally {
+    await rm(s.dir, { recursive: true, force: true });
+  }
+});
+
+// ---------------------------------------------------------------------------------------------
+// The PowerShell wrapper, executed
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * ci.ps1 was the acknowledged untested sibling: it shares the pipeline with ci.sh but not the
+ * orchestration around it, and only the bash path was ever executed by a test. That is precisely
+ * where its one review finding lived — a `finally` block reading $status before any assignment
+ * reached it, which under Set-StrictMode raises a second error, masks the build failure it was
+ * reporting, and skips the cleanup it exists to run.
+ *
+ * That defect hides behind a short circuit: the guard read `$KeepOnFailure -and $status -ne 0`, and
+ * with the switch absent `-and` never evaluates its right operand, so the unset variable is only
+ * ever touched on the `-KeepOnFailure` path. A test that omitted the switch would pass against the
+ * defect and prove nothing — which is why the build-failure case below passes it.
+ *
+ * A Windows developer's Docker is stubbed the same way as above. This does not run inside the CI
+ * container, which has neither PowerShell nor a reason to: the file it covers is the one a Windows
+ * developer invokes, and the honest place to run it is there.
+ */
+const pwsh = (() => {
+  for (const exe of ["pwsh", "powershell"]) {
+    if (spawnSync(exe, ["-NoProfile", "-Command", "exit 0"], { encoding: "utf8" }).status === 0) return exe;
+  }
+  return null;
+})();
+
+/**
+ * A scratch repository with a stub `docker.cmd`, which is what `Get-Command docker` resolves on
+ * Windows. The dispatch lives in a .ps1 the .cmd shells out to: batch's exit codes do not survive
+ * nested parenthesised blocks reliably, and a stub whose failure signal is unreliable would make
+ * this test assert nothing while appearing to.
+ */
+async function psScratch() {
+  const s = await ciScratch();
+  const stub = path.join(s.bin, "docker-stub.ps1");
+
+  await writeFile(
+    stub,
+    [
+      "$line = $args -join ' '",
+      "Add-Content -Path $env:STUB_LOG -Value $line",
+      "if ($args[0] -eq 'info') { exit 0 }",
+      "if ($line -match '\\bbuild\\b') {",
+      "    if ($env:STUB_BUILD_FAIL -eq '1') { [Console]::Error.WriteLine('the build failed on purpose'); exit 1 }",
+      "    exit 0",
+      "}",
+      "if ($line -match '\\brun\\b') {",
+      "    Write-Output '::ci-stage:: name=inventory status=passed seconds=0'",
+      "    Write-Output '::ci-stage:: name=check status=passed seconds=0'",
+      "    Write-Output $env:STUB_RUN_TAIL",
+      "    exit 0",
+      "}",
+      "exit 0",
+      "",
+    ].join("\n"),
+  );
+
+  await writeFile(
+    path.join(s.bin, "docker.cmd"),
+    ["@echo off", `${pwsh} -NoProfile -ExecutionPolicy Bypass -File "${stub}" %*`, "exit /b %ERRORLEVEL%", ""].join("\r\n"),
+  );
+
+  return s;
+}
+
+function runPs(s, env = {}, args = []) {
+  const r = spawnSync(pwsh, ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", path.join(s.work, "ci", "ci.ps1"), ...args], {
+    cwd: s.work,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      PATH: `${s.bin}${path.delimiter}${process.env.PATH}`,
+      STUB_LOG: path.join(s.dir, "docker-ps.log"),
+      STUB_RUN_TAIL: "::ci-complete:: stages=2",
+      ...env,
+    },
+  });
+  return { ...r, out: `${r.stdout}${r.stderr}` };
+}
+
+test("ci.ps1 runs a pipeline to completion and records the same evidence shape", async (t) => {
+  if (!pwsh) return t.skip("no PowerShell on this host; ci.ps1 is covered where it is used");
+
+  const s = await psScratch();
+  try {
+    const r = runPs(s);
+    assert.equal(r.status, 0, r.out);
+
+    const evidence = JSON.parse(await readFile(path.join(s.work, "artifacts", "local-ci", "latest.json"), "utf8"));
+    assert.equal(evidence.result, "passed");
+    assert.equal(evidence.schemaVersion, "1.0");
+    assert.deepEqual(evidence.checks.map((c) => c.name), ["inventory", "check"]);
+    assert.match(evidence.environment.image, /^hfn-local-ci:node20-hfn-ci-/, "the tag must be run-scoped here too");
+  } finally {
+    await rm(s.dir, { recursive: true, force: true });
+  }
+});
+
+/**
+ * THE POWERSHELL DEFECT. The build fails before $status is ever assigned; the `finally` block runs
+ * anyway. What must come out is the build failure and a completed cleanup — not a StrictMode
+ * complaint about an unset variable standing in front of it.
+ */
+test("ci.ps1 reports a build failure rather than a strict-mode error, and still cleans up", async (t) => {
+  if (!pwsh) return t.skip("no PowerShell on this host; ci.ps1 is covered where it is used");
+
+  const s = await psScratch();
+  try {
+    // -KeepOnFailure, because that is the only path on which the guard evaluates $status at all.
+    const r = runPs(s, { STUB_BUILD_FAIL: "1" }, ["-KeepOnFailure"]);
+
+    assert.notEqual(r.status, 0, "a failed build must fail the run");
+    assert.ok(
+      !/has not been set|StrictMode/i.test(r.out),
+      `the unset-variable error masks the failure it is standing in front of:\n${r.out}`,
+    );
+    assert.match(r.out, /The CI image failed to build/);
+
+    // Cleanup must still have happened. A `finally` that raises its own error never gets here.
+    const calls = await readFile(path.join(s.dir, "docker-ps.log"), "utf8");
+    assert.match(calls, /down --remove-orphans --volumes/, "teardown must run even when the build never produced anything");
+  } finally {
+    await rm(s.dir, { recursive: true, force: true });
+  }
+});
+
+test("ci.ps1 refuses to call an unevidenced pipeline a pass", async (t) => {
+  if (!pwsh) return t.skip("no PowerShell on this host; ci.ps1 is covered where it is used");
+
+  const s = await psScratch();
+  try {
+    const r = runPs(s, { STUB_RUN_TAIL: "no completion marker here" });
+
+    assert.notEqual(r.status, 0);
+    assert.match(r.out, /did not report a completed pipeline/);
+    const evidence = JSON.parse(await readFile(path.join(s.work, "artifacts", "local-ci", "latest.json"), "utf8"));
+    assert.equal(evidence.result, "failed");
+  } finally {
+    await rm(s.dir, { recursive: true, force: true });
+  }
 });
 
 // ---------------------------------------------------------------------------------------------
@@ -217,6 +618,12 @@ async function scratch() {
     [
       "#!/usr/bin/env bash",
       'if [ "$1" = "auth" ]; then exit 0; fi',
+      // `pr view` answers "does this branch already have a PR?". Silent by default, so the happy
+      // path still goes on to create one.
+      'if [ "$1" = "pr" ] && [ "$2" = "view" ]; then',
+      '  if [ -n "${GH_STUB_EXISTING_PR:-}" ]; then printf "%s\\n" "$GH_STUB_EXISTING_PR"; exit 0; fi',
+      "  exit 1",
+      "fi",
       'while [ $# -gt 0 ]; do',
       '  printf "%s\\n" "$1" >> "$GH_STUB_LOG"',
       '  if [ "$1" = "--body-file" ]; then shift; cp "$1" "$GH_STUB_BODY"; fi',
@@ -373,6 +780,35 @@ test("submission refuses evidence that names a different commit", async () => {
     assert.notEqual(r.status, 0);
     assert.match(r.stderr, /evidence names commit 0{40}/);
     assert.equal(remoteBranches(s), "");
+  } finally {
+    await rm(s.dir, { recursive: true, force: true });
+  }
+});
+
+/**
+ * Every push after the first lands on a branch that already has a PR, and `gh pr create` fails on
+ * that. The push is the half that carries the invariant, so the existing PR must be reported rather
+ * than treated as a failed submission — and the developer's PR body must not be rewritten from a
+ * commit message on the way past.
+ */
+test("submission updates an existing PR rather than failing to create a second one", async () => {
+  const s = await scratch();
+  try {
+    const sha = git(s.work, ["rev-parse", "HEAD"]);
+    const r = submit(s, {
+      env: { GH_COMMAND: forBash(s.gh), GH_STUB_EXISTING_PR: "https://example.invalid/pr/1" },
+    });
+
+    assert.equal(r.status, 0, `${r.stdout}\n${r.stderr}`);
+    assert.match(r.stdout, /A pull request already exists/);
+    assert.match(r.stdout, /https:\/\/example\.invalid\/pr\/1/);
+    assert.equal(
+      spawnSync("git", ["-C", s.remote, "rev-parse", "refs/heads/feature/verified-submission"], { encoding: "utf8" })
+        .stdout.trim(),
+      sha,
+      "the verified commit must still reach the remote",
+    );
+    assert.ok(!existsSync(path.join(s.dir, "gh-args.txt")), "no second PR may be created");
   } finally {
     await rm(s.dir, { recursive: true, force: true });
   }

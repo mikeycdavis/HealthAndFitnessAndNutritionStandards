@@ -53,15 +53,25 @@ try {
     # scoped to the project; it is not `docker system prune`, and it must never become it.
     $suffix = -join ((1..6) | ForEach-Object { '{0:x}' -f (Get-Random -Maximum 16) })
     $project = "hfn-ci-$($commit.Substring(0, [Math]::Min(12, $commit.Length)))-$PID-$suffix"
-    $image = "hfn-local-ci:node$NodeVersion"
     $container = "$project-ci"
+
+    # The image tag is run-scoped too. A unique project name scopes containers and networks and does
+    # nothing for a tag: two overlapping runs both wrote `hfn-local-ci:node20`, so the second build
+    # could move that name between the first run's build and its run, and the first run would then
+    # execute an image built from another checkout while reporting on its own. Layers are cached by
+    # content, so a per-run tag costs a re-tag and nothing else.
+    $image = "hfn-local-ci:node$NodeVersion-$project"
 
     $env:CI_NODE_VERSION = $NodeVersion
     $env:CI_IMAGE = $image
 
     $evidenceDir = Join-Path $repoRoot "artifacts/local-ci"
     New-Item -ItemType Directory -Force -Path $evidenceDir | Out-Null
-    $log = Join-Path $evidenceDir "last-run.log"
+    # Per run, not per repository. The stage markers are parsed back out of this file, so two runs
+    # sharing one log is not an untidy log — it is two sets of markers in one stream, and a run could
+    # read a pass it did not earn. `last-run.log` is written from it at the end as the documented
+    # convenience path.
+    $log = Join-Path $evidenceDir "run-$project.log"
     $startedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
 
     Write-Host "Local CI"
@@ -80,7 +90,18 @@ try {
         $script:removed = $true
         & docker @composeArgs down --remove-orphans --volumes --timeout 5 *> $null
         & docker rm --force $container *> $null
+        # The run-scoped tag goes with it, and only ever that tag. Where two runs built identical
+        # content the tags share an image id and removing one name leaves the other; the build cache
+        # is untouched either way.
+        & docker image rm --force $image *> $null
     }
+
+    # Initialised before the try, not inside it. Under Set-StrictMode a `finally` that reads $status
+    # after a build failure — before the assignment below is ever reached — raises its own error,
+    # which masks the build failure it was trying to report and skips the cleanup it was there to
+    # run. A failure state is the honest starting value: nothing has succeeded yet.
+    $status = 1
+    $containerStarted = $false
 
     try {
         Write-Verbose "docker $($composeArgs -join ' ') build"
@@ -91,15 +112,37 @@ try {
                    else { @("run", "--rm", "--name", $container, "--no-TTY", "ci") }
 
         Write-Verbose "docker $($composeArgs -join ' ') $($runArgs -join ' ')"
+        $containerStarted = $true
         & docker @composeArgs @runArgs 2>&1 | Tee-Object -FilePath $log
         $status = $LASTEXITCODE
     }
     finally {
-        if (-not ($KeepOnFailure -and $status -ne 0)) { & $cleanup }
+        # There is a container worth keeping only if one was actually started and the run failed.
+        if (-not ($KeepOnFailure -and $containerStarted -and $status -ne 0)) { & $cleanup }
     }
 
     $completedAt = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+
+    # A zero exit code is necessary and not sufficient: a container that never ran the pipeline exits
+    # 0 having proved nothing. The runner declares how many stages it completed; that declaration is
+    # checked against the passed markers actually present, so the count comes from run-checks.sh's
+    # own stage list rather than from a second copy of it here.
+    if ($status -eq 0) {
+        $logText = if (Test-Path $log) { Get-Content -Path $log -Raw } else { "" }
+        $completeMatch = [regex]::Matches($logText, '::ci-complete:: stages=(\d+)')
+        $declared = if ($completeMatch.Count -gt 0) { [int]$completeMatch[$completeMatch.Count - 1].Groups[1].Value } else { 0 }
+        $observed = ([regex]::Matches($logText, '::ci-stage:: name=[a-z-]+ status=passed')).Count
+        if ($declared -eq 0 -or $declared -ne $observed) {
+            Write-Host "ci.ps1: the container exited 0 but did not report a completed pipeline."
+            Write-Host "        stages declared complete: $declared; passed stages observed: $observed"
+            Write-Host "        Treating this as a failure. A pass has to be evidenced, not merely not-contradicted."
+            $status = 1
+        }
+    }
+
     $result = if ($status -eq 0) { "passed" } else { "failed" }
+
+    if (Test-Path $log) { Copy-Item -Path $log -Destination (Join-Path $evidenceDir "last-run.log") -Force }
 
     # The stages are read back out of the runner's own output rather than re-listed here. A wrapper
     # that maintains its own copy of the stage list is a wrapper that will one day report a stage

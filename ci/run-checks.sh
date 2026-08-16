@@ -102,3 +102,10 @@ for stage in "${STAGES[@]}"; do
 done
 
 printf '\nAll %d stages passed in %ss.\n' "${#STAGES[@]}" "$(( $(date -u +%s) - started ))"
+
+# The completion marker, printed only here — after every stage passed. Exit 0 on its own does not
+# distinguish "the pipeline ran and passed" from "something exited 0 without running the pipeline":
+# a substituted entrypoint, an image built from another checkout, a truncated log. The wrapper checks
+# this count against the passed-stage markers it actually saw and fails the run when they disagree,
+# so the number comes from the stage list rather than from a second copy of it.
+printf '::ci-complete:: stages=%d\n' "${#STAGES[@]}"

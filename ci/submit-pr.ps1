@@ -128,6 +128,18 @@ try {
         Deny "The CI evidence names commit $($evidence.commit), not $shaAfter. That run verified a different commit. Nothing was pushed and no PR was created."
     }
 
+    # A pass with no stages is not a pass. ci.ps1 already refuses to record one — it checks the
+    # runner's completion marker against the stages it saw — but this is the file that decides
+    # whether a commit reaches a PR, and "result: passed, checks: []" is exactly the shape a pipeline
+    # that never ran produces.
+    $recordedStages = @($evidence.checks)
+    if ($recordedStages.Count -eq 0) {
+        Deny "The CI evidence records a pass with no stages, so nothing was actually checked. Nothing was pushed and no PR was created."
+    }
+    if ($recordedStages | Where-Object { $_.status -ne "passed" }) {
+        Deny "The CI evidence records a pass containing a stage that did not pass. Nothing was pushed and no PR was created."
+    }
+
     # --- 7. push exactly what was verified ------------------------------------------------------
 
     Write-Host "`nPushing the verified commit $shaAfter to origin/$branch"
@@ -179,6 +191,18 @@ try {
         & $gh auth status *> $null
         if ($LASTEXITCODE -ne 0) {
             Write-Host "`nThe verified commit was pushed. GitHub CLI is not authenticated (gh auth login), so no PR was created."
+            exit 0
+        }
+
+        # A branch that already has a PR is the normal case for every push after the first, and
+        # `gh pr create` fails on it. The push above is the part that carries the invariant — the
+        # verified commit is already on the remote and the existing PR now points at it — so this
+        # reports rather than fails, and leaves the developer's body alone.
+        $existing = & $gh pr view $branch --json url --jq .url 2>$null
+        if ($LASTEXITCODE -eq 0 -and $existing) {
+            Write-Host "`nA pull request already exists for $branch, and now carries the verified commit:"
+            Write-Host "  $existing"
+            Write-Host "`nPASS  $shaAfter  verified and pushed."
             exit 0
         }
 

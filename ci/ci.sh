@@ -49,8 +49,15 @@ if [ -n "$(git status --porcelain 2>/dev/null)" ]; then dirty=true; fi
 # teardown below can only ever remove resources this run created. `docker compose down -p <project>`
 # is scoped to the project; it is not `docker system prune`, and it must never become it.
 project="hfn-ci-${commit:0:12}-$$-${RANDOM}"
-image="hfn-local-ci:node${node_version}"
 container="${project}-ci"
+
+# THE IMAGE TAG IS RUN-SCOPED TOO, and that is not decoration. A unique project name scopes the
+# containers and networks; it does nothing for a tag, and the tag was `hfn-local-ci:node20` for every
+# run at a given Node major. Two overlapping runs both write that name, so the second build can move
+# it between the first run's build and its `compose run` — and the first run then executes an image
+# built from the other checkout, reporting a pass for a pipeline it never ran. Layers are cached by
+# content rather than by tag, so a fresh tag per run costs a re-tag and nothing else.
+image="hfn-local-ci:node${node_version}-${project}"
 
 export CI_NODE_VERSION="$node_version"
 export CI_IMAGE="$image"
@@ -68,12 +75,21 @@ cleanup() {
   # networks, volumes, and databases are outside its reach by construction.
   compose down --remove-orphans --volumes --timeout 5 >/dev/null 2>&1 || true
   docker rm --force "$container" >/dev/null 2>&1 || true
+  # The run-scoped tag goes with it. This is a tag this run invented, so removing it cannot affect
+  # another run: where two runs built identical content the tags share an image id, and removing one
+  # name leaves the other. The build cache is untouched either way, which is what makes the next run
+  # fast rather than the tag.
+  docker image rm --force "$image" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT INT TERM
 
 evidence_dir="$REPO_ROOT/artifacts/local-ci"
 mkdir -p "$evidence_dir"
-log="$evidence_dir/last-run.log"
+# Per run, not per repository. The stage markers are parsed back out of this file, so two runs
+# sharing one log is not an untidy log — it is two sets of markers in one stream, and a run could
+# read a pass it did not earn. `last-run.log` is written from it at the end as the documented
+# convenience path.
+log="$evidence_dir/run-${project}.log"
 started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 printf 'Local CI\n'
@@ -95,7 +111,26 @@ status="${PIPESTATUS[0]}"
 set -e
 
 completed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+# A ZERO EXIT CODE IS NECESSARY AND NOT SUFFICIENT. `compose run` reports the container's status, and
+# a container that never ran the pipeline exits 0 having proved nothing — a substituted entrypoint, a
+# stale or swapped image, a log that stopped early. So the runner declares how many stages it
+# completed and that declaration is checked against the passed markers actually present. The count
+# comes from run-checks.sh's own stage list; nothing here keeps a second copy of it.
+if [ "$status" -eq 0 ]; then
+  declared="$(sed -n 's/.*::ci-complete:: stages=\([0-9]\{1,\}\).*/\1/p' "$log" 2>/dev/null | tail -1)"
+  observed="$(grep -c '::ci-stage:: name=[a-z-]* status=passed' "$log" 2>/dev/null || true)"
+  if [ -z "$declared" ] || [ "$declared" = "0" ] || [ "$declared" != "$observed" ]; then
+    printf '\nci.sh: the container exited 0 but did not report a completed pipeline.\n' >&2
+    printf '       stages declared complete: %s; passed stages observed: %s\n' "${declared:-none}" "$observed" >&2
+    printf '       Treating this as a failure. A pass has to be evidenced, not merely not-contradicted.\n' >&2
+    status=1
+  fi
+fi
+
 result=$([ "$status" -eq 0 ] && echo passed || echo failed)
+
+cp "$log" "$evidence_dir/last-run.log" 2>/dev/null || true
 
 # The stages are read back out of the runner's own output rather than re-listed here. A wrapper that
 # maintains its own copy of the stage list is a wrapper that will one day report a stage that did not

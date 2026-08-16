@@ -124,6 +124,18 @@ evidence_result="$(sed -n 's/.*"result"[[:space:]]*:[[:space:]]*"\([a-z]*\)".*/\
 [ "$evidence_result" = "passed" ] || refuse "The CI evidence does not record a pass (result: ${evidence_result:-missing}). Nothing was pushed and no PR was created."
 [ "$evidence_commit" = "$sha_after" ] || refuse "The CI evidence names commit ${evidence_commit:-none}, not $sha_after. That run verified a different commit. Nothing was pushed and no PR was created."
 
+# A pass with no stages is not a pass. ci.sh already refuses to record one — it checks the runner's
+# completion marker against the stages it saw — but this is the file that decides whether a commit
+# reaches a PR, and "result: passed, checks: []" is exactly the shape a pipeline that never ran
+# produces. Reading the evidence for a claim rather than for a verdict costs one line.
+evidence_stages="$(grep -c '"name"[[:space:]]*:' "$evidence" 2>/dev/null || true)"
+if [ "${evidence_stages:-0}" -eq 0 ]; then
+  refuse "The CI evidence records a pass with no stages, so nothing was actually checked. Nothing was pushed and no PR was created."
+fi
+if grep -q '"status"[[:space:]]*:[[:space:]]*"failed"' "$evidence"; then
+  refuse "The CI evidence records a pass containing a failed stage. Nothing was pushed and no PR was created."
+fi
+
 # --- 7. push exactly what was verified ----------------------------------------------------------
 
 printf '\nPushing the verified commit %s to origin/%s\n' "$sha_after" "$branch"
@@ -166,6 +178,19 @@ fi
 
 if ! "$gh_command" auth status >/dev/null 2>&1; then
   printf '\nThe verified commit was pushed. GitHub CLI is not authenticated (`gh auth login`), so no PR was created.\n'
+  exit 0
+fi
+
+# A branch that already has a PR is the normal case for every push after the first, and `gh pr
+# create` fails on it. The push above is the part that carries the invariant — the verified commit is
+# already on the remote and the existing PR now points at it — so this reports rather than fails, and
+# prints the evidence block for a body that is no longer being written.
+existing="$("$gh_command" pr view "$branch" --json url --jq .url 2>/dev/null || true)"
+if [ -n "$existing" ]; then
+  printf '\nA pull request already exists for %s, and now carries the verified commit:\n  %s\n' "$branch" "$existing"
+  printf '\nNo body was rewritten. The verification for this commit:\n\n'
+  sed -n '/^## Local CI$/,$p' "$body_file"
+  printf '\nPASS  %s  verified and pushed.\n' "$sha_after"
   exit 0
 fi
 
