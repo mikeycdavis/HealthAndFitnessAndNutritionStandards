@@ -59,6 +59,20 @@ output schema version did, because the output format did — see below.
 
 ### Added
 
+- **Release signatures are verified, and not through `git verify-tag`.**
+  `scripts/ssh-tag-verifier.mjs` reads the signature out of the annotated tag and reports who signed;
+  the trust comparison stays in `pack-origin.mjs`, so there is one place where trust is decided and
+  the mechanism can be replaced without moving it. SSH signing was chosen against ST-12's falsifier:
+  the anchor is an argument rather than the invoking user's keyring, the signature is on the release
+  object itself, and `ssh-keygen` is already in the CI image — which matters because `ci/Dockerfile`
+  has no `RUN` instruction and a mechanism requiring an install would have had to change that.
+  Git's own verification resolves the allowed-signers file through `gpg.ssh.allowedSignersFile`,
+  configuration the *evaluated repository* controls, which would let a pack nominate the file that
+  decides whether to believe it. Tested with real keys: a fork generates its own key, signs a genuine
+  release, ships its public key as in-repo trust configuration, satisfies `git verify-tag` on its own
+  terms — and is refused, while the same release under the fork's own anchor is accepted, so the test
+  cannot pass by the fork being incompetent.
+
 - **The canonical-origin contract, without the cryptography.** `scripts/pack-origin.mjs` holds the
   origin states, the five reasons a claim can fail, and `assertCanonicalOrigin` — the single door
   every origin-dependent assertion goes through. `maintain` reports origin and does not require it,

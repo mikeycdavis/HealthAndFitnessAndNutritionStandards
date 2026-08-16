@@ -16,6 +16,24 @@
  * verifies against its own key, and its in-repo trust file names that key. `the fork's own anchor
  * would accept it` asserts that positively, so this suite cannot pass by the fork being incompetent.
  *
+ * MUTATIONS RUN against the committed verifier, each killed with a distinct signature:
+ *
+ *   N1  the result of the cryptographic check is ignored   → ONLY the tampered-payload test red. The
+ *       (`if (false) return { valid: false }`)                falsifier stayed green, because a fork
+ *                                                            that signs correctly is still refused
+ *                                                            on the fingerprint. Worth knowing which
+ *                                                            test carries which property: this one
+ *                                                            is the only thing asserting that the
+ *                                                            signature has to be sound at all.
+ *   N2  the verifier reports the ANCHOR's fingerprint      → the falsifier AND the git-config test
+ *       instead of the signer's                              red. This is the defect that would make
+ *                                                            every signature appear to be the
+ *                                                            custodian's, and it is the one worth
+ *                                                            being most afraid of.
+ *   N3  an unsigned tag returns `ok: true` with an empty   → the unsigned-release test red. Missing
+ *       signature instead of refusing                        evidence must not enter the pipeline
+ *                                                            dressed as present evidence.
+ *
  * WHY NOT `git verify-tag`. Git resolves the SSH allowed-signers file through
  * `gpg.ssh.allowedSignersFile`, which is configuration the evaluated repository controls. Verifying
  * that way would let the pack under evaluation nominate the file that decides whether to believe it —
