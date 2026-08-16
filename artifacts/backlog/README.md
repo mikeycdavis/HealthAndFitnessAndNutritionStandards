@@ -82,9 +82,9 @@ _Nothing marked ready._
       - ◌ **[FE-16](./items/FE-16.md)** Wording improvements deferred from the 1.0.0 review _(0/2)_
         - ◌ **[ST-07](./items/ST-07.md)** Standard 2 R2 — "establishes" carries two meanings
         - ◌ **[ST-08](./items/ST-08.md)** Observation cadence and decision cadence are separate choices
-      - ◌ **[FE-17](./items/FE-17.md)** Documentation and tooling gaps deferred from the build _(0/4)_
+      - ◑ **[FE-17](./items/FE-17.md)** Documentation and tooling gaps deferred from the build _(1/4)_
         - ◌ **[ST-09](./items/ST-09.md)** A worked violating example for nutrition.no-single-food-disease-claims
         - ◌ **[ST-10](./items/ST-10.md)** The allergen check
         - ◌ **[ST-11](./items/ST-11.md)** CI exercises the whole declared Node range
-        - ◌ **[ST-13](./items/ST-13.md)** A pull request body keeps asserting the first commit it was verified against
+        - ● **[ST-13](./items/ST-13.md)** A pull request body keeps asserting the first commit it was verified against
 
