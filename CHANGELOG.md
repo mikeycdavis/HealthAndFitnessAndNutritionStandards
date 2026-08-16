@@ -20,6 +20,25 @@ output schema version did, because the output format did — see below.
 
 ### Changed
 
+- **A pull request body no longer keeps asserting the first commit it was verified against**
+  (ST-13). `ci/submit-pr.*` wrote the local-CI evidence block when it created a request and never
+  again, so every later push left a table headed **Verified commit** naming a commit the branch had
+  moved past — PR #2 carried `f56c7e1` under a table naming `b70d798`, two commits and one
+  remediation earlier. Not a false green: a true one pinned to the wrong object, on the surface a
+  reviewer reads first. `ci/pr-evidence.mjs` now composes and replaces the block for both wrappers,
+  locating it by markers rather than by its heading, keeping superseded runs beneath the current one,
+  and **refusing** when the region cannot be identified — a body edited by hand is reported and left
+  alone, because guessing which `## Local CI` heading is the real one is how prose gets destroyed.
+  Found in review, then corrected by hand three times before it was fixed, which is the sound a
+  mechanism makes when it is missing.
+
+  The update path fails closed. A body that cannot be read is not treated as an empty one — that
+  `|| true` turned a transient GitHub read failure into a `pr edit` replacing somebody's whole
+  description with a CI table, which is worse than the staleness the item was opened for. And the
+  block offered for manual repair is the complete machine region, markers included; slicing it from
+  the heading down dropped the opening marker, so following the instruction produced a body no later
+  run could identify.
+
 - **The output schema version is `1.1`.** It should have moved with FE-13 and did not. Every verdict
   gained `releaseIdentity`, `check` gained a refusal envelope, and `maintain` introduced a third
   shape — three output-format changes under a field still announcing `1.0`, which the table at the
