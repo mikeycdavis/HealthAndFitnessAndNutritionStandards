@@ -124,6 +124,12 @@ commitment rather than a code change, and adding an unenforced `verify-tag` call
 nothing — a check that reports success when no key is configured is exactly the false green FE-13
 exists to remove. Recorded as backlog rather than done badly.
 
+The key-management question was subsequently decided —
+[ADR 0010](0010-release-signing-custody-and-an-external-trust-anchor.md) records the custodian and
+the constraint that the trust anchor must come from outside the pack being authenticated — but no
+mechanism is implemented yet, so everything this section says about the fork residual still holds
+exactly as written. When ST-12 lands, this section is revised to state what the mechanism does claim.
+
 ## Alternatives considered
 
 ### Rejected: keep one command and add an `--expect=self-maintenance` flag
