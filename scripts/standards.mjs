@@ -48,7 +48,7 @@ import process from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { loadCatalog, resolve as resolveRule, assertBindings, coverage } from "./catalog.mjs";
-import { evaluate, envelope, STATUS, baselineStrength, INVARIANT_SCREENS, SCREENED_MEANING } from "./compliance.mjs";
+import { evaluate, envelope, SCHEMA_VERSION, STATUS, baselineStrength, INVARIANT_SCREENS, SCREENED_MEANING } from "./compliance.mjs";
 import { parseYaml, YamlError } from "./yaml.mjs";
 import { validate, assertSchemaSupported, SchemaError } from "./jsonschema.mjs";
 import { plan as initPlan, apply as initApply, detectMode, render as initRender } from "./init.mjs";
@@ -519,7 +519,33 @@ export async function runDetectors(root) {
 // Policy loading and attestation digests
 // ---------------------------------------------------------------------------------------------
 
-async function loadPolicy(root) {
+/**
+ * READING THE REQUEST, WHICH IS NOT THE SAME ACT AS JUDGING IT.
+ *
+ * This reads the adopter's policy far enough to learn which release they are asking to be evaluated
+ * against, and no further. It does not consult `schemas/project-policy.schema.json`.
+ *
+ * WHY THE SPLIT EXISTS. That schema is pack material — it is in `MATERIAL`, its bytes are part of
+ * what release verification proves. Validating the whole policy through it first meant an unverified
+ * pack could reject a perfectly valid adopter policy as a configuration error, the adopter's fault,
+ * before anything had established that the schema making the judgement belonged to the release the
+ * adopter actually asked for. Independent review named it: unverified pack material influencing the
+ * evaluation before identity is established, which is the class of defect FE-13 exists to remove,
+ * arriving one step earlier in the sequence than the place it was removed.
+ *
+ * WHAT IS CHECKED HERE, AND WHY IT IS NOT THE SAME PROBLEM. Only the fields this stage consumes, and
+ * only as shapes: a request that cannot be read is the adopter's own document being unreadable, and
+ * saying so is not the pack asserting authority over the adopter's contract. `standardVersion` in
+ * particular has to be legible before identity can be established at all — you cannot verify which
+ * release was requested without reading the request.
+ *
+ * THE LIMIT, STATED RATHER THAN IMPLIED. The evaluator running these lines is itself pack material,
+ * and no ordering of this file changes that; `scripts/release-material.mjs` records the same limit
+ * for the same reason. What the split buys is narrower and real: the pack's *declarative contract*,
+ * the part that can reject an adopter for reasons having nothing to do with identity, no longer runs
+ * before identity is established.
+ */
+async function readPolicyRequest(root) {
   const policyPath = path.join(root, "project-policy.yml");
   if (!existsSync(policyPath)) {
     return { error: "no project-policy.yml — a verdict requires a policy declaring what applies here" };
@@ -531,18 +557,50 @@ async function loadPolicy(root) {
     if (error instanceof YamlError) return { error: `project-policy.yml: ${error.message}` };
     throw error;
   }
+  if (policy === null || typeof policy !== "object" || Array.isArray(policy)) {
+    return { error: "project-policy.yml: expected a mapping at the top level" };
+  }
+  for (const field of ["standardVersion", "project", "packSelfMaintenance"]) {
+    if (field in policy && typeof policy[field] !== "string") {
+      return { error: `project-policy.yml: ${field} must be a string` };
+    }
+  }
+  if (typeof policy.standardVersion !== "string") {
+    return { error: "project-policy.yml: standardVersion is required — it names the release to evaluate against" };
+  }
+  return { policy };
+}
+
+/**
+ * The complete contract, applied through the pack's schema. Callers that produce a verdict must not
+ * reach this until release identity is established, so that the schema doing the judging is material
+ * whose identity has been proven. Returns an error string, or null when the policy is well-formed.
+ */
+async function validatePolicyContract(policy) {
   const schema = JSON.parse(await readFile(path.join(ROOT, "schemas/project-policy.schema.json"), "utf8"));
   try {
     assertSchemaSupported(schema);
   } catch (error) {
-    if (error instanceof SchemaError) return { error: error.message };
+    if (error instanceof SchemaError) return error.message;
     throw error;
   }
   const errors = validate(policy, schema);
   if (errors.length > 0) {
-    return { error: `project-policy.yml does not match the schema:\n${errors.map((e) => `  ${e.path || "(root)"}: ${e.message}`).join("\n")}` };
+    return `project-policy.yml does not match the schema:\n${errors.map((e) => `  ${e.path || "(root)"}: ${e.message}`).join("\n")}`;
   }
-  return { policy };
+  return null;
+}
+
+/**
+ * Read and validate in one step, for the commands that reach no verdict. `explain` and `status`
+ * report on a policy rather than adjudicating a project against a release, so there is no identity
+ * for them to establish first and nothing for the ordering above to protect.
+ */
+async function loadPolicy(root) {
+  const loaded = await readPolicyRequest(root);
+  if (loaded.error) return loaded;
+  const invalid = await validatePolicyContract(loaded.policy);
+  return invalid ? { error: invalid } : { policy: loaded.policy };
 }
 
 /** Content digest over the paths an attestation says were reviewed. */
@@ -576,7 +634,7 @@ async function commandAudit(root, { json, strict }) {
   assertBindings(catalog, findings.map((f) => f.rule).filter(Boolean));
 
   const payload = {
-    schemaVersion: "1.0",
+    schemaVersion: SCHEMA_VERSION,
     auditedAt: new Date().toISOString(),
     root: path.resolve(root),
     findings,
@@ -758,7 +816,7 @@ function unidentified(stage, reason, detail, requested, extra = {}) {
  */
 function refusalEnvelope({ project, releaseIdentity, auditedAt, status = "UNIDENTIFIED_RELEASE" }) {
   return {
-    schemaVersion: "1.0",
+    schemaVersion: SCHEMA_VERSION,
     standardVersion: null,
     project: project ?? null,
     status,
@@ -845,7 +903,9 @@ async function evaluateProject(root, policy) {
 }
 
 async function commandCheck(root, { json }) {
-  const loaded = await loadPolicy(root);
+  // The request, not the contract. `readPolicyRequest` explains why those are separate acts and why
+  // the second one waits until the schema performing it is material whose identity has been proven.
+  const loaded = await readPolicyRequest(root);
   if (loaded.error) {
     process.stderr.write(`standards check: ${loaded.error}\n`);
     return EXIT.INVOCATION;
@@ -888,6 +948,14 @@ async function commandCheck(root, { json }) {
       exit: release.exit,
       json,
     });
+  }
+
+  // Identity is established, so the schema below is verified material rather than whatever this
+  // directory happened to contain. Only now may the pack judge the adopter's policy.
+  const invalid = await validatePolicyContract(loaded.policy);
+  if (invalid) {
+    process.stderr.write(`standards check: ${invalid}\n`);
+    return EXIT.INVOCATION;
   }
 
   const { verdict, catalog } = await evaluateProject(root, loaded.policy);
@@ -1029,7 +1097,10 @@ function renderCheck(r, { header = true } = {}) {
  * standards", and it is now impossible to obtain one while asking for the other.
  */
 async function commandMaintain(root, { json }) {
-  const loaded = await loadPolicy(root);
+  // Same ordering as `check`, and for the same reason. Eligibility here is lineage rather than
+  // material, but a command that validated the contract first would still be letting the pack's own
+  // schema decide an outcome before anything established which pack this is.
+  const loaded = await readPolicyRequest(root);
   if (loaded.error) {
     process.stderr.write(`standards maintain: ${loaded.error}\n`);
     return EXIT.INVOCATION;
@@ -1054,10 +1125,16 @@ async function commandMaintain(root, { json }) {
     });
   }
 
+  const invalid = await validatePolicyContract(loaded.policy);
+  if (invalid) {
+    process.stderr.write(`standards maintain: ${invalid}\n`);
+    return EXIT.INVOCATION;
+  }
+
   const { verdict, catalog } = await evaluateProject(root, loaded.policy);
 
   const result = {
-    schemaVersion: "1.0",
+    schemaVersion: SCHEMA_VERSION,
     standardVersion: self.packVersion,
     project: loaded.policy.project ?? null,
     releaseIdentity: self.releaseIdentity,

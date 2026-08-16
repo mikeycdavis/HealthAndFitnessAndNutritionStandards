@@ -15,7 +15,28 @@ do not change what a rule means are **patch**.
 
 ## Unreleased
 
-No standard, rule, or verdict changed, so no version moved.
+No standard, rule, or verdict changed, so neither the framework nor the package version moved. The
+output schema version did, because the output format did — see below.
+
+### Changed
+
+- **The output schema version is `1.1`.** It should have moved with FE-13 and did not. Every verdict
+  gained `releaseIdentity`, `check` gained a refusal envelope, and `maintain` introduced a third
+  shape — three output-format changes under a field still announcing `1.0`, which the table at the
+  top of this file says changes when the format changes. Minor rather than major: nothing was removed
+  or renamed, and the new envelopes arrive only with exit codes that did not previously exist. One
+  constant now feeds all four envelopes, including `audit`, whose own shape did not change — the
+  number names the contract the output belongs to, not the history of one envelope.
+
+- **Release identity is established before the pack's schema may judge the adopter's policy.**
+  `check` validated the whole policy through `schemas/project-policy.schema.json` first. That schema
+  is pack material, inside the verified boundary, so an altered pack could reject a perfectly valid
+  adopter policy as a configuration error — the adopter's fault, exit 2 — before anything established
+  that the schema making the judgement belonged to the release the adopter asked for. Found by
+  independent review of PR #2, which named it precisely: unverified pack material influencing the
+  evaluation before identity is established. `check` and `maintain` now read only the fields needed to
+  learn which release is requested, establish identity, and validate the full contract afterwards.
+  Not claimed: that the evaluator running the check is any less pack material than the schema is.
 
 ### Added
 

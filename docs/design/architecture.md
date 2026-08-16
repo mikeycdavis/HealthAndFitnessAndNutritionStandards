@@ -305,6 +305,16 @@ Three separate contracts, deliberately not merged.
   The property this buys is worth stating as a contract: **`COMPLIANT` from `check` means the release
   identity was established**, with no accompanying field anyone has to remember to read.
 
+  A `2` from `check` now happens strictly *after* identity is established, and that ordering is part
+  of the contract rather than an implementation detail. The policy schema is pack material: its bytes
+  are inside the verified boundary. Validating the adopter's whole policy through it first meant an
+  unverified pack could reject a valid policy as the adopter's configuration error before anything
+  established that the schema doing the judging belonged to the release the adopter asked for — the
+  same false authority the feature exists to remove, one step earlier in the sequence. `check` now
+  reads only enough of the policy to learn which release is requested, establishes identity, and
+  validates the full contract afterwards. What that does not claim: the evaluator performing the
+  check is pack material too, and no ordering changes that.
+
 - `maintain`: the standards pack only. `0` the working tree satisfies its own standards · `1` it does
   not · `2` not the pack, or no declaration · `3` blocked by invariant · `4` insufficient evidence ·
   `5` eligibility could not be established. It runs the same evaluation as `check` through the same

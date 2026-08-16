@@ -16,6 +16,8 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { SCHEMA_VERSION } from "../scripts/compliance.mjs";
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.join(HERE, "..", "scripts", "standards.mjs");
 const REPO = path.join(HERE, "..");
@@ -179,7 +181,9 @@ test("every finding carries the full schema, including subjectExists", () => {
   const required = ["id", "category", "severity", "label", "evidence", "message", "standardRef", "rule", "subjectExists"];
   for (const name of ["compliant-adopter", "missing-sections", "naming-only"]) {
     const res = audit(fixture(name));
-    assert.equal(res.json.schemaVersion, "1.0");
+    // Asserted against the constant, not a literal: this envelope carries the contract's version,
+    // and pinning a spelling here is how the version stops moving when the contract does.
+    assert.equal(res.json.schemaVersion, SCHEMA_VERSION);
     assert.match(res.json.auditedAt, /^\d{4}-\d\d-\d\dT.*Z$/);
     for (const f of res.json.findings) {
       for (const key of required) assert.ok(key in f, `${name}: finding ${f.id} lacks ${key}`);

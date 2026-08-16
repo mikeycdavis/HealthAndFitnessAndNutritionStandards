@@ -304,3 +304,111 @@ test("the documented exit codes include the one this slice added", async () => {
   const cli = await readFile(CLI, "utf8");
   assert.match(cli, /5 release identity not established/);
 });
+
+// ---------------------------------------------------------------------------------------------
+// Identity comes before the pack's own contract, not after it
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * A CLONE OF THIS REPOSITORY, WHICH IS IN THE CERTIFIED LINEAGE AND CAN THEREFORE MAINTAIN ITSELF.
+ *
+ * `packWithoutGit()` above is the pack that cannot prove anything. This is its opposite, and the
+ * pair is what makes the two tests below say different things: one asserts that an unverified pack's
+ * contract is not consulted, the other that a verified pack's contract still is. Without the second,
+ * the first is satisfied by deleting the validation.
+ *
+ * The clone carries the tags, so the lineage resolves; the working tree is copied over it so the
+ * code under test is this one rather than whatever the default branch holds.
+ */
+async function lineagePack() {
+  const dir = await mkdtemp(path.join(tmpdir(), "hfn-gate-lineage-"));
+  const cloned = spawnSync("git", ["clone", "--quiet", `file://${REPO.split(path.sep).join("/")}`, dir], {
+    encoding: "utf8",
+  });
+  assert.equal(cloned.status, 0, `a full clone must be constructible: ${cloned.stderr}`);
+  for (const rel of MATERIAL) {
+    await rm(path.join(dir, rel), { recursive: true, force: true });
+    await cp(path.join(REPO, rel), path.join(dir, rel), { recursive: true });
+  }
+  return dir;
+}
+
+function maintain(packDir, dir) {
+  const r = spawnSync(
+    process.execPath,
+    [path.join(packDir, "scripts", "standards.mjs"), "maintain", `--dir=${dir}`, "--json"],
+    { encoding: "utf8" },
+  );
+  let json = null;
+  try {
+    json = JSON.parse(r.stdout);
+  } catch {
+    /* the assertions below should report which happened */
+  }
+  return { exit: r.status, json, stderr: r.stderr };
+}
+
+/**
+ * FALSIFIER — the ordering principle, applied to the pack's own schema.
+ *
+ * `check` establishes identity before it loads a rule, which is the whole feature. It was still
+ * loading the adopter's policy through `schemas/project-policy.schema.json` first, and that schema is
+ * pack material: it is in `MATERIAL`, its bytes are part of what verification proves. So an altered
+ * pack could reject a perfectly valid adopter policy as a configuration error — exit 2, the adopter's
+ * fault — before anything established that the schema making the judgement belonged to the release
+ * the adopter asked for. That is the same false authority FE-13 exists to remove, one step earlier in
+ * the sequence than the place it was removed.
+ *
+ * The adopter's policy here is valid against the real 1.0.0 schema. The pack's copy has been altered
+ * to demand a key that schema does not. The correct answer is not "your policy is wrong" — it is
+ * "this pack cannot prove it is the release you asked for", which is what the altered pack's
+ * material now guarantees.
+ */
+test("FALSIFIER: an unverified pack's schema cannot reject an adopter's policy before identity", async () => {
+  const pack = await packWithoutGit();
+  const project = await adopter();
+  try {
+    const schemaPath = path.join(pack, "schemas", "project-policy.schema.json");
+    const schema = JSON.parse(await readFile(schemaPath, "utf8"));
+    schema.required = [...(schema.required ?? []), "packSelfMaintenance"];
+    await writeFile(schemaPath, JSON.stringify(schema, null, 2));
+
+    const r = check(pack, project);
+    assert.equal(
+      r.exit,
+      EXIT.UNIDENTIFIED_RELEASE,
+      `the pack's own schema must not judge the adopter before identity is established (stderr: ${r.stderr})`,
+    );
+    assert.equal(r.json?.status, "UNIDENTIFIED_RELEASE");
+    assert.equal(r.json?.releaseIdentity?.established, false);
+  } finally {
+    await rm(pack, { recursive: true, force: true });
+    await rm(project, { recursive: true, force: true });
+  }
+});
+
+/**
+ * FALSIFIER — and the contract is still enforced once identity exists.
+ *
+ * The cheap way to pass the test above is to stop validating policies. This is the test that makes
+ * that cheat fail, and it is why the two are written together rather than one now and one later.
+ * A pack in the certified lineage has established identity by the time the policy is validated, so
+ * the schema doing the validating is verified material and a malformed policy is still exit 2.
+ */
+test("FALSIFIER: once identity is established, the full policy contract is still enforced", async () => {
+  const pack = await lineagePack();
+  try {
+    const good = maintain(pack, pack);
+    assert.equal(good.exit, 0, `the lineage fixture must be eligible, or it proves nothing: ${good.stderr}`);
+    assert.equal(good.json?.status, "SELF_MAINTENANCE");
+
+    const policyPath = path.join(pack, "project-policy.yml");
+    await writeFile(policyPath, (await readFile(policyPath, "utf8")) + "\nnotAKeyTheSchemaAllows: true\n");
+
+    const bad = maintain(pack, pack);
+    assert.equal(bad.exit, 2, "a policy the verified schema rejects is still a configuration error");
+    assert.match(bad.stderr, /does not match the schema/);
+  } finally {
+    await rm(pack, { recursive: true, force: true });
+  }
+});
