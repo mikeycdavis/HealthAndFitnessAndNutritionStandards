@@ -2,11 +2,12 @@
 /**
  * standards — audit, check, explain, status, and init for a project adopting these standards.
  *
- * FIVE COMMANDS, chosen for the loop an operator actually works in:
+ * SIX COMMANDS, chosen for the loop an operator actually works in:
  *
  *   init     bootstrap a project        (writes; dry-run derives from the same plan)
  *   audit    gather evidence            (no policy needed; never a verdict)
- *   check    reach a verdict            (the CI gate)
+ *   check    reach a verdict            (the CI gate, for a project adopting the standards)
+ *   maintain the pack's own gate        (this repository only; never reports COMPLIANT)
  *   explain  why a rule applies here    (and what evidence would satisfy it)
  *   status   what has gone stale        (expired, stale, due for revisit, missing)
  *
@@ -54,6 +55,7 @@ import { plan as initPlan, apply as initApply, detectMode, render as initRender 
 import { resolveRelease, gitIn } from "./release-identity.mjs";
 import { materialise } from "./release-material.mjs";
 import { verifyRelease } from "./release-verify.mjs";
+import { packLineage } from "./pack-lineage.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -64,6 +66,11 @@ const EXIT = {
   BLOCKED: 3,
   NOT_EVALUATED: 4,
   UNIDENTIFIED_RELEASE: 5,
+  // `check` refused because this is the pack maintaining itself, which is not an adoption and has no
+  // compliance verdict to give. Distinct from 5: there is nothing wrong here and nothing to obtain --
+  // the caller asked the wrong command. `standards maintain` is the right one, and its success is 0
+  // under a status that is not a compliance word, so no exit code means both things at once.
+  SELF_MAINTENANCE: 6,
 };
 
 /** Directories never scanned. `fixtures` is here so deliberately broken test data cannot indict the tool. */
@@ -623,53 +630,77 @@ async function commandAudit(root, { json, strict }) {
  */
 const SELF_MAINTENANCE = "self-maintenance";
 
-async function establishRelease(root, policy) {
-  const requested = policy.standardVersion;
-  const isPack = path.resolve(root) === ROOT;
-  const declaredSelf = policy.packSelfMaintenance === "this-project-is-the-pack";
+/**
+ * Is this run the pack maintaining itself, and if it claims to be, may it?
+ *
+ * THREE CONDITIONS, ALL NECESSARY, and the third is the one independent review of PR #2 said was
+ * missing. The declaration makes the claim visible in a reviewed file. The root test says the tree
+ * being evaluated is the evaluator's own. Neither is authority: the first is a sentence anyone can
+ * copy, and the second is satisfied by anyone who copies the evaluator into a directory they control,
+ * which is precisely the escape that was found. The third asks Git whether this working tree descends
+ * from this pack's certified release, which a copied evaluator does not.
+ *
+ * Returns a disposition rather than a verdict, because two commands consume it and they want
+ * different things from the same answer: `check` refuses when it is eligible, `maintain` proceeds.
+ */
+async function selfMaintenance(root, policy) {
+  const declared = policy.packSelfMaintenance === "this-project-is-the-pack";
+  const isRoot = path.resolve(root) === ROOT;
+  if (!declared) return { kind: "not-declared", isRoot };
 
-  // THE PACK MAINTAINING ITSELF IS NOT AN ADOPTION, and pretending otherwise would be the false green
-  // in the other direction: a development pack cannot be a release, so requiring it to prove it is one
-  // would make the repository's own gate unachievable and the requirement would be relaxed instead.
-  //
-  // Two conditions, both necessary. The declaration makes the claim visible in a reviewed file; the
-  // structural test makes it true. Neither alone is worth anything: a flag any policy could set is a
-  // bypass, and inferring the mode from the directory alone would let a fork acquire it silently.
-  if (declaredSelf && !isPack) {
+  const identity = (extra) => ({ established: false, mode: SELF_MAINTENANCE, packRoot: ROOT, ...extra });
+
+  if (!isRoot) {
     return {
-      ok: false,
+      kind: "blocked",
       exit: EXIT.BLOCKED,
-      releaseIdentity: {
-        established: false,
+      releaseIdentity: identity({
         stage: "declaration",
         reason: "not-the-pack",
-        requestedRelease: requested ?? null,
         detail:
           `this policy declares packSelfMaintenance, which exempts the standards pack from proving it ` +
           `is a release — but ${path.resolve(root)} is not the pack. Claiming to be the thing an ` +
           `exemption was written for is a manipulation of an applicability determination ` +
           `(integrity.no-standards-manipulation, Standard 42), not a configuration mistake.`,
-      },
-    };
-  }
-  if (declaredSelf && isPack) {
-    const packVersion = (await readFile(path.join(ROOT, "VERSION"), "utf8").catch(() => "")).trim();
-    return {
-      ok: true,
-      standardVersion: packVersion || null,
-      releaseIdentity: {
-        established: false,
-        mode: SELF_MAINTENANCE,
-        packRoot: ROOT,
-        packVersion: packVersion || null,
-        detail:
-          "the pack is evaluating itself, so no independent release identity exists to establish. " +
-          "This run says whether the working tree satisfies its own standards; it is not an adoption " +
-          "and carries no authority for one.",
-      },
+      }),
     };
   }
 
+  let record = null;
+  try {
+    record = JSON.parse(await readFile(path.join(ROOT, "scripts/certified-releases.json"), "utf8"));
+  } catch {
+    /* packLineage reports an unreadable record itself; it must not be treated as permission */
+  }
+  const lineage = packLineage(gitIn(ROOT), record);
+  if (lineage.ok === false) {
+    return {
+      kind: "blocked",
+      // Contradicted evidence is an accusation and absent evidence is not. Reporting "no repository
+      // here" as a Standard 42 violation would be a false accusation, and a gate that cries
+      // manipulation at ordinary conditions is a gate people learn to route around.
+      exit: lineage.kind === "contradicted" ? EXIT.BLOCKED : EXIT.UNIDENTIFIED_RELEASE,
+      releaseIdentity: identity({ stage: "eligibility", reason: lineage.reason, detail: lineage.detail }),
+    };
+  }
+
+  const packVersion = (await readFile(path.join(ROOT, "VERSION"), "utf8").catch(() => "")).trim();
+  return {
+    kind: "eligible",
+    packVersion: packVersion || null,
+    releaseIdentity: identity({
+      packVersion: packVersion || null,
+      lineage: lineage.lineage,
+      detail:
+        "the pack is evaluating itself, so no independent release identity exists to establish. This " +
+        "run says whether the working tree satisfies its own standards; it is not an adoption, it " +
+        "carries no authority for one, and no compliance verdict is produced from it.",
+    }),
+  };
+}
+
+async function establishRelease(root, policy) {
+  const requested = policy.standardVersion;
   const git = gitIn(ROOT);
 
   const resolved = resolveRelease(requested, git);
@@ -725,12 +756,12 @@ function unidentified(stage, reason, detail, requested, extra = {}) {
  * verdict here to report, and an empty results array beside a compliance-shaped status is exactly the
  * "nothing failed, therefore compliant" reading this repository refuses everywhere else.
  */
-function refusalEnvelope({ project, releaseIdentity, auditedAt }) {
+function refusalEnvelope({ project, releaseIdentity, auditedAt, status = "UNIDENTIFIED_RELEASE" }) {
   return {
     schemaVersion: "1.0",
     standardVersion: null,
     project: project ?? null,
-    status: "UNIDENTIFIED_RELEASE",
+    status,
     releaseIdentity,
     auditedAt,
     results: [],
@@ -739,8 +770,28 @@ function refusalEnvelope({ project, releaseIdentity, auditedAt }) {
 
 function renderRefusal(r) {
   const id = r.releaseIdentity;
+
+  // The pack asking `check` about itself is not a failure of anything. It gets its own rendering so
+  // that an operator is not told an identity could not be established when nothing was ever meant to
+  // establish one, and so the remedy printed is the command that answers the question.
+  if (r.status === "SELF_MAINTENANCE") {
+    return [
+      "NO VERDICT — SELF-MAINTENANCE",
+      "",
+      ...wrap(id.detail, 96, ""),
+      "",
+      "`check` answers one question: does this project comply with a release of these standards that",
+      "it can prove it is running? The pack is not an adopter of itself, so there is no such release",
+      "and no verdict to give. Run `standards maintain` for the pack's own gate; it reports whether",
+      "this working tree satisfies its own standards, and it never reports COMPLIANT.",
+      "",
+    ].join("\n") + "\n";
+  }
+
   const out = [
-    id.reason === "not-the-pack" ? "BLOCKED BY INVARIANT" : "RELEASE IDENTITY NOT ESTABLISHED",
+    id.reason === "not-the-pack" || id.reason === "lineage-contradicted" || id.reason === "lineage-record-unreadable"
+      ? "BLOCKED BY INVARIANT"
+      : "RELEASE IDENTITY NOT ESTABLISHED",
     "",
     `Requested release: ${id.requestedRelease ?? "(none declared)"}`,
     `Failed at:         ${id.stage} (${id.reason})`,
@@ -761,6 +812,38 @@ function renderRefusal(r) {
   return out.join("\n") + "\n";
 }
 
+function emitRefusal({ project, releaseIdentity, status, exit, json }) {
+  const refusal = refusalEnvelope({
+    project: project ?? null,
+    releaseIdentity,
+    status,
+    auditedAt: new Date().toISOString(),
+  });
+  process.stdout.write(json ? JSON.stringify(refusal, null, 2) + "\n" : renderRefusal(refusal));
+  return exit;
+}
+
+/**
+ * Run the rules. Shared by `check` and `maintain` deliberately: the two commands differ in what they
+ * are entitled to conclude, never in how thoroughly they look. A maintenance mode with its own softer
+ * evaluation path would be the bypass wearing a second costume.
+ */
+async function evaluateProject(root, policy) {
+  const catalog = await loadCatalog(path.join(ROOT, "rules"));
+  const findings = await runDetectors(root);
+  assertBindings(catalog, findings.map((f) => f.rule).filter(Boolean));
+
+  const verdict = evaluate({
+    catalog,
+    policy,
+    findings,
+    evaluated: EVALUATED_RULES,
+    today: today(),
+    digests: await attestationDigests(root, policy),
+  });
+  return { verdict, catalog };
+}
+
 async function commandCheck(root, { json }) {
   const loaded = await loadPolicy(root);
   if (loaded.error) {
@@ -768,30 +851,46 @@ async function commandCheck(root, { json }) {
     return EXIT.INVOCATION;
   }
 
+  // SELF-MAINTENANCE IS NOT AN OUTCOME OF THIS COMMAND. It used to be, and that was the second defect
+  // independent review found: the mode returned ok, ran the ordinary evaluator, and emitted the
+  // ordinary envelope, so it could answer COMPLIANT with exit 0 while `releaseIdentity.established`
+  // sat beside it as metadata. A consumer reading the exit code or the status -- the two things every
+  // consumer actually reads -- was told an adoption had been verified when none had. Routing the mode
+  // out of `check` entirely is what makes COMPLIANT from `check` mean "identity established", with no
+  // field anyone has to remember to consult.
+  const self = await selfMaintenance(root, loaded.policy);
+  if (self.kind === "blocked") {
+    return emitRefusal({
+      project: loaded.policy.project,
+      releaseIdentity: self.releaseIdentity,
+      status: self.exit === EXIT.BLOCKED ? "BLOCKED_BY_INVARIANT" : "UNIDENTIFIED_RELEASE",
+      exit: self.exit,
+      json,
+    });
+  }
+  if (self.kind === "eligible") {
+    return emitRefusal({
+      project: loaded.policy.project,
+      releaseIdentity: self.releaseIdentity,
+      status: "SELF_MAINTENANCE",
+      exit: EXIT.SELF_MAINTENANCE,
+      json,
+    });
+  }
+
   // Before the catalog is read, let alone evaluated.
   const release = await establishRelease(root, loaded.policy);
   if (release.ok === false) {
-    const refusal = refusalEnvelope({
-      project: loaded.policy.project ?? null,
+    return emitRefusal({
+      project: loaded.policy.project,
       releaseIdentity: release.releaseIdentity,
-      auditedAt: new Date().toISOString(),
+      status: "UNIDENTIFIED_RELEASE",
+      exit: release.exit,
+      json,
     });
-    process.stdout.write(json ? JSON.stringify(refusal, null, 2) + "\n" : renderRefusal(refusal));
-    return release.exit;
   }
 
-  const catalog = await loadCatalog(path.join(ROOT, "rules"));
-  const findings = await runDetectors(root);
-  assertBindings(catalog, findings.map((f) => f.rule).filter(Boolean));
-
-  const verdict = evaluate({
-    catalog,
-    policy: loaded.policy,
-    findings,
-    evaluated: EVALUATED_RULES,
-    today: today(),
-    digests: await attestationDigests(root, loaded.policy),
-  });
+  const { verdict, catalog } = await evaluateProject(root, loaded.policy);
 
   const result = envelope({
     verdict,
@@ -814,7 +913,12 @@ async function commandCheck(root, { json }) {
   return EXIT.OK;
 }
 
-function renderCheck(r) {
+/**
+ * `header: false` is for `maintain`, which has already printed what this run is and what it is not.
+ * Reprinting a `Release:` line there would answer a question nobody asked, and reprinting `Status:`
+ * would put a compliance word at the top of an output that is deliberately not a compliance verdict.
+ */
+function renderCheck(r, { header = true } = {}) {
   const out = [];
 
   if (r.status === STATUS.BLOCKED_BY_INVARIANT) {
@@ -836,20 +940,19 @@ function renderCheck(r) {
   // Which bytes produced what follows. Printed first and unconditionally: a reader who has to go
   // looking for the identity of an evaluation will assume it, and assuming it is the defect.
   const id = r.releaseIdentity;
-  if (id?.established) {
-    out.push(`Release: ${id.requestedRelease} — MATCH (${id.files} files of pack material)`);
-    out.push(`         ${id.resolvedCommit}`);
-    out.push(`         ${id.materialDigest}`);
-  } else if (id?.mode === SELF_MAINTENANCE) {
-    out.push(`Release: none established — the pack is evaluating itself (VERSION ${id.packVersion ?? "?"}).`);
-    out.push("         This is maintenance of the standards, not an adoption of them.");
-  } else {
-    out.push("Release: none established.");
+  if (header) {
+    if (id?.established) {
+      out.push(`Release: ${id.requestedRelease} — MATCH (${id.files} files of pack material)`);
+      out.push(`         ${id.resolvedCommit}`);
+      out.push(`         ${id.materialDigest}`);
+    } else {
+      out.push("Release: none established.");
+    }
+    out.push("");
   }
-  out.push("");
 
   const s = r.summary;
-  out.push(`Status: ${r.status}`);
+  if (header) out.push(`Status: ${r.status}`);
   out.push(`Score:  ${r.score === null ? "n/a" : r.score + "%"}  (rules at required strength that were evaluated: ${r.denominator.scored})`);
   out.push(`Rules:  ${s.passed} passed, ${s.failed} failed, ${s.warnings} warning(s), ${s.skipped} skipped`);
   out.push(`Cover:  ${r.assurance.automated} automated, ${r.assurance.manualReview} manual-review, ${r.assurance.notEvaluated} not-evaluated, ${r.assurance.screened} screened`);
@@ -907,6 +1010,99 @@ function renderCheck(r) {
   }
 
   return out.join("\n") + "\n";
+}
+
+/**
+ * `standards maintain` -- the pack's own gate, and the only place self-maintenance produces a result.
+ *
+ * IT IS A SEPARATE COMMAND FOR ONE REASON. Independent review of PR #2 established that a
+ * self-maintenance run emitting the ordinary verdict envelope could be consumed as an adoption
+ * result: exit 0 and `status: "COMPLIANT"` are what consumers read, and both were reachable. Every
+ * softer fix keeps that shape and asks the consumer to also check a field. This one removes the shape
+ * -- there is no code path by which `check` returns a verdict for the pack, and no output of this
+ * command carries the word COMPLIANT as its status. The compliance result is still reported, because
+ * the pack does need to know it, under `workingTreeStatus`: a name that cannot be mistaken for a
+ * statement about anybody's adoption of anything.
+ *
+ * Its exit 0 means "this working tree satisfies its own standards", which is what the repository's
+ * pipeline gates on. That is a different sentence from "this project complies with release X of the
+ * standards", and it is now impossible to obtain one while asking for the other.
+ */
+async function commandMaintain(root, { json }) {
+  const loaded = await loadPolicy(root);
+  if (loaded.error) {
+    process.stderr.write(`standards maintain: ${loaded.error}\n`);
+    return EXIT.INVOCATION;
+  }
+
+  const self = await selfMaintenance(root, loaded.policy);
+  if (self.kind === "not-declared") {
+    process.stderr.write(
+      "standards maintain: this command is for the standards pack maintaining itself, and this policy " +
+        "does not declare packSelfMaintenance.\nProjects adopting the standards run `standards check`, " +
+        "which establishes which release produced the verdict.\n",
+    );
+    return EXIT.INVOCATION;
+  }
+  if (self.kind === "blocked") {
+    return emitRefusal({
+      project: loaded.policy.project,
+      releaseIdentity: self.releaseIdentity,
+      status: self.exit === EXIT.BLOCKED ? "BLOCKED_BY_INVARIANT" : "UNIDENTIFIED_RELEASE",
+      exit: self.exit,
+      json,
+    });
+  }
+
+  const { verdict, catalog } = await evaluateProject(root, loaded.policy);
+
+  const result = {
+    schemaVersion: "1.0",
+    standardVersion: self.packVersion,
+    project: loaded.policy.project ?? null,
+    releaseIdentity: self.releaseIdentity,
+    // Never a compliance verdict, and never absent: a reader that finds no status at all invents one.
+    status: "SELF_MAINTENANCE",
+    // The compliance result of the working tree, named so that it says what it is about. It is not
+    // `status`, it is not promoted when it is good, and nothing downstream can read it as an adoption.
+    workingTreeStatus: verdict.status,
+    score: verdict.score,
+    summary: verdict.summary,
+    assurance: verdict.assurance,
+    denominator: verdict.denominator,
+    integrityScreen: verdict.integrityScreen ?? { executed: false, checks: [] },
+    integrityViolations: verdict.integrityViolations ?? [],
+    frameworkCoverage: coverage(catalog, { evaluated: EVALUATED_RULES, totalStandards: 42 }),
+    auditedAt: new Date().toISOString(),
+    results: verdict.results,
+  };
+
+  process.stdout.write(json ? JSON.stringify(result, null, 2) + "\n" : renderMaintain(result));
+
+  if (verdict.status === STATUS.BLOCKED_BY_INVARIANT) return EXIT.BLOCKED;
+  if (verdict.status === STATUS.NON_COMPLIANT) return EXIT.FINDINGS;
+  if (verdict.status === STATUS.NOT_EVALUATED) return EXIT.NOT_EVALUATED;
+  return EXIT.OK;
+}
+
+function renderMaintain(r) {
+  const id = r.releaseIdentity;
+  const out = [
+    "SELF-MAINTENANCE — the pack evaluating itself",
+    "",
+    `Pack:         ${id.packRoot}`,
+    `Version:      ${id.packVersion ?? "?"} (working tree, not a release)`,
+    `Lineage:      descends from ${id.lineage.tag} ${id.lineage.certifiedCommit.slice(0, 12)}`,
+    `Working tree: ${r.workingTreeStatus}`,
+    "",
+    "This is not an adoption result and no release identity was established. It says whether this",
+    "working tree satisfies the standards it publishes — nothing about any project's compliance with",
+    "a release of them. `standards check` is the command that can say that, and it refuses here.",
+    "",
+  ];
+  // Everything below the identity block is the ordinary reporting, reused rather than reworded so
+  // that a maintainer reads the same failure text an adopter would.
+  return out.join("\n") + "\n" + renderCheck({ ...r, status: r.workingTreeStatus }, { header: false });
 }
 
 async function commandExplain(root, target, { json }) {
@@ -1135,6 +1331,7 @@ const USAGE = `standards — evaluate a project against the health, fitness, and
   standards init    [path] [--dry-run] [--force-overwrite=<path>] [--mode=<mode>]
   standards audit   [path] [--json] [--strict]
   standards check   [path] [--json]
+  standards maintain [path] [--json]      the standards pack only; not an adoption check
   standards explain <rule-id> [path] [--json]
   standards status  [path] [--json]
 
@@ -1148,11 +1345,20 @@ Options
 Exit codes
   check   0 compliant · 1 non-compliant · 2 config error · 3 blocked by invariant
           4 insufficient evidence to reach a verdict
+          5 release identity could not be established, so no verdict was produced
+          6 this is the standards pack maintaining itself; run 'standards maintain'
+  maintain 0 the working tree satisfies its own standards · 1 it does not
+          2 not the pack, or no declaration · 3 blocked by invariant · 4 insufficient evidence
+          5 eligibility could not be established
   audit   0 completed · 1 --strict with findings · 2 invocation error
   init    0 completed · 1 conflicts, nothing written · 2 could not run
 
   4 is not a worse 0. It means the evaluation could not establish compliance, which in this
   domain is the expected first result: most rules are prohibitions only a human can evaluate.
+
+  0 from 'check' means one thing and only one thing: this project complies with a release of
+  these standards that the evaluator proved it was running. 0 from 'maintain' is a different
+  sentence about a different subject, and no output of it reports a status of COMPLIANT.
 `;
 
 async function main(argv) {
@@ -1186,6 +1392,8 @@ async function main(argv) {
       return commandAudit(root, { json, strict: flags.includes("--strict") });
     case "check":
       return commandCheck(root, { json });
+    case "maintain":
+      return commandMaintain(root, { json });
     case "explain": {
       if (!positional[0]) {
         process.stderr.write("standards explain: name a rule id. See PROHIBITIONS.md.\n");

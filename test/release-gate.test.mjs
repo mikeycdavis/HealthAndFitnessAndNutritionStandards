@@ -30,7 +30,7 @@ import { MATERIAL } from "../scripts/release-material.mjs";
 const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(REPO, "scripts", "standards.mjs");
 
-const EXIT = { OK: 0, BLOCKED: 3, UNIDENTIFIED_RELEASE: 5 };
+const EXIT = { OK: 0, BLOCKED: 3, UNIDENTIFIED_RELEASE: 5, SELF_MAINTENANCE: 6 };
 
 function check(packDir, adopterDir) {
   const r = spawnSync(
@@ -185,13 +185,23 @@ test("a version that is not a release is refused before anything is read", async
 // The pack maintaining itself
 // ---------------------------------------------------------------------------------------------
 
-test("the pack evaluating itself reaches a verdict, and reports that it established no release", () => {
+/**
+ * REWRITTEN, and the reason is recorded rather than absorbed. This test used to assert that `check`
+ * reached an ordinary verdict for the pack and reported `established: false` beside it. Independent
+ * review of PR #2 rejected exactly that arrangement: a run reporting `status: "COMPLIANT"` and exit 0
+ * is consumable as an adoption result no matter what a neighbouring field says, and this test was
+ * pinning the defect in place. Its subject moved to `standards maintain`, and the properties that
+ * replaced it live in test/self-maintenance-boundary.test.mjs, where the two rejected claims are
+ * falsifiers. What remains here is the gate's half of the split: `check` refuses, and says why.
+ */
+test("check refuses the pack rather than answering for it, and names the command that can", () => {
   const { exit, json } = check(REPO, REPO);
-  assert.equal(exit, EXIT.OK, "this repository's own gate still runs");
+  assert.equal(exit, EXIT.SELF_MAINTENANCE, "6, not 0: a consumer reading the exit code is not misled");
+  assert.equal(json.status, "SELF_MAINTENANCE");
   assert.equal(json.releaseIdentity.established, false, "self-maintenance establishes nothing");
   assert.equal(json.releaseIdentity.mode, "self-maintenance");
   assert.match(json.releaseIdentity.detail, /not an adoption/);
-  assert.ok(json.results.length > 0, "and it is a real evaluation, not a refusal wearing a verdict");
+  assert.deepEqual(json.results, [], "a refusal carries no per-rule results");
 });
 
 /**
@@ -245,10 +255,29 @@ test("every verdict carries a releaseIdentity, so a genuine run differs by conte
   assert.ok(Object.hasOwn(JSON.parse(refused.stdout), "releaseIdentity"));
 });
 
-test("the human rendering leads with which bytes produced the verdict", () => {
-  const r = spawnSync(process.execPath, [CLI, "check", `--dir=${REPO}`], { encoding: "utf8" });
-  assert.equal(r.status, EXIT.OK);
-  assert.match(r.stdout.split("\n")[0], /^Release: /, "an identity a reader has to look for is an identity they will assume");
+test("the human rendering leads with which bytes produced the verdict", async () => {
+  // Against a real adopter, because the pack no longer receives a verdict from `check` at all. The
+  // fixture is the one case that reaches the success path outside a released checkout: an adopter
+  // whose pack IS the release. Absent that, the property is asserted on the shape of the first line.
+  const pack = await packWithoutGit();
+  const project = await adopter();
+  try {
+    const r = spawnSync(
+      process.execPath,
+      [path.join(pack, "scripts", "standards.mjs"), "check", `--dir=${project}`],
+      { encoding: "utf8" },
+    );
+    assert.notEqual(r.status, EXIT.OK, "this fixture cannot establish an identity, and must not pretend to");
+    assert.match(r.stdout.split("\n")[0], /^RELEASE IDENTITY NOT ESTABLISHED$/);
+  } finally {
+    await rm(pack, { recursive: true, force: true });
+    await rm(project, { recursive: true, force: true });
+  }
+
+  // And the pack's own output leads with what the run is, for the same reason: an identity a reader
+  // has to look for is an identity they will assume.
+  const own = spawnSync(process.execPath, [CLI, "maintain", `--dir=${REPO}`], { encoding: "utf8" });
+  assert.equal(own.stdout.split("\n")[0], "SELF-MAINTENANCE — the pack evaluating itself");
 });
 
 test("a refusal is rendered as a refusal, with no verdict vocabulary in it", async () => {

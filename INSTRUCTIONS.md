@@ -37,11 +37,17 @@ command CI should gate on.
 | 2 | Configuration or schema error, including no policy | Fix the policy or the invocation |
 | 3 | `BLOCKED_BY_INVARIANT` — the evaluation was manipulated | **Report it.** Do not fix the rules it names; the inputs are not trustworthy |
 | 4 | `NOT_EVALUATED` — insufficient evidence | Record human review, or accept that compliance is not established |
+| 5 | `UNIDENTIFIED_RELEASE` — the pack cannot prove it is the release you declared | Obtain the release; do not edit the pack you are running |
+| 6 | `SELF_MAINTENANCE` — you asked `check` about the standards pack itself | Nothing, as an adopter. This cannot occur for a project adopting the standards |
 
 The 1-versus-2 split matters: 1 means the tool worked and your project has problems; 2 means the tool
 could not reach a conclusion at all.
 
 Handle 3 and 4 explicitly in CI. Treating either as a pass defeats the point of both.
+
+`0` from `standards check` means one thing and only one thing: this project complies with a release of
+these standards that the evaluator proved it was running. No other command produces that sentence, and
+no output of `standards maintain` reports a status of `COMPLIANT`.
 
 ## 3. Writing your policy
 
@@ -237,11 +243,18 @@ Two consequences worth knowing before you meet them:
 - **Vendoring or caching the pack is allowed; skipping the check is not.** A cache hit can avoid a
   download. It cannot avoid re-establishing that the cached material is still the release.
 
-The one case that is exempt is the standards pack maintaining itself, which declares
-`packSelfMaintenance` in its own policy. It is not a waiver: the evaluator honours it only when the
-directory being evaluated is the pack the evaluator was loaded from, any other policy declaring it
-stops the run at exit 3 under Standard 42, and a run in that mode reports
-`releaseIdentity.established: false` so it can never be read as an adoption.
+The one case that is exempt is the standards pack maintaining itself, and it is not reachable from
+this command. `standards check` asked about the pack refuses with exit **6** and produces no verdict;
+the pack's own gate is `standards maintain`, whose status is `SELF_MAINTENANCE` and never
+`COMPLIANT`. Nothing you run as an adopter produces that outcome, and three things must all hold
+before it is available anywhere: the policy declares `packSelfMaintenance`, the directory evaluated is
+the evaluator's own root, and that repository belongs to this pack's certified release lineage.
+Declaring it in an adopter policy stops the run at exit 3 under Standard 42.
+
+This matters to you for one reason, and it is the reason the split exists: **`COMPLIANT` from
+`standards check` means the release identity was established.** There is no field you have to
+remember to consult alongside it, and no arrangement in which a green from this command means
+something weaker than it says. ADR 0009 records what that guarantee does and does not cover.
 
 ### Versions
 

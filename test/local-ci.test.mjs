@@ -51,7 +51,7 @@ test("every stage in the pipeline is an npm script that exists", async () => {
 
   assert.deepEqual(
     stages.map((s) => s.name),
-    ["inventory", "rules", "fidelity", "policy", "diagrams", "tests", "audit", "check"],
+    ["inventory", "rules", "fidelity", "policy", "diagrams", "tests", "audit", "maintain"],
     "guards, then tests, then evidence, then the gate",
   );
 });
@@ -71,7 +71,7 @@ test("--list reports exactly the stages the pipeline defines", () => {
   assert.equal(r.status, 0, r.stderr);
   assert.deepEqual(
     r.stdout.trim().split(/\r?\n/),
-    ["inventory", "rules", "fidelity", "policy", "diagrams", "tests", "audit", "check"],
+    ["inventory", "rules", "fidelity", "policy", "diagrams", "tests", "audit", "maintain"],
   );
 });
 
@@ -96,7 +96,7 @@ test("a stage that fails stops the pipeline and propagates its exit code", async
     // Every stage is a no-op except the third, which exits 3 — a code this repository uses, and one
     // that a `|| true` or a swallowed status would flatten to something else.
     const scripts = Object.fromEntries(
-      ["inventory", "rules", "fidelity", "policy", "diagrams", "test", "audit", "check"]
+      ["inventory", "rules", "fidelity", "policy", "diagrams", "test", "audit", "maintain"]
         .map((s) => [s, s === "fidelity" ? "exit 3" : "exit 0"]),
     );
     await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "scratch", scripts }, null, 2));

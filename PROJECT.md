@@ -22,9 +22,14 @@ catalog entry — so the evidence-quality rules apply here in full and are decla
 ## Standards
 
 This repository is evaluated against its own standards, version `1.0.0`, declared in
-[`project-policy.yml`](project-policy.yml).
+[`project-policy.yml`](project-policy.yml). It is evaluated with `standards maintain`, not `standards
+check`: this repository is not an adopter of itself, and `check` refuses to answer for it rather than
+producing a verdict that would read like an adoption of a release it cannot match (FE-13, ADR 0009).
 
-Its current status is **`COMPLIANT`**. No rules apply here that are still awaiting evidence: the four
+Its current status is **`SELF_MAINTENANCE`**, and the working tree it evaluated is **`COMPLIANT`**
+against the standards published here. Those are deliberately two sentences: the second is a statement
+about this working tree only, and no reading of it says anything about any project's compliance with a
+release of these standards. No rules apply here that are still awaiting evidence: the four
 that no machine can evaluate — `escalation.tier-language-calibrated`, `trend.trends-over-events`,
 `health.no-fabricated-medical-facts`, and `nutrition.no-single-food-disease-claims` — now carry
 attestations recorded by a named human reviewer on 2026-08-11, each fixed to the material reviewed by

@@ -67,6 +67,12 @@ prove it is the release your policy declared, so no result was produced. Obtain 
 checkout with tags, not a shallow one. Do not edit the pack until the comparison agrees; that is the
 "falsifies evidence for a verification mechanism" clause of the integrity invariant.
 
+**Exit 6 will not happen to you.** It means `check` was asked about the standards pack itself, which
+has no adoption to report on. It is listed here only so that an exit code you have never seen is not
+mistaken for a failure to investigate. Conversely, `0` from `check` carries its full meaning without
+qualification: this project complies with a release of the standards that the evaluator proved it was
+running. You do not need to inspect `releaseIdentity` to confirm that a green is a real green.
+
 ## Precedence
 
 Where these instructions and a standard disagree, the standard wins. Where a standard and the source

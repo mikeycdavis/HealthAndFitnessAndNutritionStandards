@@ -47,7 +47,7 @@ test("every standards subcommand the documentation names is implemented", async 
   const cli = await read("scripts/standards.mjs");
   // Matched against the known subcommands only. A trailing `[a-z]+` alternative would turn ordinary
   // prose — "the standards documents", "the standards repository" — into a false positive.
-  const SUBCOMMANDS = ["init", "audit", "check", "explain", "status"];
+  const SUBCOMMANDS = ["init", "audit", "check", "maintain", "explain", "status"];
   const named = new Set();
   for (const text of [instructions, readme, project]) {
     for (const m of text.matchAll(new RegExp(`standards (${SUBCOMMANDS.join("|")})\\b`, "g"))) named.add(m[1]);
@@ -156,7 +156,7 @@ test("the README carries the not-medical-advice statement escalation.scope-discl
 test("PROJECT.md reports this repository's own status honestly", async () => {
   const { spawnSync } = await import("node:child_process");
   const cli = path.join(REPO, "scripts", "standards.mjs");
-  const r = spawnSync(process.execPath, [cli, "check", `--dir=${REPO}`, "--json"], { encoding: "utf8" });
+  const r = spawnSync(process.execPath, [cli, "maintain", `--dir=${REPO}`, "--json"], { encoding: "utf8" });
   const result = JSON.parse(r.stdout);
 
   const flat = project.replace(/\s+/g, " ");
@@ -272,7 +272,7 @@ test("project-policy.yml names exactly the rules the tool is waiting on", async 
   // replaces them: the attestations actually recorded in this file must be exactly the rules the
   // evaluator reports as attested. An entry that establishes a rule nobody can see here, or a
   // recorded attestation the evaluator ignores, is the same drift in the other direction.
-  const check = spawnSync(process.execPath, [cli, "check", `--dir=${REPO}`, "--json"], { encoding: "utf8" });
+  const check = spawnSync(process.execPath, [cli, "maintain", `--dir=${REPO}`, "--json"], { encoding: "utf8" });
   const attested = JSON.parse(check.stdout).results
     .filter((x) => x.disposition === "attested")
     .map((x) => x.ruleId)
@@ -327,9 +327,9 @@ test("package.json declares no dependencies, which is the policy made structural
  * every surface at once instead of one of them. The companion assertion below — that the workflow
  * delegates rather than enumerating — is what stops the old duplication coming back.
  */
-test("CI runs the guards before the tests, and gates on check", async () => {
+test("CI runs the guards before the tests, and gates on maintain", async () => {
   const pipeline = await read("ci/run-checks.sh");
-  const order = ["npm run inventory", "npm run rules", "npm run fidelity", "npm run policy", "npm run diagrams", "npm test", "npm run audit", "npm run check"];
+  const order = ["npm run inventory", "npm run rules", "npm run fidelity", "npm run policy", "npm run diagrams", "npm test", "npm run audit", "npm run maintain"];
   let previous = -1;
   for (const step of order) {
     const at = pipeline.indexOf(step);
@@ -345,7 +345,7 @@ test("the GitHub workflow invokes the pipeline rather than restating it", async 
 
   // A second enumeration of the stages here is exactly the duplication this arrangement removes: two
   // definitions that agree until one is edited.
-  for (const step of ["npm run inventory", "npm run rules", "npm run fidelity", "npm run diagrams", "npm run check"]) {
+  for (const step of ["npm run inventory", "npm run rules", "npm run fidelity", "npm run diagrams", "npm run maintain"]) {
     assert.ok(!ci.includes(step), `the workflow names '${step}' itself; the pipeline belongs in ci/run-checks.sh`);
   }
 });
