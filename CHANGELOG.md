@@ -59,6 +59,21 @@ output schema version did, because the output format did — see below.
 
 ### Added
 
+- **The release-signing procedure, frozen separately from its first execution.**
+  [`docs/release-signing.md`](docs/release-signing.md) is a human ceremony with machine assistance
+  rather than a pipeline with a human in it: a dedicated key the custodian holds outside the
+  repository and outside CI, a public key registered with the trusted host independently, a release
+  candidate identified before signing rather than repaired by it, independent inspection of the tag
+  before the push, **no unsigned fallback tag if signing or verification fails**, public facts
+  recorded and nothing derived from the private key, and rotation as an explicit governance event.
+  The prohibition that shapes the rest: **no release automation may possess the signing private key
+  merely to make the ceremony convenient** — the build prepares and verifies a candidate, an agent
+  prepares the command and inspects public evidence, the human performs the signing act. Freezing the
+  procedure and executing it are separate, so ST-12 completes without manufacturing a release to
+  satisfy process; the first new signed release is the production proof, not a prerequisite. Step 1 is
+  a guard rather than a promise: a test asserts no tracked file in this repository contains private
+  key material.
+
 - **The external verifier contract, and conformance vectors for somebody else's implementation.**
   [`docs/design/external-verifier-contract.md`](docs/design/external-verifier-contract.md) freezes
   what a trusted host must do to establish canonical origin: acquire trust independently, resolve the

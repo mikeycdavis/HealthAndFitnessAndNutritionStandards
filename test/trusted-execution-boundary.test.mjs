@@ -125,6 +125,24 @@ test("a fork that rewrites the judge convicts nobody: the in-pack answer is wort
   }
 });
 
+test("no private signing material is committed to this repository", async () => {
+  // `docs/release-signing.md` step 1 says the custodian's private key is never committed. Said in a
+  // document, that is a promise; here it is a guard. The check is deliberately cheap and total — every
+  // tracked file, not a curated list of likely names — because the way this goes wrong is somebody
+  // adding a key under a name nobody thought to enumerate.
+  const tracked = run("git", ["-C", REPO, "ls-files"]).stdout.split("\n").filter(Boolean);
+  assert.ok(tracked.length > 100, "precondition: the file list is real");
+
+  const PRIVATE = /-----BEGIN (OPENSSH|RSA|EC|DSA|PGP) PRIVATE KEY( BLOCK)?-----/;
+  const offenders = [];
+  for (const file of tracked) {
+    if (/\.(png|jpg|jpeg|gif|ico|pdf|zip|gz)$/i.test(file)) continue;
+    const contents = await readFile(path.join(REPO, file), "utf8").catch(() => "");
+    if (PRIVATE.test(contents)) offenders.push(file);
+  }
+  assert.deepEqual(offenders, [], "private key material must never be committed");
+});
+
 test("no origin claim in this repository is made by code the evaluated pack could supply", async () => {
   // The regression guard with teeth. `standards maintain` and `check` must not import an origin
   // verifier, an anchor, or a trust rule from the directory they are evaluating — that is precisely
