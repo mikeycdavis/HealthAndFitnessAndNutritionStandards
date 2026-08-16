@@ -1,11 +1,46 @@
 /**
  * FE-13 — adoption pins an immutable release.
  *
- * THIS FILE IS A FALSIFIER AND EVERY ASSERTION IN IT CURRENTLY FAILS. It was written and committed
- * before any remedy was designed, deliberately. Its assertions state the behaviour FE-13 must
- * produce; the current system does not produce it, and the point of committing it in this state is
- * that the false green is reproducible rather than argued about. They are marked `todo` — see the
- * note on that marker below, which explains what that costs and why.
+ * THIS FILE IS A FALSIFIER. Every assertion in it was written and committed before any remedy was
+ * designed, and every one of them failed when it was written — deliberately, so that the false green
+ * was reproducible rather than argued about.
+ *
+ * THREE OF THE FOUR ARE NOW ORDINARY TESTS. FE-13 stage 3 removed the paths they were written to
+ * expose, they pass unchanged, and each was mutation-checked before the marker came off: the specific
+ * mechanism it guards was reintroduced, the unchanged test was watched turn red, and the source was
+ * restored byte for byte. They have crossed from defect reproduction into regression protection, and
+ * leaving them `todo` past that point would only mean the gate no longer goes red when the defect
+ * returns.
+ *
+ *   mutation                                                        1  2  3
+ *   ------------------------------------------------------------- -- -- --
+ *   the identity gate is not consulted; the claim is reported      ✗  ok ✗
+ *   a failed identity is appended to a verdict rather than
+ *     replacing it — the caveat FE-13 forbids by name              ✗  ok ✗
+ *   a refusal no longer records what it refused                    ok ✗  ok
+ *   `releaseIdentity` dropped from the success envelope            ok ok ok   <- see below
+ *
+ * TWO THINGS THAT TABLE SAYS, AND THEY ARE BOTH WORTH KNOWING.
+ *
+ * The last row is a gap in falsifier 2, not a redundancy. It asserts that the envelope carries a
+ * release identity, and today it is satisfied by the REFUSAL envelope, because the pack running it on
+ * a development branch cannot establish an identity and never reaches the success path. Dropping the
+ * field from a successful verdict therefore leaves it green. Two tests in release-gate.test.mjs cover
+ * that property directly and do go red. The falsifier is not weakened by this — it is simply narrower
+ * than its name suggests, and a reader who assumed otherwise would be trusting the wrong test.
+ *
+ * Falsifiers 1 and 3 now fail and pass together, and no mutation separates them. Before the remedy
+ * they differed: 3 deleted `VERSION` to reach a code path that substituted the string "unknown" and
+ * carried on. That path is now downstream of a gate that refuses first, so the input that once
+ * distinguished them no longer reaches anything distinct. This is what a remedy collapsing two defects
+ * into one looks like, and it is recorded rather than presented as two independent guards.
+ *
+ * THE FOURTH IS STILL `todo`, and not because the implementation fell short. Its subject is not this
+ * evaluator: it builds its pack by checking out `v1.0.0`, so the code it exercises is `v1.0.0`'s,
+ * which predates the release-identity mechanism and cannot contain it. A pack cannot bootstrap
+ * stronger authenticity guarantees for releases that predate those guarantees (ADR 0008). Its
+ * satisfaction condition therefore falls at the first immutable release that contains FE-13, not on
+ * a development branch — so it stays here, unchanged, and FE-13 stays open until then.
  *
  * THE CLAIM UNDER TEST. An adopter that says it uses `v1.0.0` must demonstrably be evaluated against
  * the exact immutable release. Where that cannot be established, evaluation must fail closed rather
@@ -40,20 +75,24 @@ import { fileURLToPath } from "node:url";
 
 /**
  * WHY `todo` RATHER THAN A RED BUILD. All four were reproduced failing, and the intent was to
- * commit them failing. They are marked `todo` instead for one reason: this repository made CI a real
- * enforcement surface four commits before this one, and a knowingly-red `main` teaches everybody who
+ * commit them failing. They were marked `todo` instead for one reason: this repository made CI a real
+ * enforcement surface four commits before that one, and a knowingly-red `main` teaches everybody who
  * sees it that red means nothing. That erosion is the thing the whole release was built to resist.
  *
- * `todo` keeps every property that mattered. They run on every CI run, they print exactly what they
- * assert, and FE-13 does not close while this marker is still here — removing it is part of the
- * remedy, not a separate cleanup. What is lost is the build going red, and that is the part worth
- * losing.
+ * `todo` kept every property that mattered. They ran on every CI run, they printed exactly what they
+ * assert, and FE-13 does not close while this marker is still on any of them. What was lost is the
+ * build going red, and that was the part worth losing.
  *
- * THE ONLY LEGITIMATE WAY THIS MARKER DISAPPEARS is that the false green has been removed and these
- * falsifiers — all of them, unchanged — pass. They may not be deleted, weakened, rewritten to assert
- * something easier, or moved out of the default test run. Doing any of that to reach a green build
- * is the "falsify evidence for" clause of `integrity.no-standards-manipulation`, applied to this
+ * THE ONLY LEGITIMATE WAY THIS MARKER DISAPPEARS is that the false green it names has been removed
+ * and the falsifier — unchanged — passes. A falsifier may not be deleted, weakened, rewritten to
+ * assert something easier, or moved out of the default test run. Doing any of that to reach a green
+ * build is the "falsify evidence for" clause of `integrity.no-standards-manipulation`, applied to this
  * repository's own maintenance rather than to an adopter's.
+ *
+ * It is still applied here. The one test below that keeps this marker keeps its body byte for byte;
+ * what was revised is FE-13's completion rule, which now distinguishes a falsifier whose subject is
+ * the current evaluator from one whose subject is a release that cannot be changed. Revising the rule
+ * in the open is a different act from quietly revising the test to match the result.
  */
 const TODO = { todo: "FE-13: release identity is not established; remove this marker with the remedy" };
 
@@ -117,7 +156,7 @@ function check(packDir, adopterDir) {
   return { exit: r.status, json, stderr: r.stderr };
 }
 
-test("FALSIFIER: a substituted pack cannot report the release the adopter merely claims", TODO, async () => {
+test("FALSIFIER: a substituted pack cannot report the release the adopter merely claims", async () => {
   const pack = await tamperedPack();
   const adopter = await adopterClaiming("1.0.0");
   try {
@@ -141,7 +180,7 @@ test("FALSIFIER: a substituted pack cannot report the release the adopter merely
   }
 });
 
-test("FALSIFIER: the report must record what was evaluated, not only what was claimed", TODO, async () => {
+test("FALSIFIER: the report must record what was evaluated, not only what was claimed", async () => {
   const adopter = await adopterClaiming("1.0.0");
   try {
     const { json } = check(REPO, adopter);
@@ -159,7 +198,7 @@ test("FALSIFIER: the report must record what was evaluated, not only what was cl
   }
 });
 
-test("FALSIFIER: an unestablishable release identity must fail closed", TODO, async () => {
+test("FALSIFIER: an unestablishable release identity must fail closed", async () => {
   const pack = await tamperedPack();
   const adopter = await adopterClaiming("1.0.0");
   try {

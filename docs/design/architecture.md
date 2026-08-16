@@ -301,6 +301,11 @@ Three separate contracts, deliberately not merged.
   it the exit code operators associate with typos would hide it. It is separate from `1` because
   nothing was found wrong with the project — nothing was evaluated at all.
 
+  What this mechanism cannot do is give an earlier release a property it never shipped with:
+  `1.0.0` remains a valid certified release and does not provide release self-verification, because
+  the code that performs it did not exist when that tree was tagged
+  ([ADR 0008](../../artifacts/adr/0008-authenticity-guarantees-are-not-retroactive.md)).
+
   Code `4` exists because `NOT_EVALUATED` is a first-class outcome here rather than an edge case,
   and folding it into either neighbour would be a lie in one direction or the other. Mapping it to
   `0` would let a project that has evaluated nothing pass a gate — the false green in its purest

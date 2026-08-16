@@ -91,7 +91,15 @@ No standard, rule, or verdict changed, so no version moved.
 - One of FE-13's four falsifiers cannot be satisfied by any change to `main`, and finding out why was
   the most useful thing in that slice. It builds its fixture by checking out `v1.0.0` and running
   `check` from it — so the evaluator it exercises is `v1.0.0`'s, which predates the mechanism under
-  test and cannot contain it. A released pack cannot be made to verify itself retroactively.
+  test and cannot contain it. A pack cannot bootstrap stronger authenticity guarantees for releases
+  that predate those guarantees (ADR 0008). `1.0.0` is not relabelled as providing a mechanism it
+  never contained; the first later release containing FE-13 is the floor adopters can demand it from.
+- Mutation-checking the three falsifiers before promoting them found two things their names did not
+  say. Falsifier 2 requires the output to record which release evaluated the project, and is today
+  satisfied by the *refusal* envelope — removing the field from a successful verdict leaves it green,
+  and two other tests catch that instead. Falsifiers 1 and 3 no longer separate under any mutation,
+  because the code path that used to distinguish them now sits behind a gate that refuses first. Both
+  are written down in the test file rather than left as an impression of coverage.
 - That falsifier had been passing on Windows for a reason that has nothing to do with the standards:
   `git clone --local` hardlinks the object store, hardlinks do not cross volumes, and a repository on
   `F:` with a temp directory on `C:` silently took the fallback path and copied the current pack
