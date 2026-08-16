@@ -154,18 +154,9 @@ verified_at="$(sed -n 's/.*"completedAt"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\
 
 body_file="$(mktemp)"
 trap 'rm -f "$body_file"' EXIT
-{
-  printf '%s\n' "$body"
-  printf '\n---\n\n## Local CI\n\n'
-  printf '| | |\n|---|---|\n'
-  printf '| Verified commit | `%s` |\n' "$sha_after"
-  printf '| Result | **PASS** |\n'
-  printf '| Environment | Docker, no network, `ci/run-checks.sh` |\n'
-  printf '| Stages | %s |\n' "$stages"
-  printf '| Completed | %s |\n' "$verified_at"
-  printf '\nVerified locally in an ephemeral Docker container, not by a GitHub-hosted Actions run.\n'
-  printf 'This says nothing about whether GitHub Actions has run or passed for this commit.\n'
-} > "$body_file"
+if ! printf '%s\n' "$body" | node "$(dirname "$0")/pr-evidence.mjs" "$sha_after" "$stages" "$verified_at" > "$body_file"; then
+  refuse "The verified commit was pushed, but the evidence block could not be composed. No PR body was written."
+fi
 
 gh_command="${GH_COMMAND:-gh}"
 
@@ -182,14 +173,39 @@ if ! "$gh_command" auth status >/dev/null 2>&1; then
 fi
 
 # A branch that already has a PR is the normal case for every push after the first, and `gh pr
-# create` fails on it. The push above is the part that carries the invariant — the verified commit is
-# already on the remote and the existing PR now points at it — so this reports rather than fails, and
-# prints the evidence block for a body that is no longer being written.
+# create` fails on it. This used to stop here, print the block, and say "No body was rewritten" —
+# which left the request asserting the FIRST commit it had ever been verified against, under a
+# heading reading "Verified commit". Not a false green; a true one pinned to the wrong object, on
+# the surface a reviewer reads first. It was caught in review of PR #2 and corrected by hand three
+# times before this existed (ST-13).
+#
+# Only the machine-written region is replaced. `ci/pr-evidence.mjs` locates it by markers, keeps the
+# superseded verifications, and REFUSES when the region cannot be identified — a body edited by a
+# human, or written before the markers existed, is reported rather than guessed at. A refusal here is
+# not a failed submission: the verified commit is already pushed and the request already points at
+# it, which is the part carrying the invariant.
 existing="$("$gh_command" pr view "$branch" --json url --jq .url 2>/dev/null || true)"
 if [ -n "$existing" ]; then
   printf '\nA pull request already exists for %s, and now carries the verified commit:\n  %s\n' "$branch" "$existing"
-  printf '\nNo body was rewritten. The verification for this commit:\n\n'
-  sed -n '/^## Local CI$/,$p' "$body_file"
+
+  current_body="$("$gh_command" pr view "$branch" --json body --jq .body 2>/dev/null || true)"
+  updated_body="$(mktemp)"
+  refusal="$(mktemp)"
+  trap 'rm -f "$body_file" "$updated_body" "$refusal"' EXIT
+
+  if printf '%s' "$current_body" | node "$(dirname "$0")/pr-evidence.mjs" "$sha_after" "$stages" "$verified_at" > "$updated_body" 2>"$refusal"; then
+    if "$gh_command" pr edit "$branch" --body-file "$updated_body" >/dev/null 2>&1; then
+      printf '\nThe evidence block was updated to this commit. The description above it was not touched.\n'
+    else
+      printf '\nThe evidence block could not be written to GitHub. The body still names an earlier commit:\n\n'
+      sed -n "/^## Local CI$/,\$p" "$updated_body"
+    fi
+  else
+    printf '\nThe evidence block in that body was not rewritten. Reason: %s' "$(cat "$refusal")"
+    printf '\nPaste this in place of the stale block:\n\n'
+    sed -n '/^## Local CI$/,$p' "$body_file"
+  fi
+
   printf '\nPASS  %s  verified and pushed.\n' "$sha_after"
   exit 0
 fi

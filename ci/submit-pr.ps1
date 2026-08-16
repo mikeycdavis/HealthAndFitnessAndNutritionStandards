@@ -26,7 +26,8 @@ Create the PR as a draft.
 PR title. Defaults to the subject of the verified commit.
 
 .PARAMETER Body
-PR body. The local-CI evidence block is appended to it, never in place of it.
+PR body. The local-CI evidence block is appended to it, never in place of it. On a later push
+only that block is replaced; the description above it is not touched.
 
 .EXAMPLE
 .\ci\submit-pr.ps1
@@ -156,25 +157,14 @@ try {
     # two ever differ, the PR body should show what happened rather than what was intended.
     $stages = (@($evidence.checks) | ForEach-Object { $_.name }) -join ", "
 
+    # The block is composed by ci/pr-evidence.mjs, which both this and submit-pr.sh call, so the two
+    # wrappers cannot drift into writing different evidence for the same run (ST-13).
+    $evidenceScript = Join-Path $PSScriptRoot "pr-evidence.mjs"
     $bodyFile = New-TemporaryFile
-    @(
-        $Body
-        ""
-        "---"
-        ""
-        "## Local CI"
-        ""
-        "| | |"
-        "|---|---|"
-        "| Verified commit | ``$shaAfter`` |"
-        "| Result | **PASS** |"
-        "| Environment | Docker, no network, ``ci/run-checks.sh`` |"
-        "| Stages | $stages |"
-        "| Completed | $($evidence.completedAt) |"
-        ""
-        "Verified locally in an ephemeral Docker container, not by a GitHub-hosted Actions run."
-        "This says nothing about whether GitHub Actions has run or passed for this commit."
-    ) | Set-Content -Path $bodyFile -Encoding utf8
+    $Body | & node $evidenceScript $shaAfter $stages $evidence.completedAt | Set-Content -Path $bodyFile -Encoding utf8
+    if ($LASTEXITCODE -ne 0) {
+        Deny "The verified commit was pushed, but the evidence block could not be composed. No PR body was written."
+    }
 
     # GH_COMMAND is a seam, like LOCAL_CI_COMMAND: it lets PR creation be asserted without
     # contacting GitHub. A submission workflow whose refusals are untested is a workflow that will
@@ -195,13 +185,36 @@ try {
         }
 
         # A branch that already has a PR is the normal case for every push after the first, and
-        # `gh pr create` fails on it. The push above is the part that carries the invariant — the
-        # verified commit is already on the remote and the existing PR now points at it — so this
-        # reports rather than fails, and leaves the developer's body alone.
+        # `gh pr create` fails on it. The push above is the part that carries the invariant. This
+        # used to stop here and leave the body alone, which meant the request kept asserting the
+        # FIRST commit it had ever been verified against, under a heading reading "Verified commit"
+        # (ST-13). Only the marked region is replaced; a body whose region cannot be located
+        # unambiguously is reported and left untouched.
         $existing = & $gh pr view $branch --json url --jq .url 2>$null
         if ($LASTEXITCODE -eq 0 -and $existing) {
             Write-Host "`nA pull request already exists for $branch, and now carries the verified commit:"
             Write-Host "  $existing"
+
+            $currentBody = & $gh pr view $branch --json body --jq .body 2>$null
+            $updated = New-TemporaryFile
+            $currentBody | & node $evidenceScript $shaAfter $stages $evidence.completedAt 2>$null |
+                Set-Content -Path $updated -Encoding utf8
+
+            if ($LASTEXITCODE -eq 0) {
+                & $gh pr edit $branch --body-file $updated *> $null
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Host "`nThe evidence block was updated to this commit. The description above it was not touched."
+                } else {
+                    Write-Host "`nThe evidence block could not be written to GitHub. The body still names an earlier commit."
+                    Get-Content $bodyFile
+                }
+            } else {
+                Write-Host "`nThe evidence block in that body was not rewritten: it could not be located unambiguously."
+                Write-Host "Paste this in place of the stale block:`n"
+                Get-Content $bodyFile
+            }
+            Remove-Item $updated -Force -ErrorAction SilentlyContinue
+
             Write-Host "`nPASS  $shaAfter  verified and pushed."
             exit 0
         }

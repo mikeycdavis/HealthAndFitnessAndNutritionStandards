@@ -22,10 +22,12 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawn, spawnSync } from "node:child_process";
 import { chmod, cp, mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+
+import { evidenceBlock } from "../ci/pr-evidence.mjs";
 
 const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => readFile(path.join(REPO, rel), "utf8");
@@ -629,9 +631,16 @@ async function scratch() {
       'if [ "$1" = "auth" ]; then exit 0; fi',
       // `pr view` answers "does this branch already have a PR?". Silent by default, so the happy
       // path still goes on to create one.
+      // `pr view --json url` answers "does this branch already have a PR?"; `pr view --json body`
+      // answers "what does it say right now?". The stub has to tell them apart, because updating an
+      // existing body is a thing submit-pr does and a stub that returned a URL for both would let it
+      // appear to work while rewriting a body it never read.
       'if [ "$1" = "pr" ] && [ "$2" = "view" ]; then',
-      '  if [ -n "${GH_STUB_EXISTING_PR:-}" ]; then printf "%s\\n" "$GH_STUB_EXISTING_PR"; exit 0; fi',
-      "  exit 1",
+      '  if [ -z "${GH_STUB_EXISTING_PR:-}" ]; then exit 1; fi',
+      '  case "$*" in',
+      '    *"--json body"*) if [ -n "${GH_STUB_EXISTING_BODY:-}" ]; then cat "$GH_STUB_EXISTING_BODY"; fi; exit 0 ;;',
+      "  esac",
+      '  printf "%s\\n" "$GH_STUB_EXISTING_PR"; exit 0',
       "fi",
       'while [ $# -gt 0 ]; do',
       '  printf "%s\\n" "$1" >> "$GH_STUB_LOG"',
@@ -797,15 +806,35 @@ test("submission refuses evidence that names a different commit", async () => {
 /**
  * Every push after the first lands on a branch that already has a PR, and `gh pr create` fails on
  * that. The push is the half that carries the invariant, so the existing PR must be reported rather
- * than treated as a failed submission — and the developer's PR body must not be rewritten from a
- * commit message on the way past.
+ * than treated as a failed submission — and the developer's own description must survive it.
+ *
+ * REWRITTEN FOR ST-13, AND WHAT THE OLD VERSION WAS ACTUALLY ASSERTING. It ended with
+ * `assert.ok(!existsSync("gh-args.txt"), "no second PR may be created")` — using "the GitHub CLI was
+ * never invoked" as a proxy for "no second pull request was created". Those were the same fact only
+ * while this path did nothing but print, and that doing-nothing was the defect: the request kept
+ * asserting the first commit it had ever been verified against, under a heading reading **Verified
+ * commit**. So the proxy was quietly pinning the defect in place, and a test that pins a defect
+ * passes for exactly as long as nobody fixes it.
+ *
+ * The assertion now says what it always meant: `pr edit`, never `pr create`. Nothing was weakened —
+ * the no-second-PR property is checked directly rather than through a stand-in, and three further
+ * properties the old version could not see are checked beside it.
  */
 test("submission updates an existing PR rather than failing to create a second one", async () => {
   const s = await scratch();
   try {
     const sha = git(s.work, ["rev-parse", "HEAD"]);
+    const stale = "0".repeat(40);
+    const bodyPath = path.join(s.dir, "existing-body.md");
+    const prose = "A description a human wrote, which this must not touch.\n";
+    await writeFile(bodyPath, `${prose}\n${evidenceBlock({ sha: stale, stages: "tests", completedAt: "2026-01-01T00:00:00Z" })}`);
+
     const r = submit(s, {
-      env: { GH_COMMAND: forBash(s.gh), GH_STUB_EXISTING_PR: "https://example.invalid/pr/1" },
+      env: {
+        GH_COMMAND: forBash(s.gh),
+        GH_STUB_EXISTING_PR: "https://example.invalid/pr/1",
+        GH_STUB_EXISTING_BODY: forBash(bodyPath),
+      },
     });
 
     assert.equal(r.status, 0, `${r.stdout}\n${r.stderr}`);
@@ -817,7 +846,49 @@ test("submission updates an existing PR rather than failing to create a second o
       sha,
       "the verified commit must still reach the remote",
     );
-    assert.ok(!existsSync(path.join(s.dir, "gh-args.txt")), "no second PR may be created");
+
+    const invocations = readFileSync(path.join(s.dir, "gh-args.txt"), "utf8");
+    assert.match(invocations, /^edit$/m, "the existing request's body is edited");
+    assert.doesNotMatch(invocations, /^create$/m, "no second PR may be created");
+
+    const written = readFileSync(path.join(s.dir, "gh-body.md"), "utf8");
+    assert.match(written, new RegExp(`\\| Verified commit \\| \`${sha}\` \\|`), "the block names this run's commit");
+    assert.doesNotMatch(
+      written,
+      new RegExp(`\\| Verified commit \\| \`${stale}\` \\|`),
+      "and no longer names the commit it was first verified against",
+    );
+    assert.match(written, new RegExp(stale), "which is recorded as superseded rather than deleted");
+    assert.equal(written.slice(0, prose.length), prose, "the human's description is not the machine's to edit");
+  } finally {
+    await rm(s.dir, { recursive: true, force: true });
+  }
+});
+
+/**
+ * The refusal half of the same path. A body whose evidence block cannot be located unambiguously —
+ * edited by a human, or written before the markers existed — is reported and left alone. The push
+ * still happened, so this is not a failed submission; it is the one case where the operator has to
+ * paste the block themselves, and being told that is the whole point.
+ */
+test("submission refuses to rewrite a PR body whose evidence block cannot be located", async () => {
+  const s = await scratch();
+  try {
+    const bodyPath = path.join(s.dir, "existing-body.md");
+    await writeFile(bodyPath, "Prose.\n\n## Local CI\n\nA table a human wrote themselves.\n");
+
+    const r = submit(s, {
+      env: {
+        GH_COMMAND: forBash(s.gh),
+        GH_STUB_EXISTING_PR: "https://example.invalid/pr/1",
+        GH_STUB_EXISTING_BODY: forBash(bodyPath),
+      },
+    });
+
+    assert.equal(r.status, 0, `${r.stdout}\n${r.stderr}`);
+    assert.match(r.stdout, /was not rewritten/);
+    assert.match(r.stdout, /Paste this in place of the stale block/);
+    assert.ok(!existsSync(path.join(s.dir, "gh-body.md")), "a refusal writes no body to GitHub");
   } finally {
     await rm(s.dir, { recursive: true, force: true });
   }

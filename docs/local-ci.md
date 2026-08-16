@@ -69,7 +69,7 @@ verify clean tree -> record SHA -> run full Docker CI -> verify same SHA -> push
 | `-Draft` / `--draft` | Create the PR as a draft |
 | `-Base develop` / `--base develop` | Base branch (defaults to the remote's default branch) |
 | `-Title` / `--title` | PR title (defaults to the verified commit's subject) |
-| `-Body` / `--body` | PR body — the evidence block is **appended** to it, never in place of it |
+| `-Body` / `--body` | PR body — the evidence block is **appended** to it, never in place of it. On a later push only that block is replaced; the description above it is not touched |
 
 It refuses, pushing nothing and creating nothing, when:
 
@@ -246,6 +246,18 @@ like from inside a repository — no evidence either way, rather than a failure.
 **A PR body produced by `submit-pr` says local Docker verification and says so explicitly.** It never
 claims a GitHub Actions run happened. If you read a PR here and want to know whether Actions passed,
 look at the checks tab; the body deliberately tells you nothing about it.
+
+**And it names the commit this run verified, on every push rather than only the first.** It did not
+always. The block was written when the request was created and never again, so an open request kept
+asserting the first commit it had ever been verified against under a heading reading **Verified
+commit** — not a false green, a true one pinned to the wrong object, on the surface a reviewer reads
+first. `ci/pr-evidence.mjs` now replaces the block, which is delimited by `<!-- local-ci:begin -->`
+and `<!-- local-ci:end -->` markers so that only the machine-written region is touched. Superseded
+verifications are kept beneath the current one, because what was verified when is the record's point.
+A body whose region cannot be located unambiguously — edited by hand, or written before the markers
+existed — is **reported and left alone**, and the script prints the block for you to paste. Guessing
+which of two `## Local CI` headings is the real one is how a maintainer's prose gets destroyed
+(ST-13).
 
 **A self-hosted runner later** needs no redesign: it would run `ci/ci.sh` (the same Docker pipeline)
 or `ci/run-checks.sh` (the same stages) and get the same answer. Nothing here assumes it is being
