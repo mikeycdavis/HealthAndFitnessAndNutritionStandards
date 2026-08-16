@@ -73,6 +73,16 @@ const notEstablished = (reason, detail) => ({
  * `anchor` is `{ fingerprint, source }` and comes from the operator, never from the evaluated tree.
  * `release` is `{ version, tag, signature }` as presented by the pack — untrusted input, which is the
  * point: the pack may say anything, and the anchor decides whether it is believed.
+ *
+ * THAT SENTENCE IS TRUE ONLY WHEN THIS MODULE IS THE TRUSTED HOST'S COPY, and it is left standing
+ * with its correction rather than quietly rewritten, because it was believed and it was too strong.
+ * A hostile fork replaces this file along with everything else and has its own copy return
+ * ESTABLISHED without consulting the anchor at all. The key is external; the code interpreting the
+ * evidence was not. So the pack can also change the thing that lets the anchor decide, and no
+ * cryptography reachable from inside the pack closes that — see
+ * [ADR 0011](../artifacts/adr/0011-canonical-origin-cannot-be-asserted-by-the-pack.md), which moves
+ * the assertion to a verifier the evaluated pack does not supply, and
+ * `test/trusted-execution-boundary.test.mjs`, which makes the difference observable.
  * `verify` is `(release, anchor) => { valid, fingerprint }` — the cryptographic mechanism, injected.
  *
  * The anchor is checked FIRST, before the release is examined and before any verifier runs. Order is

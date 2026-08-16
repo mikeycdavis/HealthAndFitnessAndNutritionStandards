@@ -1,5 +1,15 @@
 /**
- * The cryptographic half of canonical origin: does this release tag carry a signature, and whose?
+ * A REFERENCE MECHANISM: does this release tag carry a signature, and whose?
+ *
+ * WHAT THIS FILE DOES AND DOES NOT ESTABLISH, first because it is the thing most easily assumed:
+ * it demonstrates how an SSH-signed release is cryptographically checked against an explicitly
+ * supplied public key. **Executed from the evaluated pack, it does not establish canonical pack
+ * origin against a hostile fork** — a fork replaces this file, or the module that interprets its
+ * result, and reports whatever it likes. Canonical origin requires a verifier whose implementation
+ * is outside the evaluated pack's control
+ * ([ADR 0011](../artifacts/adr/0011-canonical-origin-cannot-be-asserted-by-the-pack.md)). This is
+ * what such a verifier should do, written to be read and reimplemented by the trusted host that will
+ * do it — and, run here, a diagnostic.
  *
  * `scripts/pack-origin.mjs` decides what a verification RESULT means and refuses to let the pack
  * supply its own anchor. This file is the mechanism it was deliberately written without — injected

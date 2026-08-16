@@ -59,6 +59,22 @@ output schema version did, because the output format did — see below.
 
 ### Added
 
+- **The boundary the cryptography does not reach.**
+  [ADR 0011](artifacts/adr/0011-canonical-origin-cannot-be-asserted-by-the-pack.md) records what
+  review of the SSH slice found: the anchor is external, and the judge is not. `pack-origin.mjs` and
+  `ssh-tag-verifier.mjs` live inside the pack whose origin they authenticate, so a hostile fork
+  rewrites either and reports `ESTABLISHED` without going near `ssh-keygen` — and supplying the real
+  public key changes nothing, because the key is external and the code interpreting the evidence is
+  not. **Canonical-origin establishment therefore requires a verifier whose implementation is outside
+  the evaluated pack's control.** The pack may provide the signed tag, the standards bytes, a
+  reference implementation, and diagnostics; it may not pronounce on its own origin. The overclaiming
+  sentence in `pack-origin.mjs` is narrowed in place with its correction beside it rather than
+  rewritten, and `test/trusted-execution-boundary.test.mjs` makes the difference observable: the same
+  tag and anchor, answered once by the module loaded from the evaluated pack and once by the module
+  the host already had, disagreeing. What ST-12 can close here is the protocol and the
+  external-verifier contract; full-fork exclusivity cannot be closed by this repository, because the
+  trusted execution boundary necessarily lives outside it.
+
 - **Release signatures are verified, and not through `git verify-tag`.**
   `scripts/ssh-tag-verifier.mjs` reads the signature out of the annotated tag and reports who signed;
   the trust comparison stays in `pack-origin.mjs`, so there is one place where trust is decided and
