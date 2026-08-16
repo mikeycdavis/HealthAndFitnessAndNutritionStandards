@@ -1,0 +1,55 @@
+# The CI environment as a composition. Invoked by ci/ci.ps1 and ci/ci.sh, not by hand.
+#
+# ONE SERVICE, BECAUSE THIS REPOSITORY HAS ONE DEPENDENCY: Node, at the version the enforcement
+# surface pins. There is no database service here and adding one would be dishonest — nothing in this
+# repository reads or writes a database, so a Postgres container would exist only to make the CI file
+# look like other CI files. If a datastore is ever introduced it belongs here, on a private network,
+# with its own disposable volume; the shape is left obvious rather than pre-built.
+#
+# The project name is supplied by the wrapper scripts as `-p hfn-ci-<sha>-<pid>-<random>`, and the
+# image tag carries the same identifier, so two runs — or two repositories using this pattern —
+# cannot collide, and `down` can only ever remove resources this run created. The tag matters as much
+# as the project name: a shared tag is a name two concurrent runs both write, and the second build
+# can retag it between the first run's build and its `compose run`, so a run could execute an image
+# built from another checkout entirely.
+services:
+  ci:
+    build:
+      # THE CONTEXT IS `ci/`, NOT THE REPOSITORY, AND THE BUILD HAS NO NETWORK.
+      #
+      # `network_mode` below governs the container. It says nothing about the build that produces the
+      # image, and the build is branch-controlled too — so for as long as the context was `.` with a
+      # networked build, a Dockerfile could copy the checkout into a layer and a `RUN` could send it
+      # somewhere. "No network" described execution and was written as though it described CI.
+      #
+      # Both halves are needed. The narrow context means a `COPY` has nothing worth taking; the
+      # networkless build means a `RUN` has nowhere to take it. ci/Dockerfile has no `RUN` at all, so
+      # `network: none` costs nothing and any future edit that needs a network fails loudly here.
+      context: ci
+      dockerfile: Dockerfile
+      network: none
+      args:
+        NODE_VERSION: "${CI_NODE_VERSION:-20}"
+    image: "${CI_IMAGE:-hfn-local-ci:node20}"
+    init: true
+
+    # NO NETWORK. The repository's dependency policy is "zero third-party dependencies, no install
+    # step", and until now that was enforced by a comment in a workflow file. A container that cannot
+    # reach a registry cannot quietly acquire one, so the policy is now a property of the environment.
+    # It also means CI executes untrusted branch code with nowhere to send anything.
+    network_mode: none
+
+    # The only thing from the host, and it cannot be written to. No Docker socket, no SSH agent, no
+    # credential helper, no home directory.
+    volumes:
+      - type: bind
+        source: .
+        target: /repo
+        read_only: true
+
+    working_dir: /work
+    environment:
+      CI: "true"
+      # Node's test runner colours its output only when it believes it is on a terminal; forcing it
+      # off keeps the log the same whether a human or a script is reading it.
+      NO_COLOR: "1"

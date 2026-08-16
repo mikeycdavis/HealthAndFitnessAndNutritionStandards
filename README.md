@@ -190,9 +190,34 @@ test/                node:test suites and fixture repositories
 artifacts/prompts/   the two source documents, verbatim
 artifacts/adr/       six architecture decision records
 artifacts/*.json     two human-reviewed inventories — the tamper evidence
+ci/                  the containerised CI pipeline and the verified-PR workflow
+compose.ci.yml       the ephemeral CI environment
 PROHIBITIONS.md      the first-class prohibition index
 project-policy.yml   this repository's own policy, dogfooded
 ```
+
+## Building and submitting changes
+
+The complete CI pipeline runs locally in Docker. GitHub-hosted Actions are a second opinion, not a
+prerequisite.
+
+```bash
+./ci/ci.sh
+```
+
+```bash
+./ci/submit-pr.sh
+```
+
+The first runs every check in an ephemeral container and submits nothing. The second runs the same
+pipeline and then enforces one invariant: **the commit pushed for a PR is exactly the commit that
+passed it.** `HEAD` is resolved before and after verification, and a branch whose `HEAD` moved in
+between is refused rather than pushed. On Windows, `.\ci\ci.ps1` and `.\ci\submit-pr.ps1`.
+
+The stages are defined once, in [`ci/run-checks.sh`](ci/run-checks.sh), which is also what the GitHub
+workflow invokes. Full details — what each stage checks, what this repository has no stage for and
+why, the container's isolation model, and how to debug a failed run — are in
+[`docs/local-ci.md`](docs/local-ci.md).
 
 ## Adopting these standards
 

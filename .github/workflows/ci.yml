@@ -1,19 +1,25 @@
-# Continuous integration.
+# Continuous integration, on GitHub's runners.
 #
-# THERE IS NO INSTALL STEP, AND THAT IS DELIBERATE. This repository has zero third-party
-# dependencies; the absence of `npm ci` here is what makes that policy structural rather than
-# aspirational. If an install step ever appears in this file, the dependency policy changed, and
-# that change should be argued for in a commit message rather than discovered later.
+# THIS FILE NO LONGER DEFINES THE PIPELINE. It invokes ci/run-checks.sh, which is the one
+# authoritative definition of what "CI passes" means for this repository and which is also what runs
+# inside the local Docker pipeline (ci/ci.ps1, ci/ci.sh) and would run on a self-hosted runner. The
+# reasoning about stage order, the absence of an install step, and the removal of the exit-4
+# allowance all moved there, to the file that executes them.
 #
-# ORDER MATTERS. The guards run before the tests because each answers a question the tests assume:
-# whether the standards series still has the shape a human reviewed, whether the catalog still
-# contains the rules a human reviewed, and whether quoted source text is still the source's. A test
-# suite passing against a catalog that quietly lost a prohibition is a green build that means
-# nothing.
+# Two definitions of a pipeline agree until the day they matter. This one had already drifted once in
+# a way no diff could catch — a comment here described the repository's verdict and the gate's
+# behaviour, both of which had been true months earlier — and the fix was to stop maintaining a
+# second copy of anything.
 #
-# `check` is the gate. `audit` runs without --strict on purpose: failing a build on warnings is how
-# an audit step gets disabled, and the real error gate is the assertion inside the test suite that
-# this repository produces no error-severity findings.
+# WHAT THIS RUNNER PROVES, AND WHAT IT DOES NOT. `actions/checkout@v4` fetches one commit and no
+# tags, so refs/tags/v1.0.0 does not exist here and the release-identity tests take their fail-closed
+# branch. They pass, but they assert less than they do locally, where the container gets the full
+# repository including tags. Changing that (fetch-depth: 0, or an explicit tag fetch) belongs with
+# FE-13's verification slice, which is the first thing that will actually depend on it.
+#
+# A GitHub-hosted run is not required for a pull request in this repository: local Docker
+# verification is the gate, and ci/submit-pr.* refuses to push a commit that has not passed it. This
+# workflow is a second opinion, and it is deliberately kept able to run on its own.
 
 name: CI
 
@@ -31,41 +37,7 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Standards series (has the series changed shape?)
-        run: npm run inventory
-
-      - name: Rule catalog (has a rule been dropped, downgraded, or reclassified?)
-        run: npm run rules
-
-      - name: Source fidelity (is quoted source text still the source's?)
-        run: npm run fidelity
-
-      - name: Project policy (is this repository's own policy well-formed?)
-        run: npm run policy
-
-      - name: Diagram freshness (does each embedded diagram match its Mermaid source?)
-        run: npm run diagrams
-
-      - name: Tests
-        run: npm test
-
-      - name: Audit this repository (evidence, not a verdict)
-        run: npm run audit
-
-      # The gate. Every exit code is now treated as it should be: 0 passes, and 1, 2, 3, and 4 all
-      # fail the build.
-      #
-      # THE EXIT-4 ALLOWANCE IS GONE. It was `|| [ $? -eq 4 ]`, and it was honest while it lasted:
-      # four rules here could only be established by a human, none had been, and reporting
-      # NOT_EVALUATED was the truthful result rather than a relaxation. It was removed as part of
-      # the 1.0.0 release mechanics, after four human attestations were recorded validly and an
-      # independent certification pass against 9809afc established that the verdict rests on
-      # evidence that is what it claims to be.
-      #
-      # Do not put it back to make a build green. If this step starts failing, the repository has
-      # stopped being able to demonstrate compliance, and that is the thing to fix. Restoring the
-      # allowance would convert a real signal into a permanent excuse — and it would do so on the
-      # surface an operator reads first, which is how the last defect in this file survived from
-      # the certification baseline undetected.
-      - name: Check this repository (the gate)
-        run: npm run check
+      # The whole pipeline, in the order ci/run-checks.sh defines: the guards before the tests,
+      # `audit` for evidence, and `check` as the gate.
+      - name: Run the pipeline (ci/run-checks.sh)
+        run: bash ci/run-checks.sh
