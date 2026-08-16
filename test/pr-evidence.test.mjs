@@ -38,6 +38,19 @@
  * rather than merely that the prose survived. Two blocks would have left the prose intact and the
  * body ambiguous — which is the state this module refuses to touch on the next push, so a mutation
  * that produced it would have quietly disabled every later update.
+ *
+ * AND AGAINST THE SAME-COMMIT RULE, added after the first round of this file found a body whose
+ * current row already named the incoming commit — a case the tests above had no reason to construct:
+ *
+ *   mutation                                              reverify  list-intact  accumulate
+ *   the current row is demoted whatever its sha              x          x            ok
+ *   the incoming sha is never passed in, so nothing matches  x          x            ok
+ *   prior superseded rows are dropped rather than carried    ok         x            x
+ *
+ * The first two share a signature, and that is reported rather than dressed up: they are two
+ * spellings of one defect — the comparison not happening — so a single signature is the correct
+ * result rather than a gap in the tests. The third is genuinely different, and the middle test is
+ * what separates dropping the old rows from refusing to add a new one.
  */
 
 import { test } from "node:test";
