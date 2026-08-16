@@ -33,6 +33,18 @@
  *   N3  an unsigned tag returns `ok: true` with an empty   → the unsigned-release test red. Missing
  *       signature instead of refusing                        evidence must not enter the pipeline
  *                                                            dressed as present evidence.
+ *   P1  the signed name is not compared to the requested   → the relabelling test red. The conformance
+ *       release (the defect, restored)                        host's own vector stayed green, correctly:
+ *                                                             it implements the same rule separately,
+ *                                                             which is what a second implementation is
+ *                                                             for. Mutating that one instead reddens
+ *                                                             its vector and not this file's.
+ *   P2  `couldNotRun` is never consulted, so a missing     → the unavailable test red, and the paired
+ *       verifier reads as a refused signature                 tampered-payload control stayed green —
+ *                                                             which is the point of writing them
+ *                                                             together, since mapping every failure to
+ *                                                             `unavailable` is the easier wrong fix and
+ *                                                             that control forbids it.
  *
  * WHY NOT `git verify-tag`. Git resolves the SSH allowed-signers file through
  * `gpg.ssh.allowedSignersFile`, which is configuration the evaluated repository controls. Verifying

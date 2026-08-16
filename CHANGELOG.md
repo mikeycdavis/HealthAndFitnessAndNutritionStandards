@@ -59,6 +59,26 @@ output schema version did, because the output format did — see below.
 
 ### Added
 
+- **A genuine signature can no longer be relabelled onto a release it did not authorise.**
+  `readSignedTag` trusted the ref name it was handed and never read the signed tag object's own
+  `tag <name>` header, so pointing `refs/tags/v9.9.9` at the custodian's real signed `v1.1.0` tag
+  object passed every check — matching commit, matching tree, correct signer, valid signature, all of
+  it authentically the custodian's work. Comparing oids cannot catch that: they are identical by
+  construction, and a ref is an alias nobody signs. Reported as `release-name-mismatch`, contradicted
+  rather than missing, because somebody built that ref. Found by independent review of PR #7, and the
+  external-verifier contract now states the name binding so a host implementing it does not inherit
+  the same gap.
+
+- **A verifier that cannot run is `verification-unavailable`, not `invalid-signature`.** A missing,
+  unspawnable, or too-old `ssh-keygen` exits non-zero exactly as a refused signature does, and the
+  reference mechanism collapsed the two — asserting that a signature had been examined and found
+  wanting when nothing examined it, which is a claim nobody performed and a false accusation against
+  whoever signed. Verifiers now answer in three states. `verification-unavailable` is kept distinct
+  from `verification-unimplemented` because the operator actions differ: repair the tool, versus this
+  capability was never built. The falsifiers are paired deliberately — mapping every cryptographic
+  failure to *unavailable* would satisfy the missing-tool test on its own, so a tampered-payload
+  control sits beside it.
+
 - **The release-signing procedure, frozen separately from its first execution.**
   [`docs/release-signing.md`](docs/release-signing.md) is a human ceremony with machine assistance
   rather than a pipeline with a human in it: a dedicated key the custodian holds outside the
