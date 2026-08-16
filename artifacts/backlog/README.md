@@ -5,18 +5,18 @@
 Work on this project classified with the Extended Agile Hierarchy. Every item is a file in
 [`items/`](./items/); its YAML frontmatter is the source of truth and this page is derived from it.
 
-**11 of 24 leaf items complete — 46%**
+**12 of 24 leaf items complete — 50%**
 
 ```
-██████████████████░░░░░░░░░░░░░░░░░░░░░░  46%
+████████████████████░░░░░░░░░░░░░░░░░░░░  50%
 ```
 
 ## Status
 
 | Status | Items |
 | --- | ---: |
-| ◑ In progress | 3 |
-| ● Complete | 16 |
+| ◑ In progress | 2 |
+| ● Complete | 17 |
 | ◌ Deferred | 18 |
 | **Total** | **37** |
 
@@ -35,12 +35,11 @@ Work on this project classified with the Extended Agile Hierarchy. Every item is
 
 | Theme | Progress | Done | Remaining |
 | --- | --- | ---: | ---: |
-| [TH-01 Trustworthy health, fitness, and nutrition guidance](./items/TH-01.md) | `██████░░░░░░░░` 46% | 11 | 13 |
+| [TH-01 Trustworthy health, fitness, and nutrition guidance](./items/TH-01.md) | `███████░░░░░░░` 50% | 12 | 12 |
 
 ## In flight
 
 - ◑ [FE-13](./items/FE-13.md) — Adoption pins an immutable release
-- ◑ [ST-12](./items/ST-12.md) — Self-maintenance eligibility rests on a signature a fork cannot hold
 - ◑ [TH-01](./items/TH-01.md) — Trustworthy health, fitness, and nutrition guidance
 
 ## Ready to pick up
@@ -49,7 +48,7 @@ _Nothing marked ready._
 
 ## Everything
 
-- ◑ **[TH-01](./items/TH-01.md)** Trustworthy health, fitness, and nutrition guidance _(11/24)_
+- ◑ **[TH-01](./items/TH-01.md)** Trustworthy health, fitness, and nutrition guidance _(12/24)_
   - ● **[IN-01](./items/IN-01.md)** Publish and certify version 1.0.0 _(11/11)_
     - ● **[EP-01](./items/EP-01.md)** Build the 1.0.0 standards pack _(5/5)_
       - ● **[FE-01](./items/FE-01.md)** Committed sources, architecture record, and the guards that watch them
@@ -73,8 +72,8 @@ _Nothing marked ready._
       - ◌ **[FE-10](./items/FE-10.md)** Umbrella composition semantics
       - ◌ **[FE-11](./items/FE-11.md)** Machine-readable release migration classification
       - ◌ **[FE-12](./items/FE-12.md)** One evaluation path for development and release
-      - ◑ **[FE-13](./items/FE-13.md)** Adoption pins an immutable release _(0/1)_
-        - ◑ **[ST-12](./items/ST-12.md)** Self-maintenance eligibility rests on a signature a fork cannot hold
+      - ◑ **[FE-13](./items/FE-13.md)** Adoption pins an immutable release _(1/1)_
+        - ● **[ST-12](./items/ST-12.md)** Self-maintenance eligibility rests on a signature a fork cannot hold
       - ◌ **[FE-14](./items/FE-14.md)** Idempotent, non-authoritative bootstrap for adopters
       - ◌ **[FE-15](./items/FE-15.md)** Adoption testing prioritises actionable surfaces
   - ◌ **[IN-03](./items/IN-03.md)** Standards content and documentation refinement _(0/5)_

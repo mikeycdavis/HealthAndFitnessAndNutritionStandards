@@ -59,6 +59,86 @@ output schema version did, because the output format did — see below.
 
 ### Added
 
+- **A genuine signature can no longer be relabelled onto a release it did not authorise.**
+  `readSignedTag` trusted the ref name it was handed and never read the signed tag object's own
+  `tag <name>` header, so pointing `refs/tags/v9.9.9` at the custodian's real signed `v1.1.0` tag
+  object passed every check — matching commit, matching tree, correct signer, valid signature, all of
+  it authentically the custodian's work. Comparing oids cannot catch that: they are identical by
+  construction, and a ref is an alias nobody signs. Reported as `release-name-mismatch`, contradicted
+  rather than missing, because somebody built that ref. Found by independent review of PR #7, and the
+  external-verifier contract now states the name binding so a host implementing it does not inherit
+  the same gap.
+
+- **A verifier that cannot run is `verification-unavailable`, not `invalid-signature`.** A missing,
+  unspawnable, or too-old `ssh-keygen` exits non-zero exactly as a refused signature does, and the
+  reference mechanism collapsed the two — asserting that a signature had been examined and found
+  wanting when nothing examined it, which is a claim nobody performed and a false accusation against
+  whoever signed. Verifiers now answer in three states. `verification-unavailable` is kept distinct
+  from `verification-unimplemented` because the operator actions differ: repair the tool, versus this
+  capability was never built. The falsifiers are paired deliberately — mapping every cryptographic
+  failure to *unavailable* would satisfy the missing-tool test on its own, so a tampered-payload
+  control sits beside it.
+
+- **The release-signing procedure, frozen separately from its first execution.**
+  [`docs/release-signing.md`](docs/release-signing.md) is a human ceremony with machine assistance
+  rather than a pipeline with a human in it: a dedicated key the custodian holds outside the
+  repository and outside CI, a public key registered with the trusted host independently, a release
+  candidate identified before signing rather than repaired by it, independent inspection of the tag
+  before the push, **no unsigned fallback tag if signing or verification fails**, public facts
+  recorded and nothing derived from the private key, and rotation as an explicit governance event.
+  The prohibition that shapes the rest: **no release automation may possess the signing private key
+  merely to make the ceremony convenient** — the build prepares and verifies a candidate, an agent
+  prepares the command and inspects public evidence, the human performs the signing act. Freezing the
+  procedure and executing it are separate, so ST-12 completes without manufacturing a release to
+  satisfy process; the first new signed release is the production proof, not a prerequisite. Step 1 is
+  a guard rather than a promise: a test asserts no tracked file in this repository contains private
+  key material.
+
+- **The external verifier contract, and conformance vectors for somebody else's implementation.**
+  [`docs/design/external-verifier-contract.md`](docs/design/external-verifier-contract.md) freezes
+  what a trusted host must do to establish canonical origin: acquire trust independently, resolve the
+  release itself, verify authorization itself, resolve the signed object, materialise and bind the
+  exact bytes, and only then execute pack code — plus the negative contract, which is where the
+  erosion would otherwise start. **This repository owns the specification and the test vectors;
+  StandardsEnforcer owns the authoritative implementation**, because a specification can be published
+  by the thing being authenticated without weakening anything and a verdict cannot.
+  `test/host-verifier-conformance.test.mjs` implements a host from that document alone — importing
+  neither reference module, since a conformance test that reuses the implementation proves only that
+  it agrees with itself — and runs both required vectors: a hostile fork with a patched judge, a
+  patched verifier, malicious Git configuration and its own signed tag is rejected with none of its
+  nominated code executed, and a genuine signed release is accepted with the authenticated tree
+  materialised and bound.
+
+- **The boundary the cryptography does not reach.**
+  [ADR 0011](artifacts/adr/0011-canonical-origin-cannot-be-asserted-by-the-pack.md) records what
+  review of the SSH slice found: the anchor is external, and the judge is not. `pack-origin.mjs` and
+  `ssh-tag-verifier.mjs` live inside the pack whose origin they authenticate, so a hostile fork
+  rewrites either and reports `ESTABLISHED` without going near `ssh-keygen` — and supplying the real
+  public key changes nothing, because the key is external and the code interpreting the evidence is
+  not. **Canonical-origin establishment therefore requires a verifier whose implementation is outside
+  the evaluated pack's control.** The pack may provide the signed tag, the standards bytes, a
+  reference implementation, and diagnostics; it may not pronounce on its own origin. The overclaiming
+  sentence in `pack-origin.mjs` is narrowed in place with its correction beside it rather than
+  rewritten, and `test/trusted-execution-boundary.test.mjs` makes the difference observable: the same
+  tag and anchor, answered once by the module loaded from the evaluated pack and once by the module
+  the host already had, disagreeing. What ST-12 can close here is the protocol and the
+  external-verifier contract; full-fork exclusivity cannot be closed by this repository, because the
+  trusted execution boundary necessarily lives outside it.
+
+- **Release signatures are verified, and not through `git verify-tag`.**
+  `scripts/ssh-tag-verifier.mjs` reads the signature out of the annotated tag and reports who signed;
+  the trust comparison stays in `pack-origin.mjs`, so there is one place where trust is decided and
+  the mechanism can be replaced without moving it. SSH signing was chosen against ST-12's falsifier:
+  the anchor is an argument rather than the invoking user's keyring, the signature is on the release
+  object itself, and `ssh-keygen` is already in the CI image — which matters because `ci/Dockerfile`
+  has no `RUN` instruction and a mechanism requiring an install would have had to change that.
+  Git's own verification resolves the allowed-signers file through `gpg.ssh.allowedSignersFile`,
+  configuration the *evaluated repository* controls, which would let a pack nominate the file that
+  decides whether to believe it. Tested with real keys: a fork generates its own key, signs a genuine
+  release, ships its public key as in-repo trust configuration, satisfies `git verify-tag` on its own
+  terms — and is refused, while the same release under the fork's own anchor is accepted, so the test
+  cannot pass by the fork being incompetent.
+
 - **The canonical-origin contract, without the cryptography.** `scripts/pack-origin.mjs` holds the
   origin states, the five reasons a claim can fail, and `assertCanonicalOrigin` — the single door
   every origin-dependent assertion goes through. `maintain` reports origin and does not require it,
