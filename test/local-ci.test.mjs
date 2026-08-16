@@ -75,6 +75,44 @@ test("--list reports exactly the stages the pipeline defines", () => {
   );
 });
 
+/**
+ * A failing stage must fail the pipeline, with its own exit code.
+ *
+ * This is a regression test for a defect that shipped in the first draft of run-checks.sh and was
+ * caught by the first deliberately-failing build: the stage was written as `if ! eval "$command";
+ * then status=$?`, and `$?` there is the exit code of the negation, which is always 0. So the runner
+ * printed "FAILED at stage fidelity", marked the stage failed, and exited 0 — and the wrapper
+ * recorded a pass. A false green with a failure message printed above it is worse than either.
+ *
+ * Exercised against a scratch package.json rather than by breaking this repository, so it runs in
+ * milliseconds and asserts the exit code as well as the fact of failing.
+ */
+test("a stage that fails stops the pipeline and propagates its exit code", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "hfn-pipeline-"));
+  try {
+    await mkdir(path.join(dir, "ci"), { recursive: true });
+    await cp(path.join(REPO, "ci", "run-checks.sh"), path.join(dir, "ci", "run-checks.sh"));
+
+    // Every stage is a no-op except the third, which exits 3 — a code this repository uses, and one
+    // that a `|| true` or a swallowed status would flatten to something else.
+    const scripts = Object.fromEntries(
+      ["inventory", "rules", "fidelity", "policy", "diagrams", "test", "audit", "check"]
+        .map((s) => [s, s === "fidelity" ? "exit 3" : "exit 0"]),
+    );
+    await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "scratch", scripts }, null, 2));
+
+    const r = spawnSync("bash", [forBash(path.join(dir, "ci", "run-checks.sh"))], { cwd: dir, encoding: "utf8" });
+
+    assert.equal(r.status, 3, "the stage's own exit code must reach the caller");
+    assert.match(r.stdout, /::ci-stage:: name=fidelity status=failed/);
+    assert.match(r.stderr, /FAILED at stage fidelity \(exit 3\)\. Later stages did not run\./);
+    assert.ok(!/name=policy/.test(r.stdout), "no stage after the failure may run");
+    assert.match(r.stdout, /name=inventory status=passed/, "stages before the failure did run");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 // ---------------------------------------------------------------------------------------------
 // Isolation, asserted from the composition rather than from the README
 // ---------------------------------------------------------------------------------------------

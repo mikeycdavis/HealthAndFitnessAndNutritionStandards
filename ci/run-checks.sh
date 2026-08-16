@@ -80,8 +80,17 @@ for stage in "${STAGES[@]}"; do
   printf '\n--- %s: %s\n    $ %s\n' "$name" "$description" "$command"
   stage_started=$(date -u +%s)
 
-  if ! eval "$command"; then
-    status=$?
+  # The status is captured from the command itself, not from a negated test. `if ! cmd; then $?`
+  # reads the exit code of the negation, which is always 0 — so the pipeline reported the stage as
+  # failed and then exited 0, and the wrapper called it a pass. That defect was in this file for
+  # exactly as long as it took to run the first deliberately-failing build, which is the argument
+  # for running one.
+  set +e
+  eval "$command"
+  status=$?
+  set -e
+
+  if [ "$status" -ne 0 ]; then
     # The marker is how the wrapper reports which stages ran without re-deriving the list. A failed
     # stage is reported before the exit so the evidence records where the pipeline stopped.
     printf '::ci-stage:: name=%s status=failed seconds=%s\n' "$name" "$(( $(date -u +%s) - stage_started ))"
