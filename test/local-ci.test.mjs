@@ -959,6 +959,20 @@ test("submission refuses to write a body it could not read", async () => {
  * These are structural assertions and they know it. They cannot prove the PowerShell script behaves
  * correctly; they can prove it has not quietly lost the two constructs that make it behave
  * correctly, which is the drift that actually happened.
+ *
+ * MUTATIONS, from a committed baseline:
+ *
+ *   mutation                                                   unread-body  ambiguous-body  parity
+ *   a failed body read is swallowed into an empty string again      x             ok           x
+ *   the repair block is sliced from the heading down again          ok            x            ok
+ *
+ * The second row is the one worth reading. It reddened the behavioural test and NOT this parity
+ * guard, because the guard matches one spelling of that `sed` expression and the mutation used
+ * another. That is a real limit of a structural check and it is left recorded rather than papered
+ * over by widening the pattern until it matches anything: the behavioural test is what actually
+ * holds the shell script to the rule, and this guard exists for the PowerShell script, which has no
+ * behavioural test at all. Knowing which assertion is load-bearing matters more than making both
+ * look strong.
  */
 test("both wrappers fail closed on an unreadable body and offer a complete block", async () => {
   for (const rel of ["ci/submit-pr.sh", "ci/submit-pr.ps1"]) {

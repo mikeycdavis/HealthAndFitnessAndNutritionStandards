@@ -32,6 +32,13 @@ output schema version did, because the output format did — see below.
   Found in review, then corrected by hand three times before it was fixed, which is the sound a
   mechanism makes when it is missing.
 
+  The update path fails closed. A body that cannot be read is not treated as an empty one — that
+  `|| true` turned a transient GitHub read failure into a `pr edit` replacing somebody's whole
+  description with a CI table, which is worse than the staleness the item was opened for. And the
+  block offered for manual repair is the complete machine region, markers included; slicing it from
+  the heading down dropped the opening marker, so following the instruction produced a body no later
+  run could identify.
+
 - **The output schema version is `1.1`.** It should have moved with FE-13 and did not. Every verdict
   gained `releaseIdentity`, `check` gained a refusal envelope, and `maintain` introduced a third
   shape — three output-format changes under a field still announcing `1.0`, which the table at the
