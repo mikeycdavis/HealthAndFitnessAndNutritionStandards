@@ -22,9 +22,20 @@
 # suite passing against a catalog that quietly lost a prohibition is a green build that means
 # nothing.
 #
-# `check` is the gate. `audit` runs without --strict on purpose: failing a build on warnings is how
-# an audit step gets disabled, and the real error gate is the assertion inside the test suite that
-# this repository produces no error-severity findings.
+# THE FINAL STAGE IS `maintain`, NOT `check`, AND THE DIFFERENCE IS NOT COSMETIC. `check` answers
+# whether a project complies with a release of these standards that the evaluator proved it was
+# running. This repository is not an adopter of itself and cannot be: `main` is ahead of the tag it
+# publishes by construction, so there is no release for it to match. `maintain` answers the question
+# that is actually being asked here — does this working tree satisfy the standards it publishes — and
+# it reports a status of SELF_MAINTENANCE, never COMPLIANT. Its exit 0 is this repository's green.
+#
+# Do not "simplify" this back to `npm run check` with an allowance for exit 6. That would be the same
+# mistake as the exit-4 allowance above, and it would reintroduce the defect the second stage-3 review
+# rejected: a self-maintenance run wearing an adoption result's clothes.
+#
+# `audit` runs without --strict on purpose: failing a build on warnings is how an audit step gets
+# disabled, and the real error gate is the assertion inside the test suite that this repository
+# produces no error-severity findings.
 #
 # THE EXIT-4 ALLOWANCE IS GONE. It was `|| [ $? -eq 4 ]` on the final step, and it was honest while
 # it lasted: four rules here could only be established by a human, none had been, and reporting
@@ -33,8 +44,10 @@
 # certification pass against 9809afc established that the verdict rests on evidence that is what it
 # claims to be.
 #
-# Do not put it back to make a build green. If the final stage starts failing, the repository has
-# stopped being able to demonstrate compliance, and that is the thing to fix. Restoring the allowance
+# Do not put it back to make a build green. If the final stage starts failing, this working tree has
+# stopped satisfying the standards this repository publishes, and that is the thing to fix. It has not
+# "stopped being compliant": `maintain` establishes no compliance, because compliance here is a claim
+# about an adopter against a release, and this repository is neither. Restoring the allowance
 # would convert a real signal into a permanent excuse — and it would do so on the surface an operator
 # reads first, which is how the last defect in the workflow file survived from the certification
 # baseline undetected.
@@ -54,7 +67,7 @@ STAGES=(
   "diagrams|npm run diagrams|Diagram freshness (does each embedded diagram match its Mermaid source?)"
   "tests|npm test|Tests"
   "audit|npm run audit|Audit this repository (evidence, not a verdict)"
-  "check|npm run check|Check this repository (the gate)"
+  "maintain|npm run maintain|Evaluate this repository against its own standards (the gate)"
 )
 
 if [ "${1:-}" = "--list" ]; then

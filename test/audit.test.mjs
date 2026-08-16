@@ -16,6 +16,8 @@ import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { SCHEMA_VERSION } from "../scripts/compliance.mjs";
+
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const CLI = path.join(HERE, "..", "scripts", "standards.mjs");
 const REPO = path.join(HERE, "..");
@@ -179,7 +181,9 @@ test("every finding carries the full schema, including subjectExists", () => {
   const required = ["id", "category", "severity", "label", "evidence", "message", "standardRef", "rule", "subjectExists"];
   for (const name of ["compliant-adopter", "missing-sections", "naming-only"]) {
     const res = audit(fixture(name));
-    assert.equal(res.json.schemaVersion, "1.0");
+    // Asserted against the constant, not a literal: this envelope carries the contract's version,
+    // and pinning a spelling here is how the version stops moving when the contract does.
+    assert.equal(res.json.schemaVersion, SCHEMA_VERSION);
     assert.match(res.json.auditedAt, /^\d{4}-\d\d-\d\dT.*Z$/);
     for (const f of res.json.findings) {
       for (const key of required) assert.ok(key in f, `${name}: finding ${f.id} lacks ${key}`);
@@ -286,18 +290,27 @@ test("audit output says it is evidence rather than a verdict", () => {
  * for a person who does not exist, or to weaken the test. Both are worse than asking the right
  * question.
  *
- * The right question is whether any rule that APPLIES here is failing, which is what check answers.
+ * The right question is whether any rule that APPLIES here is failing, which is what the evaluation
+ * answers. It is reached through `maintain` rather than `check`: this repository is not an adopter of
+ * itself, and since the second stage-3 review `check` refuses to answer for it at all rather than
+ * producing a verdict that reads like an adoption. The rules run identically; only what the result is
+ * entitled to be called differs.
  */
 test("this repository has no failing rules under its own policy", () => {
-  const r = spawnSync(process.execPath, [CLI, "check", `--dir=${REPO}`, "--json"], { encoding: "utf8" });
+  const r = spawnSync(process.execPath, [CLI, "maintain", `--dir=${REPO}`, "--json"], { encoding: "utf8" });
   const result = JSON.parse(r.stdout);
   assert.deepEqual(
     result.results.filter((x) => x.status === "failed").map((x) => `${x.ruleId}: ${x.message}`),
     [],
     "the standards repository must satisfy the standards it publishes",
   );
-  assert.equal(result.status, "COMPLIANT", "four human attestations are recorded — see project-policy.yml");
-  assert.equal(r.status, 0, "COMPLIANT exits 0");
+  assert.equal(result.status, "SELF_MAINTENANCE", "the top-level status is never a compliance verdict here");
+  assert.equal(
+    result.workingTreeStatus,
+    "COMPLIANT",
+    "four human attestations are recorded — see project-policy.yml",
+  );
+  assert.equal(r.status, 0, "a satisfied working tree exits 0 — this repository's own green");
 
   // The shape of the state, not only its verdict. This survived a false green once: at ad6bdcb four
   // attestations were recorded, every gate stayed green, and the per-rule states matched the frozen

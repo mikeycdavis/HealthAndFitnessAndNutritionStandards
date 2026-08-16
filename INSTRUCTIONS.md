@@ -37,11 +37,17 @@ command CI should gate on.
 | 2 | Configuration or schema error, including no policy | Fix the policy or the invocation |
 | 3 | `BLOCKED_BY_INVARIANT` — the evaluation was manipulated | **Report it.** Do not fix the rules it names; the inputs are not trustworthy |
 | 4 | `NOT_EVALUATED` — insufficient evidence | Record human review, or accept that compliance is not established |
+| 5 | `UNIDENTIFIED_RELEASE` — the pack cannot prove it is the release you declared | Obtain the release; do not edit the pack you are running |
+| 6 | `SELF_MAINTENANCE` — you asked `check` about the standards pack itself | Nothing, as an adopter. This cannot occur for a project adopting the standards |
 
 The 1-versus-2 split matters: 1 means the tool worked and your project has problems; 2 means the tool
 could not reach a conclusion at all.
 
 Handle 3 and 4 explicitly in CI. Treating either as a pass defeats the point of both.
+
+`0` from `standards check` means one thing and only one thing: this project complies with a release of
+these standards that the evaluator proved it was running. No other command produces that sentence, and
+no output of `standards maintain` reports a status of `COMPLIANT`.
 
 ## 3. Writing your policy
 
@@ -211,6 +217,47 @@ that an obstruction goes away.
 
 ## 8. Upgrading
 
+### Adoption pins an immutable release
+
+`standardVersion` in your policy is a **request**, not a record. It says which release you want to be
+evaluated against; it says nothing about which bytes actually produced your verdict, and for a long
+time this tool reported the first as though it were the second.
+
+`check` now establishes that before it reads a single rule, in three steps it keeps separate:
+
+| Step | Question | Fails closed when |
+| --- | --- | --- |
+| Resolution | What immutable object does `v<version>` designate? | the version is a prerelease or a branch, there is no repository, the tag is missing, ambiguous, or lightweight |
+| Materialisation | Which bytes are about to be evaluated? | pack material is missing, unreadable, or reached through a symlink |
+| Verification | Are those bytes exactly that object? | any material file differs, is absent, or is present and not in the release |
+
+A run that establishes identity reports it, and the version it reports is the one it verified rather
+than the one you asked for. A run that cannot exits **5** and produces no verdict at all — not a
+verdict with a caveat attached, because there would be nothing for the caveat to qualify.
+
+Two consequences worth knowing before you meet them:
+
+- **A shallow checkout cannot do this.** `refs/tags/v1.0.0` does not exist in a one-commit clone, so
+  CI needs full history and tags (`fetch-depth: 0` for `actions/checkout`). Missing history is not a
+  smaller checkout; it is an identity that cannot be proven.
+- **Vendoring or caching the pack is allowed; skipping the check is not.** A cache hit can avoid a
+  download. It cannot avoid re-establishing that the cached material is still the release.
+
+The one case that is exempt is the standards pack maintaining itself, and it is not reachable from
+this command. `standards check` asked about the pack refuses with exit **6** and produces no verdict;
+the pack's own gate is `standards maintain`, whose status is `SELF_MAINTENANCE` and never
+`COMPLIANT`. Nothing you run as an adopter produces that outcome, and three things must all hold
+before it is available anywhere: the policy declares `packSelfMaintenance`, the directory evaluated is
+the evaluator's own root, and that repository belongs to this pack's certified release lineage.
+Declaring it in an adopter policy stops the run at exit 3 under Standard 42.
+
+This matters to you for one reason, and it is the reason the split exists: **`COMPLIANT` from
+`standards check` means the release identity was established.** There is no field you have to
+remember to consult alongside it, and no arrangement in which a green from this command means
+something weaker than it says. ADR 0009 records what that guarantee does and does not cover.
+
+### Versions
+
 Compare the version in your `standardVersion` against `VERSION` here and read the changelog. A new
 requirement or prohibition is a major change and may make a compliant project non-compliant; that is
 the intended behaviour, not a regression.
@@ -231,6 +278,9 @@ mean what its author intended.
 - **Do not treat the score as proof.** Status is the verdict; the percentage is a summary statistic
   over the rules that were evaluated, which is not all of them.
 - **Do not treat exit 4 as a pass, or exit 3 as a worse failure.** They are different instructions.
+- **Do not work around exit 5 by editing the pack you are running.** It means the standards material
+  producing your verdict is not the release you declared. The remedy is to obtain the release, never
+  to change the material until the comparison agrees.
 - **Do not hand-edit a generated artifact** — a rendered diagram, or anything with a source.
 - **Do not record an attestation for a review that did not happen.**
 

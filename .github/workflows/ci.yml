@@ -11,11 +11,17 @@
 # behaviour, both of which had been true months earlier — and the fix was to stop maintaining a
 # second copy of anything.
 #
-# WHAT THIS RUNNER PROVES, AND WHAT IT DOES NOT. `actions/checkout@v4` fetches one commit and no
-# tags, so refs/tags/v1.0.0 does not exist here and the release-identity tests take their fail-closed
-# branch. They pass, but they assert less than they do locally, where the container gets the full
-# repository including tags. Changing that (fetch-depth: 0, or an explicit tag fetch) belongs with
-# FE-13's verification slice, which is the first thing that will actually depend on it.
+# WHY THIS CHECKOUT IS NOT SHALLOW. `actions/checkout@v4` fetches one commit and no tags by default,
+# and until FE-13's verification slice that was merely a smaller checkout. It is now a difference in
+# what this runner can prove: release identity is established by resolving refs/tags/v1.0.0 and
+# comparing the pack material against the tree it designates, and a checkout with no tags cannot do
+# that at all. The tests correctly fail closed in that environment — so without `fetch-depth: 0` the
+# hosted runner would assert strictly less than the local container, which has the whole repository,
+# and the two surfaces would disagree about what had been demonstrated.
+#
+# `fetch-depth: 0` is therefore not CI convenience. It is the evidence the evaluator needs in order
+# to answer the question at all, and the shallow case it replaces is now asserted deliberately in
+# test/release-gate.test.mjs rather than being whatever the environment happened to supply.
 #
 # A GitHub-hosted run is not required for a pull request in this repository: local Docker
 # verification is the gate, and ci/submit-pr.* refuses to push a commit that has not passed it. This
@@ -33,6 +39,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history and tags. FE-13: an identity check that depends on Git history must run
+          # against a checkout that actually contains it.
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "20"

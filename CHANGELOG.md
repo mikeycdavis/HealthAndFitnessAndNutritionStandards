@@ -15,9 +15,80 @@ do not change what a rule means are **patch**.
 
 ## Unreleased
 
-No standard, rule, or verdict changed, so no version moved.
+No standard, rule, or verdict changed, so neither the framework nor the package version moved. The
+output schema version did, because the output format did — see below.
+
+### Changed
+
+- **The output schema version is `1.1`.** It should have moved with FE-13 and did not. Every verdict
+  gained `releaseIdentity`, `check` gained a refusal envelope, and `maintain` introduced a third
+  shape — three output-format changes under a field still announcing `1.0`, which the table at the
+  top of this file says changes when the format changes. Minor rather than major: nothing was removed
+  or renamed, and the new envelopes arrive only with exit codes that did not previously exist. One
+  constant now feeds all four envelopes, including `audit`, whose own shape did not change — the
+  number names the contract the output belongs to, not the history of one envelope.
+
+- **Release identity is established before the pack's schema may judge the adopter's policy.**
+  `check` validated the whole policy through `schemas/project-policy.schema.json` first. That schema
+  is pack material, inside the verified boundary, so an altered pack could reject a perfectly valid
+  adopter policy as a configuration error — the adopter's fault, exit 2 — before anything established
+  that the schema making the judgement belonged to the release the adopter asked for. Found by
+  independent review of PR #2, which named it precisely: unverified pack material influencing the
+  evaluation before identity is established. `check` and `maintain` now read only the fields needed to
+  learn which release is requested, establish identity, and validate the full contract afterwards.
+  Not claimed: that the evaluator running the check is any less pack material than the schema is.
 
 ### Added
+
+- **`standards maintain`, and the removal of the one bypass that could be mistaken for a green.**
+  Independent review of the FE-13 gate requested changes on both properties the `packSelfMaintenance`
+  exemption was claimed to have, and both rejections held.
+
+  Eligibility was `path.resolve(root) === ROOT`, and `ROOT` comes from the evaluator module's own
+  location — so it asserted "this directory is wherever the evaluator happens to be", which anyone
+  who copies the evaluator into a directory they control satisfies for free. Reproduced before the
+  remedy: a copy of this repository with its history deleted was granted the exemption and exited 0.
+  Eligibility is now membership in the certified release lineage recorded in
+  `scripts/certified-releases.json` — the tag resolving to exactly the recorded commit oid, with HEAD
+  descending from it.
+
+  Self-maintenance also ran the ordinary evaluator and emitted the ordinary envelope, so it could
+  report `COMPLIANT` with exit 0 while `releaseIdentity.established: false` sat beside it as
+  metadata. A consumer reading the exit code or the status was told an adoption had been verified
+  when none had. It is now a separate command whose status is `SELF_MAINTENANCE` and never
+  `COMPLIANT`, with the working tree's compliance result under `workingTreeStatus`; `check` refuses
+  the pack with exit **6**. The property that buys: **`COMPLIANT` from `check` means the release
+  identity was established**, with no field anyone has to remember to consult. This repository's own
+  gate is now `npm run maintain`. See ADR 0009, which also names the residual it does not close.
+
+  **Re-review narrowed the criterion, and the narrowing is recorded as a decision rather than
+  absorbed.** The remedy closed the copied-evaluator escape; it did not make the criterion it was
+  reviewed against true, because a fork of the certified lineage still satisfies eligibility. The
+  owner retired that criterion on 2026-08-16 and approved a narrower boundary: an adopter cannot
+  obtain a compliance verdict through self-maintenance, copying the evaluator is insufficient for
+  eligibility, and exclusivity against a full fork is explicitly deferred to ST-12. The reason is
+  that the property adoption actually needs — self-maintenance cannot manufacture `COMPLIANT` — is
+  preserved, and the residual needs a cryptographic origin mechanism rather than another path or
+  lineage heuristic. Recorded in ADR 0009 and FE-13, with the original criterion kept and marked
+  retired rather than reported as passed.
+
+- **`check` establishes which standards bytes produced its verdict, and refuses when it cannot**
+  (FE-13, stage 3 of 3). `standardVersion` in a policy is the release an adopter *requests*; it was
+  also what the tool reported back, with the catalog loaded from wherever the CLI happened to live
+  and no identity check anywhere in the path. A pack whose `VERSION` said `0.0.0-substituted`, with a
+  prohibition's verbatim source line reworded, still produced a report stating the project had been
+  evaluated against 1.0.0.
+
+  Identity is now established before the catalog is read, in three stages that stay in three files
+  because collapsing them is where the defect came from: resolve the tag to an immutable object
+  (`scripts/release-identity.mjs`), enumerate the bytes about to be evaluated
+  (`scripts/release-material.mjs`), and compare the two within the reviewed material boundary
+  (`scripts/release-verify.mjs`). A verdict now carries a `releaseIdentity`; a run that cannot
+  establish one exits **5** and produces no verdict at all.
+
+  The comparison is symmetric on purpose. A file the pack has and the release does not is a rejection
+  as much as a file that changed — that is the vendored patch and the extra local rule, material that
+  changes verdicts while every released byte still agrees.
 
 - **Containerised CI and verified pull requests.** The whole pipeline runs in an ephemeral Docker
   container (`ci/ci.ps1`, `ci/ci.sh`) and `ci/submit-pr.*` will only push a commit that has passed
@@ -57,6 +128,19 @@ No standard, rule, or verdict changed, so no version moved.
 
 ### Found while building this
 
+- **`MATERIAL` is versioned with the release, and widening it retroactively breaks the past.** The
+  new lineage record was first placed under `artifacts/` and added to the material boundary, because
+  authority the evaluator consults to decide an outcome belongs inside the bytes that get verified —
+  a repository guard says exactly that and caught its absence. Four tests then went red: `materialise`
+  requires every declared path to be present, so a boundary that names a file no earlier release
+  contains makes every earlier release unmaterialisable, and the real `v1.0.0` checkout stopped
+  verifying. The record lives beside the evaluator instead. This is ADR 0008's fact wearing different
+  clothes: a boundary is a property of the release that declared it.
+- **A mutation restore destroyed an hour of uncommitted work.** `git checkout -- <file>` restores
+  from HEAD, not from the working state a mutation was applied to, so the discipline "reintroduce the
+  defect, watch the test redden, restore byte-for-byte" silently means "and discard everything not yet
+  committed". Commit first, then mutate. Recorded because the procedure is written down in three
+  places in this repository and none of them said so.
 - The container is given no network at all, which turned the zero-dependency policy from a comment
   in a workflow file into a property of the environment. The policy had never been enforced by
   anything but attention.
@@ -70,6 +154,23 @@ No standard, rule, or verdict changed, so no version moved.
   the intent behind it in mind. The enforcement mechanism finding defects in itself before adoption
   makes it infrastructure is the mechanism working, and it is the reason PR #1 did not merge on the
   strength of its own description.
+- One of FE-13's four falsifiers cannot be satisfied by any change to `main`, and finding out why was
+  the most useful thing in that slice. It builds its fixture by checking out `v1.0.0` and running
+  `check` from it — so the evaluator it exercises is `v1.0.0`'s, which predates the mechanism under
+  test and cannot contain it. A pack cannot bootstrap stronger authenticity guarantees for releases
+  that predate those guarantees (ADR 0008). `1.0.0` is not relabelled as providing a mechanism it
+  never contained; the first later release containing FE-13 is the floor adopters can demand it from.
+- Mutation-checking the three falsifiers before promoting them found two things their names did not
+  say. Falsifier 2 requires the output to record which release evaluated the project, and is today
+  satisfied by the *refusal* envelope — removing the field from a successful verdict leaves it green,
+  and two other tests catch that instead. Falsifiers 1 and 3 no longer separate under any mutation,
+  because the code path that used to distinguish them now sits behind a gate that refuses first. Both
+  are written down in the test file rather than left as an impression of coverage.
+- That falsifier had been passing on Windows for a reason that has nothing to do with the standards:
+  `git clone --local` hardlinks the object store, hardlinks do not cross volumes, and a repository on
+  `F:` with a temp directory on `C:` silently took the fallback path and copied the current pack
+  instead. Two environments, two different tests, one name. The tests added in this slice use
+  `--no-hardlinks` and say why in the code.
 
 ## 1.0.0
 

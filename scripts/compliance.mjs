@@ -594,12 +594,37 @@ function summarise(results, policy, screen) {
   };
 }
 
+/**
+ * THE JSON OUTPUT CONTRACT VERSION, for every envelope this CLI emits.
+ *
+ * `CHANGELOG.md` says what moves it: the output schema version changes when the output format
+ * changes. It went to 1.1 with FE-13, which added `releaseIdentity` to every verdict and introduced
+ * two envelopes that did not exist — the refusal `check` emits when it cannot establish identity,
+ * and the one `maintain` emits instead of a verdict. A consumer pinned to 1.0 was being sent a
+ * format it had never agreed to while the field whose only job is to name the format said nothing
+ * had happened.
+ *
+ * Minor rather than major: nothing a 1.0 reader relied on was removed or renamed, `releaseIdentity`
+ * is additive, and the new envelopes arrive only with exit codes (5 and 6) that did not previously
+ * exist, so no previously-valid response changed shape underneath a caller.
+ *
+ * ONE NUMBER FOR ALL FOUR ENVELOPES, including `audit`, whose own shape did not change. It names the
+ * contract the output belongs to, not the history of that one envelope; a version per envelope is
+ * four contracts drifting independently, which is worse than no version at all.
+ * `test/output-contract.test.mjs` holds the envelopes to it.
+ */
+export const SCHEMA_VERSION = "1.1";
+
 /** The output envelope. `schemaVersion` versions this format, independently of the others. */
-export function envelope({ verdict, project, standardVersion, auditedAt, frameworkCoverage }) {
+export function envelope({ verdict, project, standardVersion, releaseIdentity, auditedAt, frameworkCoverage }) {
   return {
-    schemaVersion: "1.0",
+    schemaVersion: SCHEMA_VERSION,
     standardVersion: standardVersion ?? null,
     project: project ?? null,
+    // Which bytes produced this verdict (FE-13). `standardVersion` above says what release was
+    // evaluated; this says how that was established, and it is present on every verdict so that a
+    // genuine run and a self-maintenance run cannot be told apart only by what is missing.
+    releaseIdentity: releaseIdentity ?? null,
     status: verdict.status,
     score: verdict.score,
     summary: verdict.summary,

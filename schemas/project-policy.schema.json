@@ -20,6 +20,12 @@
       "minLength": 1
     },
 
+    "packSelfMaintenance": {
+      "description": "Declares that this project IS the standards pack rather than an adopter of it, and therefore has no independent release identity to establish (FE-13). A pack under development is not a release, so requiring it to prove it is one would make its own gate unachievable and the requirement would end up relaxed instead. THE DECLARATION ALONE GRANTS NOTHING. It is one of three necessary conditions: the directory evaluated must also be the pack the evaluator was loaded from, and that repository must belong to this pack's certified release lineage — the tag recorded in scripts/certified-releases.json resolving to exactly the commit oid recorded there, with HEAD descending from it. Declaring it in a policy anywhere else stops the run with BLOCKED_BY_INVARIANT and exit 3: claiming to be the thing an exemption was written for is a manipulation of an applicability determination (Standard 42). WHAT A RUN IN THIS MODE CAN AND CANNOT PRODUCE, stated precisely because an earlier version of this description overclaimed and independent review was right to reject it: the mode is not reachable through `standards check` at all — that command refuses with exit 6 and produces no verdict — and the only command that runs it, `standards maintain`, reports a status of SELF_MAINTENANCE and never COMPLIANT. Its compliance result appears under `workingTreeStatus`, which is a statement about this working tree and about nothing else. What is NOT claimed: that a fork of this repository cannot satisfy the eligibility conditions. It possesses the same lineage and the same record, and no check running inside the evaluator distinguishes it. What a fork obtains by satisfying them is a self-maintenance outcome, which carries no authority over anybody's adoption of anything. ADR 0009 carries that argument.",
+      "type": "string",
+      "enum": ["this-project-is-the-pack"]
+    },
+
     "domains": {
       "description": "Informational only: which domains of guidance this project produces. It does NOT switch rules on or off — a project narrows scope through `applicability` declarations, each of which carries its own reason and revisit trigger. A single list that silently disabled whole categories of prohibition would be a waiver mechanism with no reason attached to it.",
       "type": "array",

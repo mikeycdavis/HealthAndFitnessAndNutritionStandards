@@ -291,7 +291,48 @@ Three separate contracts, deliberately not merged.
 
 - `check`: `0` compliant (including with exceptions) · `1` evaluated and non-compliant · `2`
   configuration or schema error, including a missing policy · `3` blocked by invariant · `4`
-  insufficient evidence to reach a verdict.
+  insufficient evidence to reach a verdict · `5` release identity not established · `6` this is the
+  standards pack maintaining itself, so there is no adoption to report on.
+
+  Code `6` is the second half of a split made after independent review of the FE-13 gate. Before it,
+  the pack maintaining itself was an outcome of `check`: the mode ran the ordinary evaluator, emitted
+  the ordinary envelope, and could therefore answer `COMPLIANT` with exit `0` while
+  `releaseIdentity.established: false` sat beside it as metadata. A consumer reading the exit code or
+  the status — the two things consumers read — was told an adoption had been verified when none had.
+  Self-maintenance now belongs to `standards maintain`, whose status is `SELF_MAINTENANCE` and never
+  `COMPLIANT`, and whose eligibility is a fact about Git history rather than about where the evaluator
+  happens to live ([ADR 0009](../../artifacts/adr/0009-self-maintenance-is-a-distinct-outcome.md)).
+  The property this buys is worth stating as a contract: **`COMPLIANT` from `check` means the release
+  identity was established**, with no accompanying field anyone has to remember to read.
+
+  A `2` from `check` now happens strictly *after* identity is established, and that ordering is part
+  of the contract rather than an implementation detail. The policy schema is pack material: its bytes
+  are inside the verified boundary. Validating the adopter's whole policy through it first meant an
+  unverified pack could reject a valid policy as the adopter's configuration error before anything
+  established that the schema doing the judging belonged to the release the adopter asked for — the
+  same false authority the feature exists to remove, one step earlier in the sequence. `check` now
+  reads only enough of the policy to learn which release is requested, establishes identity, and
+  validates the full contract afterwards. What that does not claim: the evaluator performing the
+  check is pack material too, and no ordering changes that.
+
+- `maintain`: the standards pack only. `0` the working tree satisfies its own standards · `1` it does
+  not · `2` not the pack, or no declaration · `3` blocked by invariant · `4` insufficient evidence ·
+  `5` eligibility could not be established. It runs the same evaluation as `check` through the same
+  code path; the commands differ in what the result is entitled to be called, never in how thoroughly
+  they look.
+
+  Code `5` is FE-13's, and it precedes all the others in time: it is returned before the catalog is
+  loaded, because a run that cannot show which standards bytes it is using has no authority to
+  report anything about them. It is separate from `2` for the same reason `4` is separate from `0`.
+  "You invoked this wrongly" and "the pack you are running cannot prove it is the release you asked
+  for" have different remedies, and the second is the more important refusal in the system; giving
+  it the exit code operators associate with typos would hide it. It is separate from `1` because
+  nothing was found wrong with the project — nothing was evaluated at all.
+
+  What this mechanism cannot do is give an earlier release a property it never shipped with:
+  `1.0.0` remains a valid certified release and does not provide release self-verification, because
+  the code that performs it did not exist when that tree was tagged
+  ([ADR 0008](../../artifacts/adr/0008-authenticity-guarantees-are-not-retroactive.md)).
 
   Code `4` exists because `NOT_EVALUATED` is a first-class outcome here rather than an edge case,
   and folding it into either neighbour would be a lie in one direction or the other. Mapping it to
