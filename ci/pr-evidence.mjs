@@ -72,11 +72,19 @@ export function evidenceBlock({ sha, stages, completedAt }, superseded = []) {
  * Read the runs an existing block records: the one it currently asserts, demoted, followed by the
  * ones it had already demoted. Parsing our own output rather than storing state elsewhere keeps the
  * body the single record — a sidecar file would be a second truth to go stale.
+ *
+ * A COMMIT CANNOT SUPERSEDE ITSELF, which is why `incoming` is passed in. Re-submitting the same SHA
+ * is ordinary — a failed `gh pr edit` retried, an authentication restored, a verification re-run
+ * deliberately without moving HEAD — and treating each of those as a supersession wrote the commit
+ * into the list of things it had replaced, once per retry. The provenance stayed true and the
+ * history went false, which is the harder of the two to notice. The already-superseded rows are
+ * carried through untouched: they record what really was replaced, and a re-verification is not an
+ * event in their story.
  */
-function supersededFrom(block) {
+function supersededFrom(block, incoming) {
   const out = [];
   const current = /\|\s*Verified commit\s*\|\s*`([^`]+)`\s*\|/.exec(block);
-  if (current) {
+  if (current && current[1] !== incoming) {
     const stages = /\|\s*Stages\s*\|\s*([^|]*?)\s*\|/.exec(block);
     const completed = /\|\s*Completed\s*\|\s*([^|]*?)\s*\|/.exec(block);
     out.push(row({
@@ -129,7 +137,7 @@ export function applyEvidence(body, run) {
   }
   const before = text.slice(0, start);
   const after = text.slice(stop + END.length).replace(/^\n/, "");
-  return { body: `${before}${evidenceBlock(run, supersededFrom(text.slice(start, stop)))}${after}` };
+  return { body: `${before}${evidenceBlock(run, supersededFrom(text.slice(start, stop), run.sha))}${after}` };
 }
 
 // ---------------------------------------------------------------------------------------------

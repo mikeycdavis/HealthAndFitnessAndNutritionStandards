@@ -99,6 +99,56 @@ test("a body with no block at all gains one, rather than silently doing nothing"
   assert.match(body, new RegExp(`\\| Verified commit \\| \`${RUN_B.sha}\` \\|`));
 });
 
+/**
+ * FALSIFIER — a commit cannot supersede itself.
+ *
+ * Every replacement was treated as a supersession, so re-verifying the commit already recorded as
+ * current demoted it into the superseded list and then wrote it back as current. The provenance
+ * stayed true — the right commit was still named — but the history became false: it said the commit
+ * had been replaced by something, and the something was itself.
+ *
+ * Re-submitting the same SHA is ordinary, not exotic. A `gh pr edit` can fail and be retried, an
+ * expired authentication can be restored, and a maintainer can re-run verification deliberately
+ * without moving HEAD. Under the old behaviour each of those wrote another self-supersession, so the
+ * list grew one false entry per retry — and a record that accumulates falsehoods fastest when
+ * something is going wrong is a record that misleads exactly when it is being read most carefully.
+ *
+ * What a re-verification MAY do is refresh the run's own metadata: the stages and the timestamp
+ * belong to the run, not to the commit, and the newer run is the one that happened.
+ */
+test("FALSIFIER: re-verifying the same commit refreshes the run without superseding itself", () => {
+  const rerun = { ...RUN_A, stages: "tests, audit, maintain", completedAt: "2026-08-16T23:00:00Z" };
+  const body = updated(created(RUN_A), rerun);
+
+  assert.match(body, new RegExp(`\\| Verified commit \\| \`${RUN_A.sha}\` \\|`));
+  assert.match(body, new RegExp(rerun.completedAt), "the newer run is the one that happened");
+  assert.match(body, new RegExp(rerun.stages));
+  assert.doesNotMatch(body, /Superseded/, "nothing was superseded, so the heading has no reason to appear");
+  assert.equal(
+    body.match(new RegExp(RUN_A.sha, "g")).length,
+    1,
+    "the commit appears once, as current — never also as the thing it replaced",
+  );
+});
+
+test("FALSIFIER: a re-verification leaves the existing superseded list exactly as it was", () => {
+  const once = updated(created(RUN_A), RUN_B);
+  const rerun = { ...RUN_B, completedAt: "2026-08-16T23:30:00Z" };
+  const twice = updated(once, rerun);
+
+  assert.match(twice, new RegExp(`\\| Verified commit \\| \`${RUN_B.sha}\` \\|`));
+  assert.equal(
+    twice.match(new RegExp(RUN_A.sha, "g")).length,
+    1,
+    "the genuinely superseded commit stays recorded exactly once",
+  );
+  assert.equal(
+    twice.match(new RegExp(RUN_B.sha, "g")).length,
+    1,
+    "and the re-verified commit does not join the list it is not a member of",
+  );
+});
+
 test("superseded verifications accumulate, so the record shows what was verified when", () => {
   const once = updated(created(RUN_A), RUN_B);
   const run_c = { sha: "ccccccc3333333333333333333333333333333c3", stages: "tests", completedAt: "2026-08-16T22:00:00Z" };
