@@ -146,10 +146,21 @@ export function applyEvidence(body, run) {
 // ---------------------------------------------------------------------------------------------
 
 if (process.argv[1] && import.meta.url === new URL(`file://${process.argv[1].split("\\").join("/")}`).href) {
-  const [sha, stages, completedAt] = process.argv.slice(2);
+  const argv = process.argv.slice(2);
+  // `--block-only` prints the machine region and nothing else, for the message that tells an operator
+  // what to paste. It exists because that message used to be assembled with `sed` from the heading
+  // down, which dropped the opening marker and kept the closing one: following the instruction
+  // produced an unmatched pair, and an unmatched pair is exactly what this module refuses to touch.
+  // The repair instruction was arming the next refusal.
+  const blockOnly = argv[0] === "--block-only";
+  const [sha, stages, completedAt] = blockOnly ? argv.slice(1) : argv;
   if (!sha || !stages || !completedAt) {
-    process.stderr.write("usage: pr-evidence.mjs <sha> <stages> <completedAt> < existing-body\n");
+    process.stderr.write("usage: pr-evidence.mjs [--block-only] <sha> <stages> <completedAt> < existing-body\n");
     process.exit(2);
+  }
+  if (blockOnly) {
+    process.stdout.write(evidenceBlock({ sha, stages, completedAt }));
+    process.exit(0);
   }
   let stdin = "";
   for await (const chunk of process.stdin) stdin += chunk;

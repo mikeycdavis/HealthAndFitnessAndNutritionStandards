@@ -195,7 +195,21 @@ try {
             Write-Host "`nA pull request already exists for $branch, and now carries the verified commit:"
             Write-Host "  $existing"
 
+            # NOT KNOWING WHAT IS THERE IS THE STRONGEST REASON NOT TO WRITE. A failed read used to
+            # arrive here as an empty string, and an empty body is a real state a PR can be in — so
+            # pr-evidence.mjs read it as "there is no block here" and composed a fresh one, turning a
+            # transient GitHub read failure into a `pr edit` that replaced somebody's whole
+            # description with a CI table. Stale provenance misleads a reader; that destroys a
+            # maintainer's work. The failure stays a failure and nothing is composed or written.
             $currentBody = & $gh pr view $branch --json body --jq .body 2>$null
+            if ($LASTEXITCODE -ne 0) {
+                Write-Host "`nThe current body could not be read from GitHub, so nothing was rewritten: a body that"
+                Write-Host "cannot be read cannot be safely replaced. The evidence for this commit, to paste yourself:`n"
+                & node $evidenceScript --block-only $shaAfter $stages $evidence.completedAt
+                Write-Host "`nPASS  $shaAfter  verified and pushed."
+                exit 0
+            }
+
             $updated = New-TemporaryFile
             $currentBody | & node $evidenceScript $shaAfter $stages $evidence.completedAt 2>$null |
                 Set-Content -Path $updated -Encoding utf8
@@ -206,12 +220,17 @@ try {
                     Write-Host "`nThe evidence block was updated to this commit. The description above it was not touched."
                 } else {
                     Write-Host "`nThe evidence block could not be written to GitHub. The body still names an earlier commit."
-                    Get-Content $bodyFile
+                    Write-Host "Paste this in place of the stale block:`n"
+                    & node $evidenceScript --block-only $shaAfter $stages $evidence.completedAt
                 }
             } else {
                 Write-Host "`nThe evidence block in that body was not rewritten: it could not be located unambiguously."
                 Write-Host "Paste this in place of the stale block:`n"
-                Get-Content $bodyFile
+                # The whole machine region, markers included. Printing the composed body here offered
+                # the prose as well, and printing from the heading down would drop the opening marker
+                # and keep the closing one — either way the operator pastes something the next run
+                # cannot identify, and the repair instruction arms the next refusal.
+                & node $evidenceScript --block-only $shaAfter $stages $evidence.completedAt
             }
             Remove-Item $updated -Force -ErrorAction SilentlyContinue
 

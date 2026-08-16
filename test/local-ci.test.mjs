@@ -27,7 +27,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { evidenceBlock } from "../ci/pr-evidence.mjs";
+import { BEGIN, END, evidenceBlock } from "../ci/pr-evidence.mjs";
 
 const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (rel) => readFile(path.join(REPO, rel), "utf8");
@@ -638,7 +638,12 @@ async function scratch() {
       'if [ "$1" = "pr" ] && [ "$2" = "view" ]; then',
       '  if [ -z "${GH_STUB_EXISTING_PR:-}" ]; then exit 1; fi',
       '  case "$*" in',
-      '    *"--json body"*) if [ -n "${GH_STUB_EXISTING_BODY:-}" ]; then cat "$GH_STUB_EXISTING_BODY"; fi; exit 0 ;;',
+      // GH_STUB_BODY_FAILS is the transient GitHub read failure: the request exists, and what it
+      // currently says is unknown. Distinct from a body that is genuinely empty, which is a real and
+      // harmless state a PR can be in.
+      '    *"--json body"*)',
+      '      if [ "${GH_STUB_BODY_FAILS:-0}" = "1" ]; then exit 1; fi',
+      '      if [ -n "${GH_STUB_EXISTING_BODY:-}" ]; then cat "$GH_STUB_EXISTING_BODY"; fi; exit 0 ;;',
       "  esac",
       '  printf "%s\\n" "$GH_STUB_EXISTING_PR"; exit 0',
       "fi",
@@ -889,8 +894,92 @@ test("submission refuses to rewrite a PR body whose evidence block cannot be loc
     assert.match(r.stdout, /was not rewritten/);
     assert.match(r.stdout, /Paste this in place of the stale block/);
     assert.ok(!existsSync(path.join(s.dir, "gh-body.md")), "a refusal writes no body to GitHub");
+
+    // FALSIFIER: the block a human is told to paste must be one the next run can identify. Printing
+    // from the `## Local CI` heading omitted the opening marker and kept the closing one, so anybody
+    // following the instruction produced an unmatched pair — and an unmatched pair is precisely the
+    // state this module refuses to touch. The repair instruction was arming the next refusal.
+    const offered = r.stdout.slice(r.stdout.indexOf("Paste this in place of the stale block"));
+    assert.ok(offered.includes(BEGIN), "the offered block must carry its opening marker");
+    assert.ok(offered.includes(END), "and its closing marker");
+    assert.ok(
+      offered.indexOf(BEGIN) < offered.indexOf(END),
+      "in that order, or pasting it produces a body no later run can identify",
+    );
   } finally {
     await rm(s.dir, { recursive: true, force: true });
+  }
+});
+
+/**
+ * FALSIFIER — a read failure is not an empty body.
+ *
+ * Once the script knew a request existed, a failure of the second `pr view` was flattened to an
+ * empty string by `|| true`. `pr-evidence.mjs` reads empty input as "there is no block here" and
+ * correctly composes a fresh body — so a transient GitHub read failure became a `pr edit` that
+ * replaced somebody's entire description with a CI table.
+ *
+ * That is the inverse of the rule this whole feature is built on. Not knowing what is there is the
+ * strongest possible reason not to write, and turning it into confidence is worse than the stale
+ * block ST-13 was opened for: stale provenance misleads a reader, this destroys a maintainer's work.
+ */
+test("submission refuses to write a body it could not read", async () => {
+  const s = await scratch();
+  try {
+    const r = submit(s, {
+      env: {
+        GH_COMMAND: forBash(s.gh),
+        GH_STUB_EXISTING_PR: "https://example.invalid/pr/1",
+        GH_STUB_BODY_FAILS: "1",
+      },
+    });
+
+    assert.equal(r.status, 0, `the push still happened: ${r.stdout}\n${r.stderr}`);
+    assert.match(r.stdout, /verified and pushed/, "the verified commit reaching the remote is the invariant");
+    assert.ok(!existsSync(path.join(s.dir, "gh-body.md")), "nothing may be written to a body that was never read");
+
+    const invocations = existsSync(path.join(s.dir, "gh-args.txt"))
+      ? readFileSync(path.join(s.dir, "gh-args.txt"), "utf8")
+      : "";
+    assert.doesNotMatch(invocations, /^edit$/m, "`pr edit` must not be reached when the current body is unknown");
+  } finally {
+    await rm(s.dir, { recursive: true, force: true });
+  }
+});
+
+/**
+ * Both wrappers, one rule.
+ *
+ * The scenario tests above drive `submit-pr.sh`, because they run under bash. `submit-pr.ps1` has
+ * carried the identical defect twice now — once when only the shell script learned to update an
+ * existing body, and once when only the shell script learned to fail closed on an unreadable one —
+ * so the shared rules are asserted against both texts rather than against whichever one a test
+ * happens to be able to execute.
+ *
+ * These are structural assertions and they know it. They cannot prove the PowerShell script behaves
+ * correctly; they can prove it has not quietly lost the two constructs that make it behave
+ * correctly, which is the drift that actually happened.
+ */
+test("both wrappers fail closed on an unreadable body and offer a complete block", async () => {
+  for (const rel of ["ci/submit-pr.sh", "ci/submit-pr.ps1"]) {
+    const text = await read(rel);
+
+    assert.ok(
+      !/--json body[^\n]*\|\|\s*true/.test(text),
+      `${rel} swallows a failed body read into an empty string, which composes a fresh body over the description`,
+    );
+    assert.ok(
+      /could not be read from GitHub/.test(text),
+      `${rel} has no branch for "the current body could not be read"`,
+    );
+    assert.ok(
+      /--block-only/.test(text),
+      `${rel} builds its manual-repair output some other way; it must print the whole machine region, markers included`,
+    );
+    assert.ok(
+      !/sed -n ['"]\/\^## Local CI\$\//.test(text),
+      `${rel} still slices the repair block from the heading down, which drops the opening marker`,
+    );
   }
 });
 

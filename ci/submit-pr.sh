@@ -188,22 +188,37 @@ existing="$("$gh_command" pr view "$branch" --json url --jq .url 2>/dev/null || 
 if [ -n "$existing" ]; then
   printf '\nA pull request already exists for %s, and now carries the verified commit:\n  %s\n' "$branch" "$existing"
 
-  current_body="$("$gh_command" pr view "$branch" --json body --jq .body 2>/dev/null || true)"
   updated_body="$(mktemp)"
   refusal="$(mktemp)"
   trap 'rm -f "$body_file" "$updated_body" "$refusal"' EXIT
+
+  # NOT KNOWING WHAT IS THERE IS THE STRONGEST REASON NOT TO WRITE. This read used to end in
+  # `|| true`, which flattened a failed request into an empty string — and an empty body is a real
+  # state a PR can be in, so pr-evidence.mjs correctly read it as "there is no block here" and
+  # composed a fresh one. A transient GitHub read failure therefore became a `pr edit` that replaced
+  # somebody's entire description with a CI table. That is the inverse of this feature's rule, and
+  # worse than the staleness it was opened for: stale provenance misleads a reader, this destroys a
+  # maintainer's work. So the failure is kept as a failure and nothing is composed or written.
+  if ! current_body="$("$gh_command" pr view "$branch" --json body --jq .body 2>/dev/null)"; then
+    printf '\nThe current body could not be read from GitHub, so nothing was rewritten: a body that\n'
+    printf 'cannot be read cannot be safely replaced. The evidence for this commit, to paste yourself:\n\n'
+    node "$(dirname "$0")/pr-evidence.mjs" --block-only "$sha_after" "$stages" "$verified_at"
+    printf '\nPASS  %s  verified and pushed.\n' "$sha_after"
+    exit 0
+  fi
 
   if printf '%s' "$current_body" | node "$(dirname "$0")/pr-evidence.mjs" "$sha_after" "$stages" "$verified_at" > "$updated_body" 2>"$refusal"; then
     if "$gh_command" pr edit "$branch" --body-file "$updated_body" >/dev/null 2>&1; then
       printf '\nThe evidence block was updated to this commit. The description above it was not touched.\n'
     else
-      printf '\nThe evidence block could not be written to GitHub. The body still names an earlier commit:\n\n'
-      sed -n "/^## Local CI$/,\$p" "$updated_body"
+      printf '\nThe evidence block could not be written to GitHub. The body still names an earlier commit.\n'
+      printf 'Paste this in place of the stale block:\n\n'
+      node "$(dirname "$0")/pr-evidence.mjs" --block-only "$sha_after" "$stages" "$verified_at"
     fi
   else
     printf '\nThe evidence block in that body was not rewritten. Reason: %s' "$(cat "$refusal")"
     printf '\nPaste this in place of the stale block:\n\n'
-    sed -n '/^## Local CI$/,$p' "$body_file"
+    node "$(dirname "$0")/pr-evidence.mjs" --block-only "$sha_after" "$stages" "$verified_at"
   fi
 
   printf '\nPASS  %s  verified and pushed.\n' "$sha_after"
