@@ -59,6 +59,20 @@ output schema version did, because the output format did — see below.
 
 ### Added
 
+- **The canonical-origin contract, without the cryptography.** `scripts/pack-origin.mjs` holds the
+  origin states, the five reasons a claim can fail, and `assertCanonicalOrigin` — the single door
+  every origin-dependent assertion goes through. `maintain` reports origin and does not require it,
+  because it answers whether this working tree satisfies the standards it publishes, and putting that
+  behind release-owner credentials would make ordinary development depend on trust configuration
+  contributors correctly should not hold. Anything that *claims* canonical origin fails closed. The
+  state is named rather than boolean: `originVerified: false` would let a caller collapse "checked and
+  rejected", "could not check", and "no anchor was supplied" into one branch, and those three are the
+  distinction the mechanism exists to make. The verifier is injected and no mechanism is chosen yet
+  (ST-12), so origin is `NOT_ESTABLISHED / verification-unimplemented` — which is what fail-closed
+  means before a thing is built. The module imports no filesystem access, asserted structurally,
+  because the rejected in-pack-anchor design would pass every behavioural test by making the happy
+  path easier.
+
 - **A recorded custody decision for release signing, and the constraint that makes it worth
   anything.** [ADR 0010](artifacts/adr/0010-release-signing-custody-and-an-external-trust-anchor.md)
   names the accountable human release owner as custodian of the private key — never committed, never
