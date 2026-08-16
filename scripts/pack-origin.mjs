@@ -56,8 +56,24 @@ export const ORIGIN_REASON = Object.freeze({
   UNTRUSTED_SIGNER: "untrusted-signer",
   INVALID_SIGNATURE: "invalid-signature",
   RELEASE_UNAVAILABLE: "release-unavailable",
-  /** No verifier was supplied, because ST-12 has not chosen a mechanism. Not a synonym for the others. */
+  /**
+   * The evidence is genuine and is for a DIFFERENT release. A ref is an alias and nobody signs an
+   * alias, so a real signature over `v1.1.0` can be presented under `refs/tags/v9.9.9` with matching
+   * commit, tree, signer and signature. Its own reason because it is contradicted evidence —
+   * somebody made that ref — rather than absent evidence, and because the operator action is to look
+   * at who created the alias rather than at the key or the tooling.
+   */
+  RELEASE_NAME_MISMATCH: "release-name-mismatch",
+  /** No verifier was supplied at all — the caller did not pass one. Not a synonym for the others. */
   VERIFICATION_UNIMPLEMENTED: "verification-unimplemented",
+  /**
+   * A verifier exists and could not run here: `ssh-keygen` missing from PATH, unspawnable, or too old
+   * for `-Y`. Kept apart from VERIFICATION_UNIMPLEMENTED because the operator actions differ — install
+   * or repair the tool, versus this capability was never built — and kept far apart from
+   * INVALID_SIGNATURE because nothing examined the signature. Reporting an unexamined signature as
+   * invalid is a false accusation against whoever signed it.
+   */
+  VERIFICATION_UNAVAILABLE: "verification-unavailable",
 });
 
 const notEstablished = (reason, detail) => ({
@@ -101,6 +117,19 @@ export function packOrigin({ anchor, release, verify } = {}) {
     );
   }
 
+  // Contradicted before absent: a reader whose evidence is genuine but for another release has a
+  // different problem from one whose evidence is missing, and reporting the first as the second would
+  // hide that somebody built the alias.
+  if (release && typeof release.mismatch !== "undefined") {
+    return notEstablished(
+      ORIGIN_REASON.RELEASE_NAME_MISMATCH,
+      `this release presents a signature that authorises \`${release.mismatch ?? "no release name"}\`, ` +
+        `not \`${release.tag}\`. The commit, the tree, the signer and the signature can all be genuine ` +
+        `and it is still not evidence for the release being asked about — a ref is an alias, and ` +
+        `nobody signs an alias.`,
+    );
+  }
+
   if (!release || typeof release.tag !== "string" || typeof release.signature !== "string" || release.signature === "") {
     return notEstablished(
       ORIGIN_REASON.RELEASE_UNAVAILABLE,
@@ -119,6 +148,18 @@ export function packOrigin({ anchor, release, verify } = {}) {
   }
 
   const result = verify(release, anchor);
+  // A verifier may answer in three ways, and the third is not a shade of the second. `unavailable`
+  // means no capable verifier ran; concluding `invalid-signature` from it would assert the signature
+  // was examined and contradicted, which is a claim nothing performed. Verifiers that report only
+  // `{ valid }` are read as before, so the older two-state shape stays usable.
+  if (result?.status === "unavailable") {
+    return notEstablished(
+      ORIGIN_REASON.VERIFICATION_UNAVAILABLE,
+      result.detail ??
+        "a signature verifier exists but could not run here, so nothing checked this signature. " +
+          "Unavailable evidence fails closed and is still not contradicted evidence.",
+    );
+  }
   if (!result || result.valid !== true) {
     return notEstablished(
       ORIGIN_REASON.INVALID_SIGNATURE,

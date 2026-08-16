@@ -99,6 +99,26 @@ export function readSignedTag(git, tag) {
     };
   }
 
+  // THE NAME BINDING. A ref is an alias, and an alias is not signed. `refs/tags/v9.9.9` can be made to
+  // point at a genuine, valid, trusted signature over v1.1.0 — at which point the commit matches, the
+  // tree matches, the signer is the custodian, and the signature verifies, because all of that really
+  // is the custodian's work. The only false thing is which release the evidence is offered for, so
+  // comparing oids cannot detect it: they are identical by construction. What the signature actually
+  // authorises includes the `tag <name>` header inside the signed payload, and that is what must equal
+  // the release being asked about.
+  const signed = /^tag (.+)$/m.exec(text.slice(0, begins))?.[1]?.trim();
+  if (signed !== tag) {
+    return {
+      ok: false,
+      tag,
+      mismatch: signed ?? null,
+      detail:
+        `${ref} resolves to a tag object whose signed name is ${signed ? `\`${signed}\`` : "absent"}, not ` +
+        `\`${tag}\`. A genuine signature for another release is not evidence for this one, and a ref ` +
+        `is an alias rather than something anybody signed.`,
+    };
+  }
+
   return {
     ok: true,
     tag,
@@ -120,8 +140,16 @@ export function readSignedTag(git, tag) {
  * tool output is never the only thing standing between a fork and a positive claim.
  */
 export function sshTagVerifier({ keygen = "ssh-keygen" } = {}) {
+  /** Tri-state. `unavailable` is not a polite spelling of `invalid`: nothing examined the signature. */
+  const unavailable = (detail) => ({ status: "unavailable", valid: false, fingerprint: null, detail });
+  /** True when a spawn never produced a verdict — missing binary, unspawnable, or no `-Y` support. */
+  const couldNotRun = (r) =>
+    r.error != null || r.status === null || (r.status !== 0 && /unknown option|invalid option|usage:/i.test(r.stderr ?? ""));
+
   return (release, anchor) => {
-    if (!release?.signature || !release?.payload) return { valid: false, fingerprint: null };
+    if (!release?.signature || !release?.payload) {
+      return { status: "invalid", valid: false, fingerprint: null };
+    }
 
     const dir = mkdtempSync(path.join(tmpdir(), "origin-verify-"));
     try {
@@ -132,7 +160,18 @@ export function sshTagVerifier({ keygen = "ssh-keygen" } = {}) {
         input: release.payload,
         encoding: "utf8",
       });
-      if (checked.status !== 0) return { valid: false, fingerprint: null };
+      // The order matters: ask whether a verifier RAN before reading what it said. A missing
+      // `ssh-keygen` and a bad signature both arrive as a non-zero status, and treating them alike
+      // asserts that evidence was examined and contradicted when nothing examined it — a false
+      // accusation against whoever signed, and the exact conflation the external-verifier contract
+      // forbids downgrading in either direction.
+      if (couldNotRun(checked)) {
+        return unavailable(
+          `\`${keygen}\` could not verify this signature (${checked.error?.code ?? checked.stderr?.trim() ?? "no verdict"}). ` +
+            `Nothing checked the signature, so nothing may be concluded about it.`,
+        );
+      }
+      if (checked.status !== 0) return { status: "invalid", valid: false, fingerprint: null };
 
       const fingerprint = /(SHA256:[A-Za-z0-9+/=]+)/.exec(`${checked.stderr}${checked.stdout}`)?.[1] ?? null;
 
@@ -150,10 +189,13 @@ export function sshTagVerifier({ keygen = "ssh-keygen" } = {}) {
         // by another key. Reporting the fingerprint lets `packOrigin` call that untrusted-signer;
         // returning invalid here would tell the operator the signature is broken when it is fine and
         // simply not theirs.
-        if (verified.status !== 0 && fingerprint === anchor.fingerprint) return { valid: false, fingerprint };
+        if (couldNotRun(verified)) return unavailable(`\`${keygen} -Y verify\` could not run.`);
+        if (verified.status !== 0 && fingerprint === anchor.fingerprint) {
+          return { status: "invalid", valid: false, fingerprint };
+        }
       }
 
-      return { valid: true, fingerprint };
+      return { status: "verified", valid: true, fingerprint };
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }

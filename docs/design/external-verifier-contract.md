@@ -45,11 +45,26 @@ The host resolves `vX.Y.Z` and reads the annotated tag object from the evaluated
 executing code from that checkout**. Reading data out of a repository is safe; running its scripts,
 hooks, or helpers is not.
 
+**The requested name must equal the name inside the signed payload.** A ref is an alias and nobody
+signs an alias: `refs/tags/v9.9.9` can be pointed at a genuine, valid, trusted signature over
+`v1.1.0`, after which the commit, the tree, the signer and the signature are all authentically the
+custodian's and the only false thing is which release the evidence is offered for. Comparing oids
+cannot detect this — they are identical by construction — so the host compares the requested release
+against the `tag <name>` header carried inside the authenticated tag object. A mismatch is
+**contradicted** evidence, not missing evidence: somebody built that ref.
+
 ### 3. Verify authorization itself
 
 Host-owned verifier code validates the SSH signature over the tag payload and confirms the signer is
 the externally trusted key. Both halves are required and they fail differently: a sound signature by
 an unknown key is `untrusted-signer`; an unsound signature is `invalid-signature`.
+
+**A verifier answers in three states, not two:** verified, invalid, and *unavailable*. A missing
+`ssh-keygen`, one that cannot be spawned, or one too old for `-Y` means **nobody checked** — and a
+non-zero exit status looks identical whether the tool refused the signature or never examined it.
+Reporting that as `invalid-signature` asserts the signature was examined and found wanting, which is
+a claim nothing performed and a false accusation against whoever signed. It maps to
+`verification-unavailable`, which fails closed like every other unestablished state.
 
 ### 4. Resolve the signed object
 

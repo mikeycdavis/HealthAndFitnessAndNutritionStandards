@@ -204,6 +204,74 @@ test("an unsigned release is unavailable rather than invalid, because nobody did
   }
 });
 
+test("a genuine signature cannot be relabelled onto a release name it did not authorise", async () => {
+  // THE ATTACK: no forgery at all. The fork takes the custodian's real, valid, trusted signature over
+  // v1.1.0 and creates `refs/tags/v9.9.9` pointing at that same tag object. Every check that looks at
+  // the commit, the tree, the signer, or the signature passes, because they are all genuinely the
+  // custodian's — the ONLY thing that is false is which release the evidence is being offered for.
+  // Comparing oids cannot catch it: the oids are identical by construction. The name binding is what
+  // the signature has to authorise, and the authenticated tag object carries that name in its header.
+  const dir = await scratch();
+  try {
+    const custodian = await keypair(dir, "custodian");
+    const pack = path.join(dir, "pack");
+    await signedRepo(pack, custodian);
+
+    const authentic = run("git", ["-C", pack, "rev-parse", "refs/tags/v1.1.0"]).stdout.trim();
+    assert.equal(run("git", ["-C", pack, "update-ref", "refs/tags/v9.9.9", authentic]).status, 0);
+
+    const relabelled = readSignedTag(gitIn(pack), "v9.9.9");
+    const origin = packOrigin({ anchor: custodian, release: relabelled, verify: sshTagVerifier() });
+
+    assert.equal(origin.status, ORIGIN.NOT_ESTABLISHED, "a real signature for another release is not evidence for this one");
+    assert.equal(origin.reason, ORIGIN_REASON.RELEASE_NAME_MISMATCH);
+    assert.ok(origin.detail.includes("v1.1.0"), "and it says which release was actually authorised");
+
+    // The negative control: the same object under its own name still establishes origin, so this is a
+    // check on the name binding rather than a check that broke signed tags.
+    const honest = packOrigin({
+      anchor: custodian,
+      release: readSignedTag(gitIn(pack), "v1.1.0"),
+      verify: sshTagVerifier(),
+    });
+    assert.equal(honest.status, ORIGIN.ESTABLISHED);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("a verifier that cannot run is unavailable evidence, never contradicted evidence", async () => {
+  // The distinction this repository keeps everywhere else, applied to the tool rather than the data.
+  // `ssh-keygen` missing from PATH, unable to spawn, or too old for `-Y` means NOBODY CHECKED. Calling
+  // that `invalid-signature` asserts the signature was examined and found wanting, which is a claim
+  // about the release that nothing performed — and it is a false accusation against whoever signed it.
+  const dir = await scratch();
+  try {
+    const custodian = await keypair(dir, "custodian");
+    const pack = path.join(dir, "pack");
+    await signedRepo(pack, custodian);
+    const release = readSignedTag(gitIn(pack), "v1.1.0");
+
+    const origin = packOrigin({
+      anchor: custodian,
+      release,
+      verify: sshTagVerifier({ keygen: "ssh-keygen-that-does-not-exist" }),
+    });
+    assert.equal(origin.status, ORIGIN.NOT_ESTABLISHED, "unavailable still fails closed");
+    assert.equal(origin.reason, ORIGIN_REASON.VERIFICATION_UNAVAILABLE);
+    assert.notEqual(origin.reason, ORIGIN_REASON.INVALID_SIGNATURE);
+
+    // The paired negative control, and the reason this pair is written together: mapping every
+    // cryptographic failure to `unavailable` would satisfy the test above on its own, and it is the
+    // easier fix. The test below refuses it.
+    const tampered = { ...release, payload: release.payload.replace("release v1.1.0", "release v9.9.9") };
+    const contradicted = packOrigin({ anchor: custodian, release: tampered, verify: sshTagVerifier() });
+    assert.equal(contradicted.reason, ORIGIN_REASON.INVALID_SIGNATURE, "a real verifier that says no still says no");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("a signature that does not match the release it is presented with is invalid, not untrusted", async () => {
   const dir = await scratch();
   try {

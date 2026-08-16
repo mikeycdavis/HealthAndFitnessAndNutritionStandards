@@ -136,6 +136,16 @@ test("the reasons are distinct states, because a boolean would hide the differen
   const seen = new Map();
   const cases = {
     [ORIGIN_REASON.TRUST_ANCHOR_ABSENT]: { release: signedRelease, verify: verifierSigningAs(TRUSTED.fingerprint) },
+    [ORIGIN_REASON.RELEASE_NAME_MISMATCH]: {
+      anchor: TRUSTED,
+      release: { ...signedRelease, tag: "v9.9.9", mismatch: "v1.1.0" },
+      verify: verifierSigningAs(TRUSTED.fingerprint),
+    },
+    [ORIGIN_REASON.VERIFICATION_UNAVAILABLE]: {
+      anchor: TRUSTED,
+      release: signedRelease,
+      verify: () => ({ status: "unavailable", valid: false, fingerprint: null }),
+    },
     [ORIGIN_REASON.RELEASE_UNAVAILABLE]: { anchor: TRUSTED, release: { tag: "v1.1.0", signature: "" }, verify: verifierSigningAs(TRUSTED.fingerprint) },
     [ORIGIN_REASON.VERIFICATION_UNIMPLEMENTED]: { anchor: TRUSTED, release: signedRelease },
     [ORIGIN_REASON.INVALID_SIGNATURE]: { anchor: TRUSTED, release: signedRelease, verify: () => ({ valid: false }) },
@@ -150,7 +160,8 @@ test("the reasons are distinct states, because a boolean would hide the differen
     assert.ok(!seen.has(origin.reason), `${expected} shares a reason string with ${seen.get(origin.reason)}`);
     seen.set(origin.reason, expected);
   }
-  assert.equal(seen.size, 5);
+  assert.equal(seen.size, 7);
+  assert.equal(seen.size, Object.keys(ORIGIN_REASON).length, "every reason the module defines is reachable and distinct");
 });
 
 test("established requires all three: an external anchor, a valid signature, and the right signer", () => {

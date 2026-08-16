@@ -104,6 +104,15 @@ function establishCanonicalPack({ trustedPublicKey, trustedKeySource, packDir, r
   const to = object.stdout.indexOf(END);
   if (from === -1 || to === -1) return fail("release-unavailable", `${ref} carries no signature`);
 
+  // The name binding, and it belongs to step 2 rather than to step 4: the host resolves the REQUESTED
+  // release, and a ref is an alias nobody signed. A genuine signature over another release, reached
+  // through a relabelled ref, has a matching commit, tree, signer and signature — the release name
+  // inside the signed payload is the only thing that disagrees.
+  const signedName = /^tag (.+)$/m.exec(object.stdout.slice(0, from))?.[1]?.trim();
+  if (signedName !== release) {
+    return fail("release-name-mismatch", `${ref} carries a signature authorising ${signedName ?? "no release"}`);
+  }
+
   // 3. VERIFY AUTHORIZATION ITSELF, against the allowed-signers file written above from the key the
   //    host was given. `git verify-tag` is not used: it resolves that file through
   //    gpg.ssh.allowedSignersFile, which the evaluated repository controls.
@@ -297,6 +306,36 @@ test("POSITIVE CONTROL: the same host accepts a genuine release and binds the au
       "and HEAD is detached, so no moving reference can change what was verified",
     );
     assert.equal((await readFile(path.join(canonical.materialRoot, "VERSION"), "utf8")).trim(), "1.1.0");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("ADVERSARIAL: a genuine signature reached through a relabelled ref is not evidence for that name", async () => {
+  // No forgery, no key substitution, and nothing for the signer check to catch: the fork publishes
+  // `refs/tags/v9.9.9` pointing at the custodian's own signed `v1.1.0` tag object. A host that
+  // resolves the requested release by ref alone reports a trusted signature for a release the
+  // custodian never authorised, which is why the contract says the host derives meaning from the
+  // authenticated object rather than from the alias that led to it.
+  const dir = await mkdtemp(path.join(tmpdir(), "host-relabel-"));
+  try {
+    const custodian = await keypair(dir, "custodian");
+    const pack = await repoSignedBy(path.join(dir, "pack"), custodian);
+    const authentic = run("git", ["-C", pack, "rev-parse", "refs/tags/v1.1.0"]).stdout.trim();
+    assert.equal(run("git", ["-C", pack, "update-ref", "refs/tags/v9.9.9", authentic]).status, 0);
+
+    const workspace = path.join(dir, "host");
+    await mkdir(workspace, { recursive: true });
+    const verdict = establishCanonicalPack({
+      trustedPublicKey: custodian.publicKey,
+      trustedKeySource: "enforcer trust configuration (test)",
+      packDir: pack,
+      release: "v9.9.9",
+      workspace,
+    });
+
+    assert.equal(verdict.ok, false, "a real signature for v1.1.0 is not authorisation for v9.9.9");
+    assert.equal(verdict.reason, "release-name-mismatch");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
