@@ -35,12 +35,20 @@
  * distinguished them no longer reaches anything distinct. This is what a remedy collapsing two defects
  * into one looks like, and it is recorded rather than presented as two independent guards.
  *
- * THE FOURTH IS STILL `todo`, and not because the implementation fell short. Its subject is not this
- * evaluator: it builds its pack by checking out `v1.0.0`, so the code it exercises is `v1.0.0`'s,
- * which predates the release-identity mechanism and cannot contain it. A pack cannot bootstrap
- * stronger authenticity guarantees for releases that predate those guarantees (ADR 0008). Its
- * satisfaction condition therefore falls at the first immutable release that contains FE-13, not on
- * a development branch — so it stays here, unchanged, and FE-13 stays open until then.
+ * THE FOURTH IS RETIRED, and this file no longer contains it. It was never going to pass: it builds
+ * its pack by checking out `v1.0.0`, so the code it exercises is `v1.0.0`'s, which predates the
+ * release-identity mechanism and cannot contain it. A pack cannot bootstrap stronger authenticity
+ * guarantees for releases that predate those guarantees (ADR 0008), so no release could satisfy that
+ * body — the satisfaction condition it was given on 2026-08-16 named a release the fixture does not
+ * execute. Two runs established it, and the second is the worse one: with a working clone it fails on
+ * `standardVersion: "1.0.0"`, and where `git clone --local` cannot hardlink across volumes its
+ * fallback copies the working tree without `.git` and passes without exercising either half.
+ *
+ * It is preserved byte for byte at `test/retired/fe-13-falsifier-4.retired.mjs`, out of the default
+ * suite, under the rule in ADR 0012 — retirement is for a fixture that cannot express its subject,
+ * never for one that is merely red. Its subject is now asserted of the evaluator that exists, in
+ * `test/release-material-binding.test.mjs`, and FE-13 closes on that plus release-certification
+ * evidence (R2) rather than on this file alone.
  *
  * THE CLAIM UNDER TEST. An adopter that says it uses `v1.0.0` must demonstrably be evaluated against
  * the exact immutable release. Where that cannot be established, evaluation must fail closed rather
@@ -89,12 +97,15 @@ import { fileURLToPath } from "node:url";
  * build is the "falsify evidence for" clause of `integrity.no-standards-manipulation`, applied to this
  * repository's own maintenance rather than to an adopter's.
  *
- * It is still applied here. The one test below that keeps this marker keeps its body byte for byte;
- * what was revised is FE-13's completion rule, which now distinguishes a falsifier whose subject is
- * the current evaluator from one whose subject is a release that cannot be changed. Revising the rule
- * in the open is a different act from quietly revising the test to match the result.
+ * NO TEST IN THIS FILE CARRIES THE MARKER ANY MORE, and the paragraph above is kept rather than
+ * deleted because it is the standard the fourth one was eventually judged against. Three were
+ * converted unchanged when the false green was removed, which is the legitimate route. The fourth was
+ * not converted and was not quietly satisfied either: it was retired, byte for byte and out of the
+ * suite, on evidence that its fixture could never express its subject (ADR 0012). That is a third
+ * disposition, and it needed to be, because the two this comment allows for — still red, or honestly
+ * green — were both unreachable for it. The rule it must not become is "retire what stays red"; the
+ * boundary is written down in the ADR, not left to whoever reads this next.
  */
-const TODO = { todo: "FE-13: release identity is not established; remove this marker with the remedy" };
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO = path.join(HERE, "..");
@@ -220,51 +231,3 @@ test("FALSIFIER: an unestablishable release identity must fail closed", async ()
   }
 });
 
-/**
- * The negative control that a string-comparison remedy would pass.
- *
- * Correct tag, correct VERSION, modified standards file. Every label agrees; the bytes do not. A
- * remedy that compares `standardVersion` to `VERSION`, or even resolves the tag and stops there,
- * goes green here — and it would be wrong, because the whole finding is about which bytes produced
- * the verdict rather than which commit someone says they came from.
- *
- * This is the case that separates artifact identity from labels, which is why it is a falsifier and
- * not a note in the backlog.
- */
-test("FALSIFIER: correct tag and correct VERSION with a modified standard must still reject", TODO, async () => {
-  const dir = await mkdtemp(path.join(tmpdir(), "hfn-labels-agree-"));
-  const adopter = await adopterClaiming("1.0.0");
-  try {
-    // A real checkout of the release where possible, so the tag genuinely resolves. Where the tag is
-    // unavailable — a shallow CI checkout has no tags — a plain copy stands in; the requirement is
-    // identical either way, and only the strength of the "correct tag" half is reduced.
-    const cloned = spawnSync("git", ["clone", "--local", "--quiet", REPO, dir], { encoding: "utf8" });
-    const checkedOut =
-      cloned.status === 0 &&
-      spawnSync("git", ["-C", dir, "checkout", "--quiet", "v1.0.0"], { encoding: "utf8" }).status === 0;
-    if (!checkedOut) {
-      await rm(dir, { recursive: true, force: true });
-      await cp(REPO, dir, {
-        recursive: true,
-        filter: (src) => !src.includes(`${path.sep}.git`) && !src.includes("node_modules"),
-      });
-    }
-
-    // VERSION is untouched and correct. One standard is not.
-    const standard = path.join(dir, "standards", "32-energy-balance.md");
-    await writeFile(standard, (await readFile(standard, "utf8")) + "\n\nLocally added guidance.\n");
-    assert.equal((await readFile(path.join(dir, "VERSION"), "utf8")).trim(), "1.0.0");
-
-    const { exit, json } = check(dir, adopter);
-    assert.notEqual(
-      exit,
-      0,
-      `every label agrees and the standards bytes differ${checkedOut ? "" : " (tag unavailable; copy stood in)"}: ` +
-        "identity must be established over the material, not over the labels",
-    );
-    assert.notEqual(json?.standardVersion, "1.0.0", "a modified pack must not report itself as 1.0.0");
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-    await rm(adopter, { recursive: true, force: true });
-  }
-});
