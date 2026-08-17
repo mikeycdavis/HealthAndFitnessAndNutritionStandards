@@ -18,15 +18,24 @@
  * the key so the ceremony would be convenient is the prohibition that document opens with. This script
  * reads a tag that already exists and reports what it finds.
  *
- *     node ci/certify-release.mjs v1.1.0
+ *     HFN_TRUSTED_PUBLIC_KEY="ssh-ed25519 AAAA…" node ci/certify-release.mjs v1.1.0
  *
- * Exit 0 means the release certified and the evidence block below is true. Any other exit means it did
- * not, and per step 5b nothing is pushed: the tag is deleted and recreated against a corrected
- * candidate, and the ceremony restarts from step 3.
+ * The anchor is the key's VALUE, never a path — a path is something this repository could point at,
+ * and the anchor may not come from the pack being authenticated (ADR 0010).
+ *
+ *     exit 0    certified; the evidence block is true and complete
+ *     exit 1    R2 FAILED; a stated condition did not hold
+ *     exit 2    R2 INCOMPLETE; something was not examined, so nothing may be claimed about it
+ *
+ * Only exit 0 authorises a push. On anything else the tag is deleted and recreated against a corrected
+ * candidate and the ceremony restarts from step 3 — per `docs/release-signing.md` step 5b.
+ *
+ * `--rehearsal` permits an unsigned tag so the mechanism can be exercised before the ceremony. It
+ * cannot produce exit 0: without an anchor the run is incomplete by construction.
  */
 
 import { spawnSync } from "node:child_process";
-import { cp, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -79,12 +88,24 @@ const tagObject = git("rev-parse", `refs/tags/${tag}`).stdout.trim();
 // repository controls, so a fork could nominate its own trust file and verify itself (ADR 0010).
 // The anchor is a value the custodian supplies, never a path this tree could point at.
 const anchorKey = process.env.HFN_TRUSTED_PUBLIC_KEY?.trim();
+const rehearsal = process.argv.includes("--rehearsal");
+
+// The signature's PRESENCE is checked whether or not an anchor was supplied, because "this tag is not
+// signed at all" is a fact about the candidate rather than about the verifier's availability.
+const raw = git("cat-file", "tag", tag).stdout;
+const begins = raw.indexOf("-----BEGIN SSH SIGNATURE-----");
+const signaturePresent = begins !== -1;
+if (!signaturePresent && !rehearsal) {
+  fail(`${tag} carries no SSH signature`, "docs/release-signing.md step 4: the release tag is signed.");
+}
+
+// AND A MISSING ANCHOR IS NOT A PASS. Caught in rehearsal: this script printed "R2 PASSED" over an
+// evidence line reading "not checked", which is the shape of claim this whole repository exists to
+// refuse — nothing examined the signature, so nothing may be said about it (ST-12). Without an anchor
+// the run is INCOMPLETE and exits non-zero, so no ceremony can mistake it for certification.
 let signature = "not checked — HFN_TRUSTED_PUBLIC_KEY was not supplied";
 if (anchorKey) {
-  const raw = git("cat-file", "tag", tag).stdout;
-  const begins = raw.indexOf("-----BEGIN SSH SIGNATURE-----");
-  if (begins === -1) fail(`${tag} carries no SSH signature`);
-
+  if (!signaturePresent) fail(`${tag} carries no SSH signature`);
   const signed = /^tag (.+)$/mu.exec(raw.slice(0, begins))?.[1]?.trim();
   if (signed !== tag) {
     fail(
@@ -128,10 +149,7 @@ try {
   const co = spawnSync("git", ["-C", pack, "checkout", "--quiet", tag], { encoding: "utf8" });
   if (co.status !== 0) fail(`could not check out ${tag}`, co.stderr);
 
-  await cp(path.join(REPO, "templates", "project-policy.yml"), path.join(work, "unused"), { force: true }).catch(
-    () => {},
-  );
-  await (await import("node:fs/promises")).mkdir(adopter, { recursive: true });
+  await mkdir(adopter, { recursive: true });
   await writeFile(
     path.join(adopter, "project-policy.yml"),
     [
@@ -209,14 +227,34 @@ process.stdout.write(
   [
     "```text",
     `candidate commit                      ${releaseCommit}`,
-    `signed annotated tag object           ${tagObject}`,
+    `annotated tag object                  ${tagObject}`,
     `dereferenced release commit           ${releaseCommit}`,
+    `signature present on the tag          ${signaturePresent ? "yes" : "NO"}`,
     `signer fingerprint                    ${signer}`,
     `local external verification result    ${signature}`,
     `R2 result                             ${r2}`,
     `tag pushed at time of R2              ${publishedAtR2}`,
     "```",
     "",
+  ].join("\n"),
+);
+
+if (!anchorKey) {
+  process.stdout.write(
+    [
+      "R2 INCOMPLETE — the material binding above held, and the signature was not examined.",
+      "",
+      "That is two findings, not one, and only the first is established. Supply the custodian's public",
+      "key as HFN_TRUSTED_PUBLIC_KEY — the value, never a path this repository could point at — and run",
+      "again. Nothing may be pushed on this result.",
+      "",
+    ].join("\n"),
+  );
+  process.exit(2);
+}
+
+process.stdout.write(
+  [
     "R2 PASSED. Push only when every other condition in docs/release-signing.md holds, and push the",
     "exact tag object certified above — a recreated tag is a different object and has not been certified.",
     "",
