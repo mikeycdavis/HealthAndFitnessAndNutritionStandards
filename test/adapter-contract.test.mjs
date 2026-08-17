@@ -28,6 +28,20 @@
  * an empty set that compares equal to nothing and reports success. Every extraction below therefore
  * fails loudly when it cannot find what it went looking for, before it compares anything.
  *
+ * MUTATIONS RUN, recorded as observed:
+ *
+ *   mutation                                                       statuses  passing  observed  shape
+ *   -------------------------------------------------------------- -------- -------- --------- -----
+ *   MA1  UNIDENTIFIED_RELEASE dropped from result.statuses          red      ok       red       ok
+ *   MA2  result.statuses gains a status the CLI cannot produce      red      ok       ok        ok
+ *   MA3  NOT_EVALUATED added to result.passing                      ok       red      ok        ok
+ *   MA4  commandCheck renamed, so neither extraction finds it       red      red      red       ok
+ *
+ * MA1 killing two tests is the point of having both: the source scan catches the omission, and the
+ * execution probe independently emits the very status that was dropped. MA4 is the seam check doing
+ * its job — both guards failed with "the seam is gone", naming what they failed to find, rather than
+ * comparing two empty sets and reporting agreement.
+ *
  * WHAT IS OUT OF SCOPE, STATED SO IT IS NOT MISREAD AS COVERED. `standards-adapter.json` is not in
  * `MATERIAL` (scripts/release-material.mjs), so this pack's own release verification does not cover
  * its bytes. That is correct rather than an oversight: `MATERIAL` is the set of paths whose bytes can

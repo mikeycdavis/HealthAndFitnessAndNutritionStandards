@@ -30,16 +30,20 @@
  * the signing ceremony against the real unpublished tag, and its evidence is recorded under
  * `artifacts/evidence/`. FE-13 closes on both, not on this file alone.
  *
- * MUTATIONS RUN, recorded as observed:
+ * MUTATIONS RUN, recorded as observed rather than as predicted:
  *
  *   mutation                                                          R1   control  specimen
  *   ---------------------------------------------------------------- ---- -------- --------
- *   verifyRelease compares the resolved tree to itself, so material   red  ok       ok
- *     mismatch cannot be detected
- *   the material-differs branch reports the requested version         red  ok       ok
- *     instead of null
- *   the retired specimen is edited by one character                   ok   ok       red
- *   the retired specimen is deleted                                   ok   ok       red
+ *   MR1  the `release.ok === false` refusal in commandCheck is        red  ok       ok
+ *        skipped, so an unestablished identity evaluates anyway
+ *   MR2  one character changed in the retired specimen                ok   ok       red
+ *   MR3  the retired specimen is deleted                              ok   ok       red
+ *   MR4  the retired specimen is put back into the test command       ok   ok       red
+ *
+ * MR1 is the one that matters for R1, and the separation is the evidence: the control stayed green
+ * under it, so R1's refusal is about the modified bytes and not about the fixture being unable to
+ * start. MR2–MR4 are the three ways "retired" decays — edited, deleted, quietly made pending again —
+ * and each is a different sentence in ADR 0012's rule.
  */
 
 import { test } from "node:test";

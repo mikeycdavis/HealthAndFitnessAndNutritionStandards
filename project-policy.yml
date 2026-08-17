@@ -25,7 +25,7 @@
 # rationale of every catalog entry. So the rules about evidence quality and fabricated facts apply
 # here in full, and are declared applicable below.
 
-standardVersion: "1.0.0"
+standardVersion: "1.1.0"
 project: "HealthAndFitnessAndNutritionStandards"
 
 # This repository is the pack, not an adopter of it (FE-13). Every other project running `check`

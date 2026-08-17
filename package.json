@@ -1,6 +1,6 @@
 {
   "name": "health-fitness-nutrition-standards",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Numbered standards for personal health, fitness, exercise, and nutrition guidance, and the commands that evaluate a project against them.",
   "type": "module",
   "bin": {
