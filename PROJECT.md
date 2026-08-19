@@ -21,7 +21,7 @@ catalog entry — so the evidence-quality rules apply here in full and are decla
 
 ## Standards
 
-This repository is evaluated against its own standards, version `1.0.0`, declared in
+This repository is evaluated against its own standards, version `1.1.0`, declared in
 [`project-policy.yml`](project-policy.yml). It is evaluated with `standards maintain`, not `standards
 check`: this repository is not an adopter of itself, and `check` refuses to answer for it rather than
 producing a verdict that would read like an adoption of a release it cannot match (FE-13, ADR 0009).
@@ -73,7 +73,7 @@ npm run rules       # has a rule been dropped, downgraded, or reclassified?
 npm run fidelity    # is quoted source text still the source's?
 npm run policy      # is this repository's own policy well-formed?
 npm run diagrams    # does each embedded diagram match its Mermaid source?
-npm test            # 161 tests, including a mutation test per guard
+npm test            # 297 tests, including a mutation test per guard
 npm run audit       # evidence, not a verdict
 npm run check       # the verdict; the CI gate
 ```
@@ -109,8 +109,14 @@ only exit 0 — the transitional `|| [ $? -eq 4 ]` allowance is gone.
 
 ## Current state
 
-**Complete for 1.0.0.** All 42 standards written, 59 rules catalogued, the CLI implemented with
-five subcommands, 161 tests passing, all guards green.
+**Complete for 1.0.0; 1.1.0 is prepared and unpublished.** All 42 standards written, 59 rules
+catalogued, the CLI implemented with five subcommands, 297 tests passing, all guards green.
+
+The standards corpus is unchanged since 1.0.0 — the same 42 standards, 59 rules and 34 prohibitions.
+What 1.1.0 adds is integration and release-authenticity machinery: the adapter contract this pack
+publishes for StandardsEnforcer, and the release-identity guarantees FE-13 and ST-12 built. **The
+`v1.1.0` tag does not exist until the custodian signs it** (`docs/release-signing.md`), and no
+statement here anticipates that act.
 
 **Known gaps**, stated rather than left to be discovered:
 
@@ -119,7 +125,7 @@ five subcommands, 161 tests passing, all guards green.
 - The allergen check of Standard 41 R2 is deliberately unbuilt — see INSTRUCTIONS.md §10.
 - No `.svg` renders are committed; the `.mmd` sources are canonical and the absence is declared in
   ADR 0006.
-- The version is `1.0.0`. A release version makes the inventory guard additionally require every
+- The version is `1.1.0`. A release version makes the inventory guard additionally require every
   standard to exist, which it does.
 - Detector paths are fixed. A project using a different layout must declare the affected rules
   not-applicable rather than configure the paths.

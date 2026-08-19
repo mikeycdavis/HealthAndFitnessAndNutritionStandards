@@ -70,10 +70,23 @@ if (tagType !== "tag") {
 }
 
 // The unpushed precondition is the whole point of the timing, so it is checked rather than assumed.
-// `ls-remote` failing (offline, no remote) is not evidence of absence and is reported as unknown.
+//
+// THREE OUTCOMES, NOT TWO, and collapsing the third into either of the others is the defect
+// independent review found here on PR #8. `ls-remote` failing — offline, expired credentials, no
+// remote configured — is not evidence that the tag is absent. Reported as "unknown" and then allowed
+// to proceed, it let a run print R2 PASSED and exit 0 without ever establishing the precondition,
+// which would authorise a push and could certify a tag that is already public.
+//
+// Unavailable evidence is not confirming evidence. This script already applies that rule one check
+// later, to a missing trust anchor, and did not apply it here — which is why the rule is now a test
+// (`test/release-certification.test.mjs`) rather than a habit.
 const remote = git("ls-remote", "--tags", "origin", `refs/tags/${tag}`);
-const publishedAtR2 =
-  remote.status !== 0 ? "unknown (could not reach origin)" : remote.stdout.trim() === "" ? "no" : "YES";
+const remoteUnqueryable = remote.status !== 0;
+const publishedAtR2 = remoteUnqueryable
+  ? "unknown — origin could not be queried"
+  : remote.stdout.trim() === ""
+    ? "no"
+    : "YES";
 if (publishedAtR2 === "YES") {
   fail(`${tag} is already published on origin`, "R2 must run while the tag is still unpublished.");
 }
@@ -239,14 +252,31 @@ process.stdout.write(
   ].join("\n"),
 );
 
+// Everything not established, gathered in one place so a run cannot be incomplete in a way the
+// operator has to infer from a blank-looking line in the evidence block.
+const notEstablished = [];
 if (!anchorKey) {
+  notEstablished.push(
+    "  · the signature was not examined — no HFN_TRUSTED_PUBLIC_KEY was supplied. Pass the custodian's",
+    "    public key as a VALUE, never a path this repository could point at.",
+  );
+}
+if (remoteUnqueryable) {
+  notEstablished.push(
+    "  · origin could not be queried, so the tag is not known to be unpublished. R2's whole timing rests",
+    `    on that precondition: ${remote.stderr.trim().split("\n")[0] || "no detail from git"}`,
+  );
+}
+
+if (notEstablished.length > 0) {
   process.stdout.write(
     [
-      "R2 INCOMPLETE — the material binding above held, and the signature was not examined.",
+      "R2 INCOMPLETE — the material binding above held. These were not established:",
       "",
-      "That is two findings, not one, and only the first is established. Supply the custodian's public",
-      "key as HFN_TRUSTED_PUBLIC_KEY — the value, never a path this repository could point at — and run",
-      "again. Nothing may be pushed on this result.",
+      ...notEstablished,
+      "",
+      "Not established is not the same as fine. Nothing may be pushed on this result; resolve each item",
+      "and run again.",
       "",
     ].join("\n"),
   );
