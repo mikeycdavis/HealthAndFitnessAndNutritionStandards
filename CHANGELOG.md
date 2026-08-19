@@ -49,6 +49,13 @@ Nothing here changes it again: the adapter is a new file, not a new field in the
 - **R2 — release certification** (`ci/certify-release.mjs`), run once during the ceremony against the
   signed tag while it is still unpublished, emitting the evidence block `docs/release-signing.md`
   step 5b requires. It never holds a key.
+- **R2 has its own guards** (`test/release-certification.test.mjs`). Independent review found that a
+  run whose `origin` could not be queried recorded the tag as `unknown` and then printed **R2 PASSED**
+  and exited 0 — authorising a push without establishing the unpublished precondition R2 exists to
+  check, and capable of certifying an already-public tag. Unavailable evidence is not confirming
+  evidence; the script applied that rule to a missing trust anchor one check later and not here. Now
+  three-valued, and the fixture signs its own tag so the remote is the only variable and the case
+  cannot pass for the wrong reason.
 
 ### Changed
 
@@ -61,7 +68,7 @@ Nothing here changes it again: the adapter is a new file, not a new field in the
   digest-pinned and out of the test command, and its subject is now covered by R1 and R2. ADR 0012
   records the rule this is permitted under: **a falsifier may be retired only on evidence that its
   fixture cannot express its subject, never because it is merely red.**
-- The suite runs 292 tests with **no `todo`** for the first time.
+- The suite runs 297 tests with **no `todo`** for the first time.
 
 - **A pull request body no longer keeps asserting the first commit it was verified against**
   (ST-13). `ci/submit-pr.*` wrote the local-CI evidence block when it created a request and never

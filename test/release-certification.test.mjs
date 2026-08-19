@@ -17,13 +17,27 @@
  * one check earlier. A rule obeyed in one branch and forgotten in the next is exactly what a test is
  * for; the reasoning that produced the first branch plainly did not produce the second.
  *
- * MUTATIONS RUN, recorded as observed:
+ * MUTATIONS RUN, recorded as observed — including the one that survived and the one that lied.
  *
- *   mutation                                                            unqueryable  published  usage
- *   ------------------------------------------------------------------ ------------ ---------- -----
- *   C1  an unqueryable origin is treated as "no" rather than unknown    red          ok         ok
- *   C2  the `publishedAtR2 === "YES"` refusal is removed                ok           red        ok
- *   C3  the semver guard accepts any argument                           ok           ok         red
+ *   mutation                                                          unqueryable published usage
+ *   ----------------------------------------------------------------- ----------- --------- -----
+ *   C1  an unqueryable origin is treated as "no" rather than unknown   red         ok        ok
+ *   C2  the `publishedAtR2 === "YES"` refusal is removed               ok          red       ok
+ *   C3  the semver guard accepts any argument                          ok          ok        red
+ *   C4  the `modified.exit === 0` refusal is removed                   ok          ok        ok   <- survived
+ *
+ * C4 SURVIVED, and the reason is worth more than a green row would have been: the assertion is
+ * redundant. A modified release that still exits 0 is caught one line later by the status check, which
+ * requires UNIDENTIFIED_RELEASE. The property is guarded; that particular line is not the thing
+ * guarding it. Left in place because an exit code is what a shell reads, and recorded here rather than
+ * quietly deleted or papered over with a new test written to make the row go red.
+ *
+ * C3 ALSO "SURVIVED" ON ITS FIRST RUN, and did not: the substitution never applied, because the regex
+ * was mangled passing through two levels of shell quoting. An unapplied mutation is indistinguishable
+ * from a surviving one in the output, and reads as reassurance. Every mutation above was re-run through
+ * a helper that exits non-zero when the text it was told to replace is not present — the same rule the
+ * seam assertions in `test/adapter-contract.test.mjs` apply to source scanning, turned on the
+ * mutation testing itself.
  */
 
 import { test } from "node:test";
