@@ -63,6 +63,41 @@ under the external public key. **The pack's own origin result is not evidence fo
 reason ADR 0011 exists: the pack cannot pronounce on its own origin, and it certainly cannot do so
 about a tag it was just handed.
 
+### 5b. Certify the release against its own machinery — R2
+
+**Run while the signed tag exists locally and is still unpublished.** This is the one step that can
+only be done here: it asks whether the release about to be published proves its own identity using the
+release machinery it actually contains, which no test on a development branch can establish and no
+test after publication can un-publish if the answer is no.
+
+R2 exercises FE-13's subject against the real candidate: check the signed tag out into a scratch
+directory, modify one file inside the material boundary, and require `standards check` to refuse with
+`UNIDENTIFIED_RELEASE` / `material-differs` rather than report the version an adopter claimed. Then the
+same release unmodified, to confirm it establishes identity — without that control the refusal could
+mean nothing more than a broken checkout.
+
+Record, in `artifacts/evidence/`:
+
+```text
+candidate commit
+signed annotated tag object
+dereferenced release commit
+signer fingerprint
+local external verification result
+R2 result
+whether the tag had been pushed at the time of R2      <- must be "no"
+```
+
+**If R2 fails, nothing is pushed.** The tag is deleted and recreated as necessary against a corrected
+candidate, and the ceremony restarts from step 3. A failed R2 on an unpublished tag costs a retag; the
+same failure discovered after publication cannot be withdrawn.
+
+Why this ordering rather than a test that runs in CI after the release: converting a release-bound test
+to non-`todo` *after* tagging would move the commit the tag names, so the first release containing the
+mechanism would not contain the discharged guard. R1 is therefore an ordinary test inside the candidate
+before tagging, and R2 is evidence rather than a suite member. No post-tag code change is required by
+either, which is the property that keeps the tag meaning what it says (ADR 0012, FE-13).
+
 ### 6. Push only when those conditions hold
 
 If signing or verification fails, **no unsigned or lightweight fallback tag is created**. A tag of the

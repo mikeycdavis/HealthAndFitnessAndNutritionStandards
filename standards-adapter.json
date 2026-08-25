@@ -1,0 +1,30 @@
+{
+  "$schema": "https://standards-enforcer/schemas/standards-adapter.schema.json",
+  "schemaVersion": "1.0.0",
+  "standard": {
+    "id": "health-fitness-nutrition"
+  },
+  "evaluation": {
+    "entrypoint": "scripts/standards.mjs",
+    "arguments": [
+      "check",
+      "{target}",
+      "--json"
+    ]
+  },
+  "result": {
+    "statuses": [
+      "BLOCKED_BY_INVARIANT",
+      "COMPLIANT",
+      "COMPLIANT_WITH_EXCEPTIONS",
+      "NON_COMPLIANT",
+      "NOT_EVALUATED",
+      "SELF_MAINTENANCE",
+      "UNIDENTIFIED_RELEASE"
+    ],
+    "passing": [
+      "COMPLIANT",
+      "COMPLIANT_WITH_EXCEPTIONS"
+    ]
+  }
+}

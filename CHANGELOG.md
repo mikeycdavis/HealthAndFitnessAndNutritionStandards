@@ -13,12 +13,71 @@ because it can make a compliant project non-compliant — that is the intended b
 regression. A new recommendation is **minor**. Documentation, detector fixes, and clarifications that
 do not change what a rule means are **patch**.
 
-## Unreleased
+## 1.1.0 — prepared, not yet released
 
-No standard, rule, or verdict changed, so neither the framework nor the package version moved. The
-output schema version did, because the output format did — see below.
+**No standard, rule, or prohibition changed. The corpus is identical to 1.0.0** — still 42 standards,
+59 rules, 34 prohibitions and the integrity invariant. What moved is integration capability and
+release authenticity machinery, which is a **minor** change under the policy above: nothing here can
+make a compliant project non-compliant.
+
+The version is set in `VERSION`, `package.json` and this repository's own policy because the release
+candidate is 1.1.0. **The tag does not exist until the custodian signs it** (`docs/release-signing.md`),
+and nothing in this repository may claim otherwise before then.
+
+The output schema version stays at `1.1`, moved earlier in this cycle when the output format changed.
+Nothing here changes it again: the adapter is a new file, not a new field in the envelope.
+
+### Added
+
+- **This pack publishes an adapter contract** (ST-14). `standards-adapter.json` at the repository root
+  declares how StandardsEnforcer invokes this pack and how to read the answer: `check {target} --json`
+  against `scripts/standards.mjs`, under adapter schema `1.0.0`. The enforcer had recorded this pack
+  as blocked since 2026-08-09 for one reason — *"no tag, `1.0.0-dev`"* — and `v1.0.0` removed it, but
+  no declaration existed to read. `1.0.0` rather than `1.1.0`: the `{policy}` placeholder exists for
+  packs that do not read the policy from the target, and this one does.
+- **The backlog tracker is generated rather than asserted to be.**
+  `artifacts/backlog/README.md` has carried "GENERATED FILE - do not edit by hand" since
+  2026-08-09 with no generator in the repository, and drifted four ways while it said so: the
+  headline read 12 of 25 (48%) against items giving 13 of 26 (50%), the status table summed to 38
+  across 39 items, the story count omitted ST-14, and FE-17 rendered as active over DEFERRED
+  frontmatter. `scripts/backlog.mjs` (`npm run backlog`, `npm run backlog:check`) derives the page
+  from item frontmatter, and `test/backlog-tracker.test.mjs` fails when the committed tracker is not
+  what the items derive. The legacy `DONE` status alias is normalised in one documented place and
+  tested explicitly, because dropping it is how the arithmetic broke.
+- **The declaration is pinned to the CLI in both directions** (ST-14).
+  `test/adapter-contract.test.mjs` derives the status vocabulary from `scripts/compliance.mjs` and
+  `scripts/standards.mjs` independently of the adapter, and goes red on a new CLI status that was not
+  declared as well as on a declared status the CLI cannot produce. `result.passing` is pinned
+  separately, against the exit-code mapping rather than the vocabulary, because *what can be emitted*
+  and *what authorises proceeding* are different claims. This was not theoretical: FE-13 added
+  `UNIDENTIFIED_RELEASE` and `SELF_MAINTENANCE` after the enforcer's inventory was taken, so a status
+  list copied from any sibling pack would have been false on the day it shipped.
+- **R1 — a release whose labels agree and whose bytes differ cannot obtain a verdict**
+  (`test/release-material-binding.test.mjs`), asserted against an immutable release the test
+  constructs rather than borrows.
+- **R2 — release certification** (`ci/certify-release.mjs`), run once during the ceremony against the
+  signed tag while it is still unpublished, emitting the evidence block `docs/release-signing.md`
+  step 5b requires. It never holds a key.
+- **R2 has its own guards** (`test/release-certification.test.mjs`). Independent review found that a
+  run whose `origin` could not be queried recorded the tag as `unknown` and then printed **R2 PASSED**
+  and exited 0 — authorising a push without establishing the unpublished precondition R2 exists to
+  check, and capable of certifying an already-public tag. Unavailable evidence is not confirming
+  evidence; the script applied that rule to a missing trust anchor one check later and not here. Now
+  three-valued, and the fixture signs its own tag so the remote is the only variable and the case
+  cannot pass for the wrong reason.
 
 ### Changed
+
+- **FE-13's fourth falsifier is retired, on evidence** (ADR 0012). It could never pass: its fixture
+  checks out `v1.0.0` and executes *that* evaluator, which predates the release-identity mechanism and
+  by ADR 0008 can never contain it — so the completion rule written on 2026-08-16 named a condition no
+  release could reach. Worse, where `git clone --local` cannot hardlink across volumes its fallback
+  copied the working tree without `.git` and it passed without exercising either half of its subject,
+  which `todo` hid. It is preserved byte for byte at `test/retired/fe-13-falsifier-4.retired.mjs`,
+  digest-pinned and out of the test command, and its subject is now covered by R1 and R2. ADR 0012
+  records the rule this is permitted under: **a falsifier may be retired only on evidence that its
+  fixture cannot express its subject, never because it is merely red.**
+- The suite runs 297 tests with **no `todo`** for the first time.
 
 - **A pull request body no longer keeps asserting the first commit it was verified against**
   (ST-13). `ci/submit-pr.*` wrote the local-CI evidence block when it created a request and never
