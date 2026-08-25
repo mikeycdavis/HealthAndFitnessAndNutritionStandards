@@ -30,13 +30,22 @@
  *   mutation                                                          committed alias falsifier
  *   ----------------------------------------------------------------- --------- ----- ----------
  *   MB1  `done: "COMPLETE"` removed from STATUS_ALIASES                red       red   ok
- *   MB2  leaf progress counts every item, not only leaves              red       ok    ok
- *   MB3  `--check` returns 0 unconditionally                           red       ok    red
- *   MB4  status table omits any status with a zero count               ok        ok    ok   <- survived
+ *   MB2  leaf progress counts items twice, not once                    red       red   red
+ *   MB3  `--check` reports staleness but never exits 1                 ok        ok    red
+ *   MB4  the Total row sums the rendered rows instead of counting      ok        ok    ok   <- survived
+ *        the items
  *
- * MB4 SURVIVED and is recorded rather than papered over: this backlog currently has no status with
- * a zero count, so no assertion here can see the difference. Writing a fixture solely to redden that
- * row would be testing the fixture. The row is left as observed.
+ * MB2 WAS PREDICTED red/ok/ok AND CAME BACK red/red/red. The prediction is left visible rather than
+ * quietly corrected: it was wrong because the mutation is coarser than the property it was aimed at,
+ * and every fixture here has completed leaves, so all three see it. Recorded as observed.
+ *
+ * MB4 SURVIVED, and the reason matters more than a green row would have. `items.length` and the sum
+ * of the rendered status rows are equal by construction — the table skips only zero-count statuses,
+ * so nothing is ever dropped from the sum. No assertion can separate the two expressions, because
+ * this code path cannot produce the discrepancy. The hand-maintained tracker's 38-against-39 was a
+ * human miscount of a table nobody derived, which is precisely the failure the generator retires
+ * rather than one it could reintroduce. Left in place, and not papered over with a fixture written
+ * to redden the row.
  */
 
 import { test } from "node:test";

@@ -35,6 +35,15 @@ Nothing here changes it again: the adapter is a new file, not a new field in the
   as blocked since 2026-08-09 for one reason — *"no tag, `1.0.0-dev`"* — and `v1.0.0` removed it, but
   no declaration existed to read. `1.0.0` rather than `1.1.0`: the `{policy}` placeholder exists for
   packs that do not read the policy from the target, and this one does.
+- **The backlog tracker is generated rather than asserted to be.**
+  `artifacts/backlog/README.md` has carried "GENERATED FILE - do not edit by hand" since
+  2026-08-09 with no generator in the repository, and drifted four ways while it said so: the
+  headline read 12 of 25 (48%) against items giving 13 of 26 (50%), the status table summed to 38
+  across 39 items, the story count omitted ST-14, and FE-17 rendered as active over DEFERRED
+  frontmatter. `scripts/backlog.mjs` (`npm run backlog`, `npm run backlog:check`) derives the page
+  from item frontmatter, and `test/backlog-tracker.test.mjs` fails when the committed tracker is not
+  what the items derive. The legacy `DONE` status alias is normalised in one documented place and
+  tested explicitly, because dropping it is how the arithmetic broke.
 - **The declaration is pinned to the CLI in both directions** (ST-14).
   `test/adapter-contract.test.mjs` derives the status vocabulary from `scripts/compliance.mjs` and
   `scripts/standards.mjs` independently of the adapter, and goes red on a new CLI status that was not
