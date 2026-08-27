@@ -59,7 +59,17 @@ test("every stage in the pipeline is an npm script that exists", async () => {
 });
 
 test("the wrappers invoke the pipeline and do not restate it", async () => {
-  for (const rel of ["ci/ci.sh", "ci/ci.ps1", "ci/submit-pr.sh", "ci/submit-pr.ps1", "compose.ci.yml"]) {
+  for (const rel of [
+    "ci/ci.sh",
+    "ci/ci.ps1",
+    "ci/submit-pr.sh",
+    "ci/submit-pr.ps1",
+    "compose.ci.yml",
+    // ST-11 added the workflow to this list. It was already a wrapper in fact — it has invoked
+    // ci/run-checks.sh since the stage list moved out of it — but nothing asserted that it stayed
+    // one, and a matrix is exactly the edit that tempts a job into carrying its own steps.
+    ".github/workflows/ci.yml",
+  ]) {
     const text = await read(rel);
     const executable = text.split("\n").filter((l) => !/^\s*(#|<#|\.|[A-Z]{2,}|\s*$)/.test(l)).join("\n");
     for (const stage of ["npm run inventory", "npm run rules", "npm run fidelity", "npm run diagrams"]) {
@@ -75,6 +85,126 @@ test("--list reports exactly the stages the pipeline defines", () => {
     r.stdout.trim().split(/\r?\n/),
     ["inventory", "rules", "fidelity", "policy", "diagrams", "tests", "audit", "maintain"],
   );
+});
+
+// ---------------------------------------------------------------------------------------------
+// The hosted matrix covers the declared Node range (ST-11)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * THE FAILURE CLASS THIS EXISTS TO PREVENT: a Node version this package declares it supports, on
+ * which the pipeline cannot actually execute, and which no CI run would ever have contradicted.
+ *
+ * That is not hypothetical here. `npm test` was `node --test "test/*.test.mjs"` for the entire life
+ * of the repository. Glob expansion inside `--test` arrived in Node 21. On the maintainer's Node 24
+ * the suite ran; on the single Node 20 the workflow pinned, and on every other version inside the
+ * declared `engines: >=18` range, it matched a literal path, found nothing and exited 1 — so the
+ * suite had never once executed on the enforcement surface.
+ *
+ * The guard in test/guards.test.mjs closes that specific hole: no glob in the test command, and every
+ * test file on disk named in it. This closes the class. A version cannot be declared supported and
+ * left unexercised, because the matrix is derived from the declared floor rather than chosen.
+ *
+ * WHY THE LIST IS CHECKED RATHER THAN GENERATED. `engines` says `>=18`, which is open-ended, and a
+ * workflow cannot enumerate versions that do not exist yet. So the workflow names the list and this
+ * test asserts the two agree: the floor is exercised, nothing below the floor is, and there is no
+ * gap in between. Adding a new major stays a deliberate edit to a file a human reads; silently
+ * dropping one does not stay silent.
+ */
+
+/** The `node-version` list the hosted workflow actually runs, in file order. */
+function workflowMatrix(workflow) {
+  const jobsSection = workflow.slice(workflow.search(/^jobs:$/m));
+  const declared = jobsSection
+    .split("\n")
+    .filter((line) => !/^\s*#/.test(line))
+    .join("\n")
+    .match(/^\s*node-version:\s*\[([^\]]*)\]/m);
+  assert.ok(declared, "the workflow declares no node-version matrix");
+  return declared[1]
+    .split(",")
+    .map((entry) => entry.trim().replace(/^["']|["']$/g, ""))
+    .filter(Boolean)
+    .map(Number);
+}
+
+test("the hosted matrix exercises every declared-supported Node major", async () => {
+  const workflow = await read(".github/workflows/ci.yml");
+  const pkg = JSON.parse(await read("package.json"));
+
+  const floor = Number(pkg.engines.node.match(/^>=\s*(\d+)$/)?.[1]);
+  assert.ok(Number.isInteger(floor), `engines.node is '${pkg.engines.node}'; this guard reads a >=N floor`);
+
+  const matrix = workflowMatrix(workflow);
+  assert.ok(matrix.length > 1, "a single-version matrix is the pinned job this item exists to replace");
+
+  // The floor is the version most likely to break and least likely to be run by hand: the
+  // maintainer's machine is always the newest one.
+  assert.ok(matrix.includes(floor), `engines declares >=${floor}, and the matrix never runs ${floor}`);
+
+  for (const version of matrix) {
+    assert.ok(version >= floor, `the matrix runs Node ${version}, below the declared floor of ${floor}`);
+  }
+
+  // Contiguous even majors from the floor. Odd majors are never long-term supported, so the even
+  // series is the whole of the declared range that a consumer could reasonably be on — and a
+  // contiguity assertion is what makes removing a middle version fail rather than merely shrink the
+  // matrix.
+  const expected = [];
+  for (let v = floor; v <= Math.max(...matrix); v += 2) expected.push(v);
+  assert.deepEqual(
+    [...matrix].sort((a, b) => a - b),
+    expected,
+    "the matrix skips a supported major; every even major from the floor upward must be exercised",
+  );
+});
+
+test("every matrix job runs the shared pipeline on the version the matrix selected", async () => {
+  const workflow = await read(".github/workflows/ci.yml");
+
+  // EVERY ASSERTION BELOW READS THE JOBS SECTION, NOT THE FILE. The header comment on ci.yml
+  // discusses `fetch-depth: 0` and names ci/run-checks.sh in prose, so a whole-file match confirms
+  // the workflow *mentions* what it should *do*. The mutation pass caught this: turning the real
+  // checkout shallow left every assertion green, because the comment above it still said the right
+  // words. Use is not mention, which is a defect class this repository already keeps a fixture for.
+  const jobsSection = workflow.slice(workflow.search(/^jobs:$/m));
+  const steps = jobsSection.split("\n").filter((line) => !/^\s*#/.test(line)).join("\n");
+
+  // One job, parameterised — not one job per version, which is how a matrix turns back into copies
+  // that drift.
+  const jobs = [...jobsSection.matchAll(/^ {2}([a-z][a-z0-9-]*):$/gm)].map((m) => m[1]);
+  assert.deepEqual(jobs, ["verify"], "one parameterised job; a job per version is a copied pipeline");
+
+  assert.match(
+    steps,
+    /node-version:\s*\$\{\{\s*matrix\.node-version\s*\}\}/,
+    "setup-node pins a literal, so the matrix would run the same version four times",
+  );
+
+  assert.match(steps, /run:\s*bash ci\/run-checks\.sh/, "the job must invoke the one authoritative pipeline");
+
+  // fail-fast cancels the remaining versions the moment one fails, which is precisely the
+  // information this matrix exists to collect: WHICH versions differ, not merely that one did.
+  assert.match(steps, /fail-fast:\s*false/, "fail-fast hides which other versions would have failed");
+
+  // The identity checks need history and tags; a shallow checkout makes them fail closed and assert
+  // less than the local container. That is asserted once here so the matrix cannot lose it.
+  assert.match(steps, /fetch-depth:\s*0/, "release identity cannot be established without tags");
+});
+
+test("the workflow's actions are off the versions that emit a runtime deprecation", async () => {
+  const workflow = await read(".github/workflows/ci.yml");
+  const jobsSection = workflow.slice(workflow.search(/^jobs:$/m));
+  const steps = jobsSection.split("\n").filter((line) => !/^\s*#/.test(line)).join("\n");
+  const uses = [...steps.matchAll(/uses:\s*(actions\/[a-z-]+)@v(\d+)/g)];
+  assert.ok(uses.length >= 2, "expected checkout and setup-node");
+
+  for (const [, action, major] of uses) {
+    assert.ok(
+      Number(major) >= 5,
+      `${action}@v${major} runs on the deprecated Node 20 action runtime; ST-11 moves both to v5`,
+    );
+  }
 });
 
 /**

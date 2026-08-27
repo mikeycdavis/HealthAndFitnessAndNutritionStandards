@@ -13,6 +13,35 @@ because it can make a compliant project non-compliant — that is the intended b
 regression. A new recommendation is **minor**. Documentation, detector fixes, and clarifications that
 do not change what a rule means are **patch**.
 
+## Unreleased
+
+**No standard, rule, or prohibition changed**, and nothing an adopter is evaluated on moved. The
+corpus is still 42 standards, 59 rules, 34 prohibitions and the integrity invariant. `VERSION` and
+the output `schemaVersion` are untouched, because neither what a rule means nor what the tooling
+emits has changed.
+
+### Changed
+
+- **Hosted CI runs the whole declared Node range** (ST-11). `engines` says `>=18`; the workflow ran
+  one pinned version, so everything between the two was asserted rather than demonstrated. The
+  `verify` job is now a `fail-fast: false` matrix over Node 18, 20, 22, 24 and 26 — contiguous even
+  majors from the declared floor — and `actions/checkout` and `actions/setup-node` move to `v5`,
+  which also retires the Node 20 action-runtime deprecation warning on every run.
+
+  That gap was not theoretical. `npm test` was `node --test "test/*.test.mjs"` for the whole life of
+  the repository; glob expansion inside `--test` arrived in Node 21, so on the pinned Node 20 — and
+  on every other version in the declared range — the suite matched a literal path, found nothing and
+  exited 1. It ran only on the maintainer's Node 24. `test/guards.test.mjs` closed that specific
+  hole; the matrix closes the class.
+
+  The job stays a single parameterised job invoking `ci/run-checks.sh`, so there is still exactly one
+  definition of what CI passing means. `test/local-ci.test.mjs` now asserts that the matrix contains
+  the declared floor, skips no major in between, selects the version through `matrix.node-version`
+  rather than a literal, keeps `fail-fast` off and the checkout unshallow, and that the workflow does
+  not restate a pipeline stage. Those assertions read the `jobs:` section with comments stripped: the
+  first draft matched the file as a whole and a shallow checkout passed it, because the explanatory
+  comment above the step still contained the words `fetch-depth: 0`.
+
 ## 1.1.0 — released 2026-08-26
 
 **No standard, rule, or prohibition changed. The corpus is identical to 1.0.0** — still 42 standards,
