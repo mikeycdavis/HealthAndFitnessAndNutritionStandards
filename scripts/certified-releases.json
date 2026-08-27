@@ -6,7 +6,19 @@
       "tag": "v1.0.0",
       "commit": "570c45b742204841821e5a2ba4dbc38e6069bdc0",
       "annotated": true,
-      "$note": "The 1.0.0 release. Certified against 9809afc by an independent pass recorded in artifacts/release-review/. It predates the FE-13 release-identity mechanism and cannot claim it (ADR 0008)."
+      "$note": "The 1.0.0 release. Certified against 9809afc by an independent pass recorded in artifacts/release-review/. It predates the FE-13 release-identity mechanism and cannot claim it (ADR 0008).",
+      "signed": false,
+      "$signingNote": "Unsigned. It predates the SSH release-signing regime (ADR 0010) and cannot acquire it retroactively (ADR 0008). Recorded as a fact about the release rather than left absent, so that a consumer reads \"not signed under this regime\" instead of inferring either unsigned-therefore-fine or unsigned-therefore-broken."
+    },
+    "1.1.0": {
+      "tag": "v1.1.0",
+      "commit": "91c870087c32d8b728249aa91cc1659b7eadf979",
+      "annotated": true,
+      "signed": true,
+      "signingRegime": "ssh-ed25519",
+      "tagObject": "6c8d8935d2fbe842c09569f4530fd0c16dc91446",
+      "signerFingerprint": "SHA256:ZIKVolJl/xr0Z8lNvxjUDh0EvG+XUS1D0v+OCqRf26k",
+      "$note": "The first release signed under the regime ADR 0010 established. Certified before publication by ci/certify-release.mjs (R2) against the tag while it was still unpushed; the evidence block is in artifacts/evidence/2026-08-26-v1.1.0-release-ceremony.md. The signer fingerprint is recorded so a reader can check which identity authorised this release without consulting the trust store, but it is NOT the trust anchor: the authoritative public key lives in the operator trust store outside every pack (ADR 0013), and a fingerprint copied into the pack could be replaced by a fork along with everything else."
     }
   }
 }

@@ -13,16 +13,19 @@ because it can make a compliant project non-compliant — that is the intended b
 regression. A new recommendation is **minor**. Documentation, detector fixes, and clarifications that
 do not change what a rule means are **patch**.
 
-## 1.1.0 — prepared, not yet released
+## 1.1.0 — released 2026-08-26
 
 **No standard, rule, or prohibition changed. The corpus is identical to 1.0.0** — still 42 standards,
 59 rules, 34 prohibitions and the integrity invariant. What moved is integration capability and
 release authenticity machinery, which is a **minor** change under the policy above: nothing here can
 make a compliant project non-compliant.
 
-The version is set in `VERSION`, `package.json` and this repository's own policy because the release
-candidate is 1.1.0. **The tag does not exist until the custodian signs it** (`docs/release-signing.md`),
-and nothing in this repository may claim otherwise before then.
+**Released 2026-08-26**, and the first release signed under the regime ADR 0010 established: tag
+object `6c8d8935d2fbe842c09569f4530fd0c16dc91446` over release commit
+`91c870087c32d8b728249aa91cc1659b7eadf979`, certified by R2 while still unpublished and pushed only
+afterwards. The trust anchor is the operator store outside every pack ([ADR 0013](artifacts/adr/0013-the-trust-anchor-lives-in-an-operator-store-outside-every-pack.md)),
+and the full ceremony record — including the blocker that held it and a near-miss during setup — is in
+[`artifacts/evidence/2026-08-26-v1.1.0-release-ceremony.md`](artifacts/evidence/2026-08-26-v1.1.0-release-ceremony.md).
 
 The output schema version stays at `1.1`, moved earlier in this cycle when the output format changed.
 Nothing here changes it again: the adapter is a new file, not a new field in the envelope.
@@ -77,7 +80,7 @@ Nothing here changes it again: the adapter is a new file, not a new field in the
   digest-pinned and out of the test command, and its subject is now covered by R1 and R2. ADR 0012
   records the rule this is permitted under: **a falsifier may be retired only on evidence that its
   fixture cannot express its subject, never because it is merely red.**
-- The suite runs 297 tests with **no `todo`** for the first time.
+- The suite runs 300 tests with **no `todo`** for the first time.
 
 - **A pull request body no longer keeps asserting the first commit it was verified against**
   (ST-13). `ci/submit-pr.*` wrote the local-CI evidence block when it created a request and never
