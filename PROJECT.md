@@ -109,14 +109,15 @@ only exit 0 — the transitional `|| [ $? -eq 4 ]` allowance is gone.
 
 ## Current state
 
-**Complete for 1.0.0; 1.1.0 is prepared and unpublished.** All 42 standards written, 59 rules
-catalogued, the CLI implemented with five subcommands, 297 tests passing, all guards green.
+**Released: 1.0.0 and 1.1.0.** All 42 standards written, 59 rules catalogued, the CLI implemented
+with five subcommands, 300 tests passing, all guards green.
 
 The standards corpus is unchanged since 1.0.0 — the same 42 standards, 59 rules and 34 prohibitions.
-What 1.1.0 adds is integration and release-authenticity machinery: the adapter contract this pack
-publishes for StandardsEnforcer, and the release-identity guarantees FE-13 and ST-12 built. **The
-`v1.1.0` tag does not exist until the custodian signs it** (`docs/release-signing.md`), and no
-statement here anticipates that act.
+What 1.1.0 added is integration and release-authenticity machinery: the adapter contract this pack
+publishes for StandardsEnforcer, and the release-identity guarantees FE-13 and ST-12 built. **`v1.1.0`
+is the first release signed under the regime** — tag object `6c8d8935d2fbe842c09569f4530fd0c16dc91446`
+over commit `91c870087c32d8b728249aa91cc1659b7eadf979`, certified by R2 before publication. `v1.0.0`
+remains unsigned and cannot acquire a signature retroactively (ADR 0008).
 
 **Known gaps**, stated rather than left to be discovered:
 
