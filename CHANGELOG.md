@@ -80,7 +80,7 @@ Nothing here changes it again: the adapter is a new file, not a new field in the
   digest-pinned and out of the test command, and its subject is now covered by R1 and R2. ADR 0012
   records the rule this is permitted under: **a falsifier may be retired only on evidence that its
   fixture cannot express its subject, never because it is merely red.**
-- The suite runs 297 tests with **no `todo`** for the first time.
+- The suite runs 300 tests with **no `todo`** for the first time.
 
 - **A pull request body no longer keeps asserting the first commit it was verified against**
   (ST-13). `ci/submit-pr.*` wrote the local-CI evidence block when it created a request and never

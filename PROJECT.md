@@ -73,7 +73,7 @@ npm run rules       # has a rule been dropped, downgraded, or reclassified?
 npm run fidelity    # is quoted source text still the source's?
 npm run policy      # is this repository's own policy well-formed?
 npm run diagrams    # does each embedded diagram match its Mermaid source?
-npm test            # 297 tests, including a mutation test per guard
+npm test            # 300 tests, including a mutation test per guard
 npm run audit       # evidence, not a verdict
 npm run check       # the verdict; the CI gate
 ```
