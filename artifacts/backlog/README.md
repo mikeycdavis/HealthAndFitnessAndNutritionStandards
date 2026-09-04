@@ -15,8 +15,7 @@ Work on this project classified with the Extended Agile Hierarchy. Every item is
 
 | Status | Items |
 | --- | ---: |
-| ◔ Ready | 1 |
-| ◑ In progress | 6 |
+| ◑ In progress | 7 |
 | ● Complete | 21 |
 | ◌ Deferred | 12 |
 | **Total** | **40** |
@@ -45,11 +44,12 @@ Work on this project classified with the Extended Agile Hierarchy. Every item is
 - ◑ [FE-17](./items/FE-17.md) — Documentation and tooling gaps deferred from the build
 - ◑ [IN-02](./items/IN-02.md) — Adherence enforced rather than remembered
 - ◑ [IN-03](./items/IN-03.md) — Standards content and documentation refinement
+- ◑ [ST-15](./items/ST-15.md) — submit-pr.sh hands gh.exe a path it cannot open on Windows
 - ◑ [TH-01](./items/TH-01.md) — Trustworthy health, fitness, and nutrition guidance
 
 ## Ready to pick up
 
-- ◔ [ST-15](./items/ST-15.md) — submit-pr.sh hands gh.exe a path it cannot open on Windows
+_Nothing marked ready._
 
 ## Everything
 
@@ -92,5 +92,5 @@ Work on this project classified with the Extended Agile Hierarchy. Every item is
         - ◌ **[ST-10](./items/ST-10.md)** The allergen check
         - ● **[ST-11](./items/ST-11.md)** CI exercises the whole declared Node range
         - ● **[ST-13](./items/ST-13.md)** A pull request body keeps asserting the first commit it was verified against
-        - ◔ **[ST-15](./items/ST-15.md)** submit-pr.sh hands gh.exe a path it cannot open on Windows
+        - ◑ **[ST-15](./items/ST-15.md)** submit-pr.sh hands gh.exe a path it cannot open on Windows
 

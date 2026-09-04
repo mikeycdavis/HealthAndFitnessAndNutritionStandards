@@ -152,6 +152,25 @@ git branch --set-upstream-to="origin/${branch}" "$branch" >/dev/null 2>&1 || tru
 stages="$(sed -n 's/.*"name"[[:space:]]*:[[:space:]]*"\([a-z-]*\)".*/\1/p' "$evidence" | paste -sd ',' - | sed 's/,/, /g')"
 verified_at="$(sed -n 's/.*"completedAt"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$evidence" | head -1)"
 
+# The path form handed to `gh`, which is a native Windows binary under Git Bash (ST-15).
+#
+# `mktemp` here is an MSYS program and answers with an MSYS path: /tmp/tmp.XXXXXX. MSYS normally
+# rewrites an argument like that into a Windows path on its way to a native binary, which is why this
+# worked for a long time. That rewriting is off whenever MSYS_NO_PATHCONV=1 is set — and this
+# repository requires it set, because the same rewriting mangles the Docker bind mount in ci/ci.sh.
+# So an operator who ran the container gate has it exported, submit-pr.sh inherits it, and gh.exe
+# resolves /tmp against the filesystem root, where nothing is:
+#
+#   open /tmp/tmp.HuZvjSAzt5: The system cannot find the file specified.
+#
+# It fails AFTER the push, so the result is a pushed branch and no pull request. Converting here does
+# not depend on that variable in either direction: the path is made native explicitly, so the CLI
+# gets a form it can open whether MSYS is rewriting arguments or not. Elsewhere there is no cygpath
+# and no conversion to make, and the absolute path is already the native one.
+native_path() {
+  if command -v cygpath >/dev/null 2>&1; then cygpath -w "$1"; else printf %s "$1"; fi
+}
+
 body_file="$(mktemp)"
 trap 'rm -f "$body_file"' EXIT
 if ! printf '%s\n' "$body" | node "$(dirname "$0")/pr-evidence.mjs" "$sha_after" "$stages" "$verified_at" > "$body_file"; then
@@ -208,7 +227,7 @@ if [ -n "$existing" ]; then
   fi
 
   if printf '%s' "$current_body" | node "$(dirname "$0")/pr-evidence.mjs" "$sha_after" "$stages" "$verified_at" > "$updated_body" 2>"$refusal"; then
-    if "$gh_command" pr edit "$branch" --body-file "$updated_body" >/dev/null 2>&1; then
+    if "$gh_command" pr edit "$branch" --body-file "$(native_path "$updated_body")" >/dev/null 2>&1; then
       printf '\nThe evidence block was updated to this commit. The description above it was not touched.\n'
     else
       printf '\nThe evidence block could not be written to GitHub. The body still names an earlier commit.\n'
@@ -225,7 +244,7 @@ if [ -n "$existing" ]; then
   exit 0
 fi
 
-args=(pr create --base "$base" --head "$branch" --title "$title" --body-file "$body_file")
+args=(pr create --base "$base" --head "$branch" --title "$title" --body-file "$(native_path "$body_file")")
 if [ "$draft" -eq 1 ]; then args+=(--draft); fi
 
 "$gh_command" "${args[@]}"

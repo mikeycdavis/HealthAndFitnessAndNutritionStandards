@@ -45,6 +45,26 @@ emits has changed.
   first draft matched the file as a whole and a shallow checkout passed it, because the explanatory
   comment above the step still contained the words `fetch-depth: 0`.
 
+### Fixed
+
+- **The submission wrapper handed `gh` a path it could not open** (ST-15). On Windows, `mktemp` in
+  `ci/submit-pr.sh` answers with an MSYS path (`/tmp/tmp.XXXXXX`). MSYS normally rewrites such an
+  argument into a Windows path on its way to a native binary, but that rewriting is off whenever
+  `MSYS_NO_PATHCONV=1` is set — which this repository requires, because the same rewriting mangles the
+  Docker bind mount in `ci/ci.sh`. So an operator who ran the container gate had it exported, and
+  `gh.exe` resolved `/tmp` against the filesystem root: `open /tmp/tmp.HuZvjSAzt5: The system cannot
+  find the file specified.`
+
+  The failure lands *after* the push, so the result was a pushed branch, no pull request, and exit 0.
+  `native_path()` now converts with `cygpath -w` where cygpath exists and is the identity elsewhere,
+  at both `--body-file` call sites. The conversion is explicit, so it does not depend on whether MSYS
+  is rewriting arguments.
+
+  The seams already existed and the defect still shipped: the `gh` stub the other tests use reads the
+  body with `cp`, an MSYS program that resolves `/tmp` perfectly. A stub more capable than the tool it
+  stands in for will certify that tool's defects. The two new tests hand the path to `node.exe`, a
+  native binary, and set `MSYS_NO_PATHCONV=1` to reproduce the operator's environment.
+
 ## 1.1.0 — released 2026-08-26
 
 **No standard, rule, or prohibition changed. The corpus is identical to 1.0.0** — still 42 standards,
