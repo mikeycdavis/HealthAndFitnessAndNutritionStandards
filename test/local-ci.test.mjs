@@ -102,8 +102,10 @@ test("--list reports exactly the stages the pipeline defines", () => {
  * suite had never once executed on the enforcement surface.
  *
  * The guard in test/guards.test.mjs closes that specific hole: no glob in the test command, and every
- * test file on disk named in it. This closes the class. A version cannot be declared supported and
- * left unexercised, because the matrix is derived from the declared floor rather than chosen.
+ * test file on disk named in it. The matrix closes the enforcement gap for the even majors: every
+ * even major from the declared floor upward is exercised, with no gap, so none of them can be
+ * declared supported and left untested. The odd majors inside `>=18` (21, 23, 25) exist and are
+ * deliberately not exercised; the declared range is therefore covered by exemplar, not exhaustively.
  *
  * WHY THE LIST IS CHECKED RATHER THAN GENERATED. `engines` says `>=18`, which is open-ended, and a
  * workflow cannot enumerate versions that do not exist yet. So the workflow names the list and this
@@ -178,7 +180,7 @@ test("every matrix job runs the shared pipeline on the version the matrix select
   assert.match(
     steps,
     /node-version:\s*\$\{\{\s*matrix\.node-version\s*\}\}/,
-    "setup-node pins a literal, so the matrix would run the same version four times",
+    "setup-node pins a literal, so the matrix would run the same version five times",
   );
 
   assert.match(steps, /run:\s*bash ci\/run-checks\.sh/, "the job must invoke the one authoritative pipeline");
