@@ -32,7 +32,10 @@ emits has changed.
   the repository; glob expansion inside `--test` arrived in Node 21, so on the pinned Node 20 — and
   on every other version in the declared range — the suite matched a literal path, found nothing and
   exited 1. It ran only on the maintainer's Node 24. `test/guards.test.mjs` closed that specific
-  hole; the matrix closes the class.
+  hole; the matrix closes the class for the even majors. It does not exercise the odd majors inside
+  `>=18` — 21, 23 and 25 exist and are not run — so the declared range is covered by exemplar rather
+  than exhaustively, and nothing detects a new major appearing: `>=18` is open-ended and a workflow
+  cannot name a version that does not exist yet, so adding one stays a deliberate edit.
 
   The job stays a single parameterised job invoking `ci/run-checks.sh`, so there is still exactly one
   definition of what CI passing means. `test/local-ci.test.mjs` now asserts that the matrix contains
