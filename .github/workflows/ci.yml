@@ -37,15 +37,40 @@ on:
 jobs:
   verify:
     runs-on: ubuntu-latest
+
+    # ST-11. `engines` says `>=18`; this job ran one version, so everything between the two was
+    # asserted rather than demonstrated. That gap was not theoretical: `npm test` was
+    # `node --test "test/*.test.mjs"`, glob expansion inside `--test` arrived in Node 21, and the
+    # suite therefore found nothing and exited 1 on every version in the declared range including the
+    # 20 pinned here. It ran only on the maintainer's Node 24, which is the one machine no gate
+    # consults.
+    #
+    # The list is contiguous even majors from the declared floor. Odd majors never reach long-term
+    # support, so the even series is the whole of `>=18` a consumer could reasonably be on;
+    # test/local-ci.test.mjs asserts the floor is present and that no major in between is skipped, so
+    # shrinking this list fails the suite rather than quietly narrowing what is demonstrated.
+    #
+    # Adding a major stays a deliberate edit here, because `>=18` is open-ended and a workflow cannot
+    # enumerate versions that do not exist yet.
+    strategy:
+      # NOT fail-fast. The question this matrix answers is *which* versions differ, and cancelling
+      # the survivors on the first failure destroys exactly that answer — leaving the same
+      # single-version evidence the matrix was added to replace.
+      fail-fast: false
+      matrix:
+        node-version: ["18", "20", "22", "24", "26"]
+
+    name: verify (Node ${{ matrix.node-version }})
+
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           # Full history and tags. FE-13: an identity check that depends on Git history must run
           # against a checkout that actually contains it.
           fetch-depth: 0
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
-          node-version: "20"
+          node-version: ${{ matrix.node-version }}
 
       # The whole pipeline, in the order ci/run-checks.sh defines: the guards before the tests,
       # `audit` for evidence, and `check` as the gate.

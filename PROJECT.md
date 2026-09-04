@@ -73,7 +73,7 @@ npm run rules       # has a rule been dropped, downgraded, or reclassified?
 npm run fidelity    # is quoted source text still the source's?
 npm run policy      # is this repository's own policy well-formed?
 npm run diagrams    # does each embedded diagram match its Mermaid source?
-npm test            # 300 tests, including a mutation test per guard
+npm test            # 303 tests, including a mutation test per guard
 npm run audit       # evidence, not a verdict
 npm run check       # the verdict; the CI gate
 ```
@@ -110,7 +110,7 @@ only exit 0 — the transitional `|| [ $? -eq 4 ]` allowance is gone.
 ## Current state
 
 **Released: 1.0.0 and 1.1.0.** All 42 standards written, 59 rules catalogued, the CLI implemented
-with five subcommands, 300 tests passing, all guards green.
+with five subcommands, 303 tests passing, all guards green.
 
 The standards corpus is unchanged since 1.0.0 — the same 42 standards, 59 rules and 34 prohibitions.
 What 1.1.0 added is integration and release-authenticity machinery: the adapter contract this pack

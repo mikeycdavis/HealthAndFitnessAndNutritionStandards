@@ -15,9 +15,9 @@ Work on this project classified with the Extended Agile Hierarchy. Every item is
 
 | Status | Items |
 | --- | ---: |
-| ◑ In progress | 3 |
+| ◑ In progress | 7 |
 | ● Complete | 20 |
-| ◌ Deferred | 16 |
+| ◌ Deferred | 12 |
 | **Total** | **39** |
 
 ## The hierarchy
@@ -40,7 +40,11 @@ Work on this project classified with the Extended Agile Hierarchy. Every item is
 ## In flight
 
 - ◑ [EP-03](./items/EP-03.md) — Post-1.0 adoption and enforcement workstream
+- ◑ [EP-04](./items/EP-04.md) — Deferred content and documentation improvements
+- ◑ [FE-17](./items/FE-17.md) — Documentation and tooling gaps deferred from the build
 - ◑ [IN-02](./items/IN-02.md) — Adherence enforced rather than remembered
+- ◑ [IN-03](./items/IN-03.md) — Standards content and documentation refinement
+- ◑ [ST-11](./items/ST-11.md) — CI exercises the whole declared Node range
 - ◑ [TH-01](./items/TH-01.md) — Trustworthy health, fitness, and nutrition guidance
 
 ## Ready to pick up
@@ -78,14 +82,14 @@ _Nothing marked ready._
         - ● **[ST-14](./items/ST-14.md)** Publish the adapter contract, and pin it to what check actually emits
       - ◌ **[FE-14](./items/FE-14.md)** Idempotent, non-authoritative bootstrap for adopters
       - ◌ **[FE-15](./items/FE-15.md)** Adoption testing prioritises actionable surfaces
-  - ◌ **[IN-03](./items/IN-03.md)** Standards content and documentation refinement _(1/6)_
-    - ◌ **[EP-04](./items/EP-04.md)** Deferred content and documentation improvements _(1/6)_
+  - ◑ **[IN-03](./items/IN-03.md)** Standards content and documentation refinement _(1/6)_
+    - ◑ **[EP-04](./items/EP-04.md)** Deferred content and documentation improvements _(1/6)_
       - ◌ **[FE-16](./items/FE-16.md)** Wording improvements deferred from the 1.0.0 review _(0/2)_
         - ◌ **[ST-07](./items/ST-07.md)** Standard 2 R2 — "establishes" carries two meanings
         - ◌ **[ST-08](./items/ST-08.md)** Observation cadence and decision cadence are separate choices
-      - ◌ **[FE-17](./items/FE-17.md)** Documentation and tooling gaps deferred from the build _(1/4)_
+      - ◑ **[FE-17](./items/FE-17.md)** Documentation and tooling gaps deferred from the build _(1/4)_
         - ◌ **[ST-09](./items/ST-09.md)** A worked violating example for nutrition.no-single-food-disease-claims
         - ◌ **[ST-10](./items/ST-10.md)** The allergen check
-        - ◌ **[ST-11](./items/ST-11.md)** CI exercises the whole declared Node range
+        - ◑ **[ST-11](./items/ST-11.md)** CI exercises the whole declared Node range
         - ● **[ST-13](./items/ST-13.md)** A pull request body keeps asserting the first commit it was verified against
 
