@@ -1141,3 +1141,191 @@ test("submission refuses evidence that does not record a pass", async () => {
     await rm(s.dir, { recursive: true, force: true });
   }
 });
+
+// ---------------------------------------------------------------------------------------------
+// The path form handed to the GitHub CLI (ST-15)
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * THE FAILURE CLASS: the submission wrapper writes a file the GitHub CLI cannot open, and it does
+ * so AFTER the push. Both outcomes are silent, and they are not the same outcome:
+ *
+ *   - on `pr create`, the verified commit is on the remote and no pull request exists at all;
+ *   - on `pr edit`, a pull request already exists and KEEPS ITS PREVIOUS BODY, so its evidence
+ *     block still names an earlier commit. That is the worse of the two: a reviewer reads
+ *     provenance that is true of some other object, under a heading reading "Verified commit". It
+ *     is the defect ST-13 exists to prevent, arriving by a different route.
+ *
+ * Both exit 0.
+ *
+ * On Windows, `mktemp` runs under MSYS and returns `/tmp/tmp.XXXXXX`. That path exists only inside
+ * the MSYS filesystem mapping. `gh.exe` is a native Windows binary and resolves it against the
+ * filesystem root, where it is not:
+ *
+ *   $ f="$(mktemp)"; echo '{}' > "$f"                   # /tmp/tmp.CeQ3tQSfSo
+ *   $ gh api rate_limit --input "$f"                    # {"message": "Not Found", ...}
+ *   $ MSYS_NO_PATHCONV=1 gh api rate_limit --input "$f"
+ *   open /tmp/tmp.CeQ3tQSfSo: The system cannot find the file specified.
+ *   $ MSYS_NO_PATHCONV=1 gh api rate_limit --input "$(cygpath -w "$f")"
+ *   gh: Not Found (HTTP 404)                            # reached the API, so the file opened
+ *
+ * The first call SUCCEEDS, and the variable is why. MSYS rewrites a POSIX-looking argument into a
+ * Windows path on its way to a native binary; MSYS_NO_PATHCONV=1 turns that off. This repository
+ * requires it off, because the same rewriting mangles the Docker bind mount in ci/ci.sh — so it is
+ * exported in exactly the situation that runs this script, and submit-pr.sh inherits it.
+ *
+ * WHY THE SUITE ALREADY HAD SEAM COVERAGE HERE AND STILL MISSED IT. The `gh` stub the other tests
+ * use is a bash script, and it reads the body with `cp`. Under MSYS, `cp` is an MSYS program, so it
+ * resolves `/tmp` perfectly. The stub was more capable than the tool it stood in for, and a stub
+ * that can do something the real binary cannot will report success for a defect. So this test hands
+ * the path to a genuinely native program — `process.execPath`, the same `node.exe` running this
+ * suite — which fails on an MSYS path for precisely the reason `gh.exe` does.
+ *
+ * On Linux and macOS there is no MSYS mapping and no conversion to make, so the assertion holds
+ * trivially. That is the correct behaviour, not a hole: the test states the contract everywhere and
+ * only has something to catch where the contract can be broken.
+ */
+async function nativeGh(s) {
+  const reader = path.join(s.dir, "read-body.mjs");
+  await writeFile(
+    reader,
+    [
+      // No error handling on purpose: an unopenable path must throw and exit non-zero, which is
+      // what the real gh does with one.
+      'import { readFileSync, writeFileSync } from "node:fs";',
+      "const [, , target, out] = process.argv;",
+      "writeFileSync(out, readFileSync(target));",
+      "",
+    ].join("\n"),
+  );
+
+  // Outside the work tree on purpose: an untracked file in it is a dirty tree, and submit-pr.sh
+  // correctly refuses to verify one. That refusal is not weakened here, it is stepped around.
+  const gh = path.join(s.dir, "gh-native-stub.sh");
+  await writeFile(
+    gh,
+    [
+      "#!/usr/bin/env bash",
+      'if [ "$1" = "auth" ]; then exit 0; fi',
+      'if [ "$1" = "pr" ] && [ "$2" = "view" ]; then',
+      '  if [ -z "${GH_STUB_EXISTING_PR:-}" ]; then exit 1; fi',
+      '  case "$*" in',
+      '    *"--json body"*)',
+      '      if [ -n "${GH_STUB_EXISTING_BODY:-}" ]; then cat "$GH_STUB_EXISTING_BODY"; fi; exit 0 ;;',
+      "  esac",
+      '  printf "%s\n" "$GH_STUB_EXISTING_PR"; exit 0',
+      "fi",
+      "while [ $# -gt 0 ]; do",
+      '  printf "%s\n" "$1" >> "$GH_STUB_LOG"',
+      '  if [ "$1" = "--body-file" ]; then',
+      "    shift",
+      '    printf "body-file=%s\n" "$1" >> "$GH_STUB_LOG"',
+      // The whole point: the NATIVE binary opens it, not the shell.
+      '    "$GH_STUB_NODE" "$GH_STUB_READER" "$1" "$GH_STUB_BODY" || exit 7',
+      "  fi",
+      "  shift",
+      "done",
+      "exit 0",
+      "",
+    ].join("\n"),
+  );
+  await chmod(gh, 0o755);
+
+  return {
+    GH_COMMAND: forBash(gh),
+    GH_STUB_NODE: forBash(process.execPath),
+    GH_STUB_READER: forBash(reader),
+    // The condition that makes this reachable. MSYS normally rewrites a POSIX-looking argument to a
+    // Windows path on its way to a native binary, which hides the defect. MSYS_NO_PATHCONV=1 turns
+    // that off — and this repository requires it exported, because the Docker bind mount in
+    // ci/ci.sh is mangled by the same rewriting. An operator running the container gate therefore
+    // has it set, and submit-pr.sh inherits it. Elsewhere the variable means nothing.
+    MSYS_NO_PATHCONV: "1",
+  };
+}
+
+/** The path form submit-pr.sh actually handed to the CLI, as the stub recorded it. */
+const recordedBodyPath = (log) => log.match(/^body-file=(.*)$/m)?.[1];
+
+test("the PR body is written at a path the native GitHub CLI can open", async () => {
+  const s = await scratch();
+  try {
+    const sha = git(s.work, ["rev-parse", "HEAD"]);
+    const r = submit(s, { env: await nativeGh(s) });
+
+    // The push must still have happened — this defect is downstream of it, and a fix that
+    // prevented the push would be a worse bug than the one it replaced.
+    assert.equal(
+      spawnSync("git", ["-C", s.remote, "rev-parse", "refs/heads/feature/verified-submission"], { encoding: "utf8" })
+        .stdout.trim(),
+      sha,
+      "the verified commit must still be pushed",
+    );
+
+    const log = await readFile(path.join(s.dir, "gh-args.txt"), "utf8");
+    const handed = recordedBodyPath(log);
+    assert.ok(handed, "no --body-file was handed to the CLI at all");
+
+    // The assertion that fails before the fix: a native program opens what the wrapper handed it.
+    // If the read threw, the stub exited 7 and never wrote this file.
+    const body = await readFile(path.join(s.dir, "gh-body.md"), "utf8").catch(() => null);
+    assert.ok(
+      body !== null,
+      `the native CLI could not open the body file at ${handed}\n` +
+        `submit-pr.sh exited ${r.status}; that leaves a pushed branch and no pull request at all`,
+    );
+    assert.ok(body.includes(sha), "the body the CLI opened must name the verified commit");
+
+    // Naming the defect directly, where it can occur. An MSYS path is the specific form gh.exe
+    // cannot resolve; everywhere else the absolute path is already native.
+    if (process.platform === "win32") {
+      assert.ok(
+        !handed.startsWith("/"),
+        `the CLI was handed the MSYS path ${handed}; a native binary resolves that against the ` +
+          "filesystem root, where it does not exist",
+      );
+    }
+  } finally {
+    await rm(s.dir, { recursive: true, force: true });
+  }
+});
+
+test("the rewritten body of an existing PR is also written at a native path", async () => {
+  const s = await scratch();
+  try {
+    const sha = git(s.work, ["rev-parse", "HEAD"]);
+    const existing = path.join(s.dir, "existing-body.md");
+    await writeFile(existing, "Prose the developer wrote and expects to keep.\n");
+
+    const r = submit(s, {
+      env: {
+        ...(await nativeGh(s)),
+        GH_STUB_EXISTING_PR: "https://github.com/example/example/pull/1",
+        GH_STUB_EXISTING_BODY: forBash(existing),
+      },
+    });
+
+    const log = await readFile(path.join(s.dir, "gh-args.txt"), "utf8");
+    const handed = recordedBodyPath(log);
+    assert.ok(handed, "the update path handed no --body-file to the CLI");
+
+    const body = await readFile(path.join(s.dir, "gh-body.md"), "utf8").catch(() => null);
+    assert.ok(
+      body !== null,
+      `the native CLI could not open the rewritten body at ${handed}; submit-pr.sh exited ${r.status}.
+` +
+        "The pull request still exists and still carries its previous evidence block, naming an earlier commit.",
+    );
+    assert.ok(body.includes(sha), "the rewritten body must name the verified commit");
+    assert.ok(
+      body.startsWith("Prose the developer wrote and expects to keep."),
+      "the human's description must survive the rewrite",
+    );
+
+    if (process.platform === "win32") {
+      assert.ok(!handed.startsWith("/"), `the CLI was handed the MSYS path ${handed}`);
+    }
+  } finally {
+    await rm(s.dir, { recursive: true, force: true });
+  }
+});

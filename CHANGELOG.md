@@ -32,7 +32,10 @@ emits has changed.
   the repository; glob expansion inside `--test` arrived in Node 21, so on the pinned Node 20 — and
   on every other version in the declared range — the suite matched a literal path, found nothing and
   exited 1. It ran only on the maintainer's Node 24. `test/guards.test.mjs` closed that specific
-  hole; the matrix closes the class.
+  hole; the matrix closes the class for the even majors. It does not exercise the odd majors inside
+  `>=18` — 21, 23 and 25 exist and are not run — so the declared range is covered by exemplar rather
+  than exhaustively, and nothing detects a new major appearing: `>=18` is open-ended and a workflow
+  cannot name a version that does not exist yet, so adding one stays a deliberate edit.
 
   The job stays a single parameterised job invoking `ci/run-checks.sh`, so there is still exactly one
   definition of what CI passing means. `test/local-ci.test.mjs` now asserts that the matrix contains
@@ -41,6 +44,29 @@ emits has changed.
   not restate a pipeline stage. Those assertions read the `jobs:` section with comments stripped: the
   first draft matched the file as a whole and a shallow checkout passed it, because the explanatory
   comment above the step still contained the words `fetch-depth: 0`.
+
+### Fixed
+
+- **The submission wrapper handed `gh` a path it could not open** (ST-15). On Windows, `mktemp` in
+  `ci/submit-pr.sh` answers with an MSYS path (`/tmp/tmp.XXXXXX`). MSYS normally rewrites such an
+  argument into a Windows path on its way to a native binary, but that rewriting is off whenever
+  `MSYS_NO_PATHCONV=1` is set — which this repository requires, because the same rewriting mangles the
+  Docker bind mount in `ci/ci.sh`. So an operator who ran the container gate had it exported, and
+  `gh.exe` resolved `/tmp` against the filesystem root: `open /tmp/tmp.HuZvjSAzt5: The system cannot
+  find the file specified.`
+
+  The failure lands *after* the push, and what it left depended on the call site: on `pr create`, a
+  pushed branch and no pull request at all; on `pr edit`, a pull request that kept its previous body,
+  so its evidence block still named an earlier commit — the staleness ST-13 exists to prevent,
+  reached another way. Both exited 0.
+  `native_path()` now converts with `cygpath -w` where cygpath exists and is the identity elsewhere,
+  at both `--body-file` call sites. The conversion is explicit, so it does not depend on whether MSYS
+  is rewriting arguments.
+
+  The seams already existed and the defect still shipped: the `gh` stub the other tests use reads the
+  body with `cp`, an MSYS program that resolves `/tmp` perfectly. A stub more capable than the tool it
+  stands in for will certify that tool's defects. The two new tests hand the path to `node.exe`, a
+  native binary, and set `MSYS_NO_PATHCONV=1` to reproduce the operator's environment.
 
 ## 1.1.0 — released 2026-08-26
 
