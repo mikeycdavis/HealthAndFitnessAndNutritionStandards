@@ -1148,17 +1148,31 @@ test("submission refuses evidence that does not record a pass", async () => {
 
 /**
  * THE FAILURE CLASS: the submission wrapper writes a file the GitHub CLI cannot open, and it does
- * so AFTER the push. The verified commit is on the remote and no pull request exists — the one
- * state the workflow is built to avoid producing silently.
+ * so AFTER the push. Both outcomes are silent, and they are not the same outcome:
+ *
+ *   - on `pr create`, the verified commit is on the remote and no pull request exists at all;
+ *   - on `pr edit`, a pull request already exists and KEEPS ITS PREVIOUS BODY, so its evidence
+ *     block still names an earlier commit. That is the worse of the two: a reviewer reads
+ *     provenance that is true of some other object, under a heading reading "Verified commit". It
+ *     is the defect ST-13 exists to prevent, arriving by a different route.
+ *
+ * Both exit 0.
  *
  * On Windows, `mktemp` runs under MSYS and returns `/tmp/tmp.XXXXXX`. That path exists only inside
  * the MSYS filesystem mapping. `gh.exe` is a native Windows binary and resolves it against the
  * filesystem root, where it is not:
  *
- *   $ gh api rate_limit --input /tmp/tmp.HuZvjSAzt5
- *   open /tmp/tmp.HuZvjSAzt5: The system cannot find the file specified.
- *   $ gh api rate_limit --input "$(cygpath -w /tmp/tmp.HuZvjSAzt5)"
- *   gh: Not Found (HTTP 404)          # reached the API, so the file opened
+ *   $ f="$(mktemp)"; echo '{}' > "$f"                   # /tmp/tmp.CeQ3tQSfSo
+ *   $ gh api rate_limit --input "$f"                    # {"message": "Not Found", ...}
+ *   $ MSYS_NO_PATHCONV=1 gh api rate_limit --input "$f"
+ *   open /tmp/tmp.CeQ3tQSfSo: The system cannot find the file specified.
+ *   $ MSYS_NO_PATHCONV=1 gh api rate_limit --input "$(cygpath -w "$f")"
+ *   gh: Not Found (HTTP 404)                            # reached the API, so the file opened
+ *
+ * The first call SUCCEEDS, and the variable is why. MSYS rewrites a POSIX-looking argument into a
+ * Windows path on its way to a native binary; MSYS_NO_PATHCONV=1 turns that off. This repository
+ * requires it off, because the same rewriting mangles the Docker bind mount in ci/ci.sh — so it is
+ * exported in exactly the situation that runs this script, and submit-pr.sh inherits it.
  *
  * WHY THE SUITE ALREADY HAD SEAM COVERAGE HERE AND STILL MISSED IT. The `gh` stub the other tests
  * use is a bash script, and it reads the body with `cp`. Under MSYS, `cp` is an MSYS program, so it
@@ -1258,7 +1272,7 @@ test("the PR body is written at a path the native GitHub CLI can open", async ()
     assert.ok(
       body !== null,
       `the native CLI could not open the body file at ${handed}\n` +
-        `submit-pr.sh exited ${r.status}; a pushed branch with no pull request is the state this prevents`,
+        `submit-pr.sh exited ${r.status}; that leaves a pushed branch and no pull request at all`,
     );
     assert.ok(body.includes(sha), "the body the CLI opened must name the verified commit");
 
@@ -1298,7 +1312,9 @@ test("the rewritten body of an existing PR is also written at a native path", as
     const body = await readFile(path.join(s.dir, "gh-body.md"), "utf8").catch(() => null);
     assert.ok(
       body !== null,
-      `the native CLI could not open the rewritten body at ${handed}; submit-pr.sh exited ${r.status}`,
+      `the native CLI could not open the rewritten body at ${handed}; submit-pr.sh exited ${r.status}.
+` +
+        "The pull request still exists and still carries its previous evidence block, naming an earlier commit.",
     );
     assert.ok(body.includes(sha), "the rewritten body must name the verified commit");
     assert.ok(

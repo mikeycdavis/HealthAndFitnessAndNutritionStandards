@@ -55,7 +55,10 @@ emits has changed.
   `gh.exe` resolved `/tmp` against the filesystem root: `open /tmp/tmp.HuZvjSAzt5: The system cannot
   find the file specified.`
 
-  The failure lands *after* the push, so the result was a pushed branch, no pull request, and exit 0.
+  The failure lands *after* the push, and what it left depended on the call site: on `pr create`, a
+  pushed branch and no pull request at all; on `pr edit`, a pull request that kept its previous body,
+  so its evidence block still named an earlier commit — the staleness ST-13 exists to prevent,
+  reached another way. Both exited 0.
   `native_path()` now converts with `cygpath -w` where cygpath exists and is the identity elsewhere,
   at both `--body-file` call sites. The conversion is explicit, so it does not depend on whether MSYS
   is rewriting arguments.

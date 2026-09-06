@@ -163,7 +163,9 @@ verified_at="$(sed -n 's/.*"completedAt"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\
 #
 #   open /tmp/tmp.HuZvjSAzt5: The system cannot find the file specified.
 #
-# It fails AFTER the push, so the result is a pushed branch and no pull request. Converting here does
+# It fails AFTER the push, and what that leaves depends on which call site hit it: on `pr create`, a
+# pushed branch with no pull request; on `pr edit`, a pull request that keeps its previous body, so
+# its evidence block still names an earlier commit. Both exit 0. Converting here does
 # not depend on that variable in either direction: the path is made native explicitly, so the CLI
 # gets a form it can open whether MSYS is rewriting arguments or not. Elsewhere there is no cygpath
 # and no conversion to make, and the absolute path is already the native one.
