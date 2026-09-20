@@ -20,6 +20,16 @@ corpus is still 42 standards, 59 rules, 34 prohibitions and the integrity invari
 the output `schemaVersion` are untouched, because neither what a rule means nor what the tooling
 emits has changed.
 
+### Fixed
+
+- **`node scripts/backlog.mjs` no longer recreates a file backlog in a GitHub-authority repository.**
+  When `github-mapping.json` says `authority: "github"`, the generator now refuses in every mode
+  (write, `--check`, `--json`), before reading or writing anything, checking every conventional
+  backlog location unless `--dir` names one. File-backed and unmigrated repositories are unchanged.
+  `scripts/` is certified release material, so this change ships with the next release; `npm run backlog`
+  was already guarded by `ci/backlog-write.mjs`. **Not yet released:** `VERSION` and the signed tag are
+  the release custodian's act (docs/release-signing.md).
+
 ### Changed
 
 - **Hosted CI runs the whole declared Node range** (ST-11). `engines` says `>=18`; the workflow ran

@@ -124,9 +124,8 @@ test("the GitHub-authority mapping is valid, and no item files or generated item
   assert.equal(existsSync(path.join(REPO, "artifacts", "backlog", "items")), false, "item files would be a second source of truth");
 });
 
-// scripts/backlog.mjs is certified release material and is unchanged here. Its read-only modes fail
-// on a GitHub-backed backlog by themselves; write mode is guarded at the npm entry point
-// (ci/backlog-write.mjs, outside the boundary). Running the script directly still bypasses that guard.
+// scripts/backlog.mjs refuses by itself when the mapping says authority "github", in every mode; the npm
+// entry point (ci/backlog-write.mjs) refuses earlier, with the same message.
 async function movedScratch() {
   const dir = await mkdtemp(path.join(tmpdir(), "moved-"));
   await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "scratch" }));
@@ -169,6 +168,51 @@ test("npm run backlog on a GitHub-authority backlog refuses, creates nothing, an
     assert.equal(existsSync(path.join(dir, "artifacts", "backlog", "README.md")), false);
     assert.match(r.stderr, /github\.com\/acme\/widgets\/issues/u);
     assert.match(r.stderr, /gh issue list/u);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("running scripts/backlog.mjs directly refuses in every mode on a GitHub-authority backlog and creates nothing", async () => {
+  const dir = await movedScratch();
+  try {
+    for (const args of [[], ["--check"], ["--json"]]) {
+      const r = run(dir, ...args);
+      assert.equal(r.status, 1, `${args.join(" ") || "(write)"}: ${r.stdout}${r.stderr}`);
+      assert.match(r.stderr, /github\.com\/acme\/widgets\/issues/u);
+    }
+    assert.equal(existsSync(path.join(dir, "artifacts", "backlog", "items")), false);
+    assert.equal(existsSync(path.join(dir, "artifacts", "backlog", "README.md")), false);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("the direct guard finds a mapping in any conventional location, and ignores an unreadable one", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "moved-alt-"));
+  try {
+    await writeFile(path.join(dir, "package.json"), "{}");
+    await mkdir(path.join(dir, "docs", "backlog"), { recursive: true });
+    await writeFile(path.join(dir, "docs", "backlog", "github-mapping.json"), JSON.stringify({ target: "acme/widgets", authority: "github", items: {} }));
+    assert.equal(run(dir).status, 1);
+    assert.equal(existsSync(path.join(dir, "artifacts")), false, "nothing was scaffolded beside the moved backlog");
+    await writeFile(path.join(dir, "docs", "backlog", "github-mapping.json"), "{ not json");
+    assert.equal(run(dir).status, 0, "an unreadable mapping is not an authority claim");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("running scripts/backlog.mjs directly on file-backed and unmigrated backlogs is unchanged", async () => {
+  const dir = await scratchBacklog({
+    "ST-01": "id: ST-01\ntype: story\ntitle: Open\nparent: FE-01\nstatus: IN_PROGRESS\nopened: 2026-08-25",
+  });
+  try {
+    assert.equal(run(dir).status, 0);
+    assert.equal(run(dir, "--check").status, 0);
+    assert.equal(run(dir, "--json").status, 0);
+    await writeFile(path.join(dir, "artifacts", "backlog", "github-mapping.json"), JSON.stringify({ target: "acme/widgets", authority: "files", items: {} }));
+    assert.equal(run(dir).status, 0, "authority \"files\" is a file-backed backlog");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

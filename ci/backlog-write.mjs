@@ -7,9 +7,8 @@
  * file beside it, changes bytes a released version is verified against. This file lives in `ci/`,
  * which is outside that boundary, so the guard ships without a release.
  *
- * WHAT IT DOES NOT COVER. Running `node scripts/backlog.mjs` directly bypasses this file; that
- * script's own guard arrives with the next release that re-certifies it. This closes the documented
- * entry point (`npm run backlog`), not the script.
+ * scripts/backlog.mjs now carries the same refusal itself, so running it directly is guarded too; this wrapper
+ * remains as the earlier, identical check at the npm entry point.
  */
 import { existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";

@@ -69,6 +69,28 @@ const ITEMS_DIR = path.join(BACKLOG_DIR, "items");
 const TRACKER = path.join(BACKLOG_DIR, "README.md");
 
 /**
+ * A backlog that lives in GitHub Issues must not be recreated as files. The mapping's `authority` is
+ * the record of where the backlog lives; when it says "github" this generator refuses in every mode,
+ * before anything is read or written. Without an explicit --dir every conventional location is
+ * checked, because the default above falls back to artifacts/backlog when no items directory exists,
+ * which is exactly the state of a repository that has moved. An unreadable mapping is not an
+ * authority claim and is ignored.
+ */
+for (const dir of dirArg ? [BACKLOG_DIR] : CANDIDATES.map((c) => path.resolve(ROOT, c))) {
+  const file = path.join(dir, "github-mapping.json");
+  if (!existsSync(file)) continue;
+  let mapping;
+  try { mapping = JSON.parse(readFileSync(file, "utf8")); } catch { continue; }
+  if (mapping.authority === "github") {
+    const repo = mapping.target ?? mapping.source ?? "<owner/name>";
+    console.error(`  ! This backlog is in GitHub Issues (${path.relative(ROOT, file)} says authority "github"), not in files.`);
+    console.error(`    Read it at https://github.com/${repo}/issues, or with: gh issue list --repo ${repo}`);
+    console.error("    This script will not run: it would create item files and restore a second source of truth.");
+    process.exit(1);
+  }
+}
+
+/**
  * This script exists twice: once inside the `backlog-validate` skill, so it runs
  * in any repository, and once inside a project that wants CI to fail on a stale
  * tracker — CI has no access to a developer's skills directory, so the copy is
