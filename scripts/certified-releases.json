@@ -19,6 +19,16 @@
       "tagObject": "6c8d8935d2fbe842c09569f4530fd0c16dc91446",
       "signerFingerprint": "SHA256:ZIKVolJl/xr0Z8lNvxjUDh0EvG+XUS1D0v+OCqRf26k",
       "$note": "The first release signed under the regime ADR 0010 established. Certified before publication by ci/certify-release.mjs (R2) against the tag while it was still unpushed; the evidence block is in artifacts/evidence/2026-08-26-v1.1.0-release-ceremony.md. The signer fingerprint is recorded so a reader can check which identity authorised this release without consulting the trust store, but it is NOT the trust anchor: the authoritative public key lives in the operator trust store outside every pack (ADR 0013), and a fingerprint copied into the pack could be replaced by a fork along with everything else."
+    },
+    "1.1.1": {
+      "tag": "v1.1.1",
+      "commit": "0ca5707b5d5d5e1491901a2a1df21af2045d946b",
+      "annotated": true,
+      "signed": true,
+      "signingRegime": "ssh-ed25519",
+      "tagObject": "d85d8cfb456cc023bc9de544c1bbacf885eaac63",
+      "signerFingerprint": "SHA256:Ms8cz3LUAaFgQRFyNijvoiHrAOLDpeYgKwcjtFdN5ew",
+      "$note": "Signed by the key that replaced the one that signed 1.1.0, after a lost passphrase made that key unusable: retired, not compromised. A rotation is a governance event (ADR 0010 section 8); the record is artifacts/evidence/2026-09-19-v1.1.1-release-ceremony.md. Certified before publication by ci/certify-release.mjs (R2) against the tag while it was still unpushed. Under the CURRENT trust anchor 1.1.0 does not verify and this release does; under the retired anchor the reverse holds. The fingerprint is recorded so a reader can see which identity authorised this release, but it is NOT the trust anchor: the authoritative public key lives in the operator trust store outside every pack (ADR 0013)."
     }
   }
 }
