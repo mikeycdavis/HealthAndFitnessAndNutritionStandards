@@ -21,3 +21,9 @@ now the only home for this repository's work items; nothing here is maintained.
 the `status:` label is what separates open work from executable work.
 
 The full contract is in the ClaudeSkills repository, as `GITHUB-SCHEMA.md`.
+
+## Entry points, and one to avoid
+
+- **Supported:** `npm run backlog` and `npm run backlog:check`. `backlog` refuses and says where the issues are; `backlog:check` exits non-zero ("No backlog found") and creates nothing.
+- **Do not run `node scripts/backlog.mjs` directly.** That file is certified release material and still predates the GitHub-authority guard, so run bare it would create an empty `artifacts/backlog/items/` and restore a second source of truth. The `npm` entry points route around it. Closing this properly needs a scoped release that re-certifies a guarded copy of the script.
+- To read or change work items, use the issues, or the `backlog-validate` skill's `backlog-gh.mjs` commands.
