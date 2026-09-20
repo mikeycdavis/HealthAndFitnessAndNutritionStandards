@@ -107,6 +107,58 @@ test("the committed tracker is what the generator derives from the items", { ski
   assert.equal(r.status, 0, r.stdout + r.stderr);
 });
 
+// What replaces the check above once the backlog lives in GitHub: the record of where it lives has to
+// be valid, and the local tooling must not quietly bring a second, empty backlog back.
+test("the GitHub-authority mapping is valid, and no item files or generated items directory exist", { skip: !MOVED && "this repository's backlog is still in files" }, () => {
+  const mapping = JSON.parse(readFileSync(MAPPING, "utf8"));
+  assert.equal(mapping.authority, "github");
+  assert.match(mapping.switchedAt, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(mapping.source, mapping.target, "the backlog is in this repository's own issues");
+  assert.ok(mapping.verifiedBy, "the switch records what verified it");
+  const entries = Object.entries(mapping.items);
+  assert.ok(entries.length > 0, "an empty mapping would make every id unresolvable");
+  for (const [id, entry] of entries) {
+    assert.match(id, /^(TH|IN|EP|FE|ST|TA)-\d+$/, id);
+    assert.ok(Number.isInteger(entry.number) && Number.isInteger(entry.id), `${id} needs an issue number and id`);
+  }
+  assert.equal(existsSync(path.join(REPO, "artifacts", "backlog", "items")), false, "item files would be a second source of truth");
+});
+
+// scripts/backlog.mjs is part of the certified release material (release-material-binding), so it
+// cannot be swapped for the guarded copy without a release. Until that is done the read-only modes
+// are safe and write mode is the known gap, recorded as a todo so it stays visible rather than passing.
+async function movedScratch() {
+  const dir = await mkdtemp(path.join(tmpdir(), "moved-"));
+  await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "scratch" }));
+  await mkdir(path.join(dir, "artifacts", "backlog"), { recursive: true });
+  await writeFile(path.join(dir, "artifacts", "backlog", "github-mapping.json"), JSON.stringify({
+    source: "acme/widgets", target: "acme/widgets", authority: "github", switchedAt: "2026-09-19", items: { "ST-01": { number: 1, id: 1 } },
+  }));
+  return dir;
+}
+
+test("the local generator's read-only modes fail on a GitHub-backed backlog and create nothing", async () => {
+  const dir = await movedScratch();
+  try {
+    for (const args of [["--check"], ["--json"]]) {
+      assert.notEqual(run(dir, ...args).status, 0, `${args[0]} must not report success over no item files`);
+    }
+    assert.equal(existsSync(path.join(dir, "artifacts", "backlog", "items")), false);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("KNOWN GAP: the local generator in write mode must refuse rather than create an items directory", { todo: "the guarded script changes certified release material; needs a release" }, async () => {
+  const dir = await movedScratch();
+  try {
+    assert.notEqual(run(dir).status, 0);
+    assert.equal(existsSync(path.join(dir, "artifacts", "backlog", "items")), false);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("the legacy DONE alias is counted and rendered as Complete, not dropped", async () => {
   const dir = await scratchBacklog({
     "ST-01": "id: ST-01\ntype: story\ntitle: Legacy spelling\nparent: FE-01\nstatus: DONE\nclosed: 2026-08-25\nopened: 2026-08-25\nevidence:\n  - deadbee",
