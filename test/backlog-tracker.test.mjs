@@ -124,9 +124,9 @@ test("the GitHub-authority mapping is valid, and no item files or generated item
   assert.equal(existsSync(path.join(REPO, "artifacts", "backlog", "items")), false, "item files would be a second source of truth");
 });
 
-// scripts/backlog.mjs is part of the certified release material (release-material-binding), so it
-// cannot be swapped for the guarded copy without a release. Until that is done the read-only modes
-// are safe and write mode is the known gap, recorded as a todo so it stays visible rather than passing.
+// scripts/backlog.mjs is certified release material and is unchanged here. Its read-only modes fail
+// on a GitHub-backed backlog by themselves; write mode is guarded at the npm entry point
+// (ci/backlog-write.mjs, outside the boundary). Running the script directly still bypasses that guard.
 async function movedScratch() {
   const dir = await mkdtemp(path.join(tmpdir(), "moved-"));
   await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "scratch" }));
@@ -149,11 +149,39 @@ test("the local generator's read-only modes fail on a GitHub-backed backlog and 
   }
 });
 
-test("KNOWN GAP: the local generator in write mode must refuse rather than create an items directory", { todo: "the guarded script changes certified release material; needs a release" }, async () => {
+// Write mode is exercised through the entry point `npm run backlog` really runs, read from
+// package.json rather than hard-coded, so pointing the script back at the unguarded generator makes
+// these fail. This supersedes the earlier `todo` (PR #53, chore/backlog-authority-checks).
+const npmBacklogEntry = () => {
+  const cmd = JSON.parse(readFileSync(path.join(REPO, "package.json"), "utf8")).scripts.backlog;
+  const m = /^node (\S+)$/u.exec(cmd);
+  assert.ok(m, `unexpected backlog script: ${cmd}`);
+  return path.join(REPO, m[1]);
+};
+const runWrite = (cwd) => spawnSync(process.execPath, [npmBacklogEntry()], { cwd, encoding: "utf8" });
+
+test("npm run backlog on a GitHub-authority backlog refuses, creates nothing, and names GitHub", async () => {
   const dir = await movedScratch();
   try {
-    assert.notEqual(run(dir).status, 0);
+    const r = runWrite(dir);
+    assert.notEqual(r.status, 0, r.stdout + r.stderr);
     assert.equal(existsSync(path.join(dir, "artifacts", "backlog", "items")), false);
+    assert.equal(existsSync(path.join(dir, "artifacts", "backlog", "README.md")), false);
+    assert.match(r.stderr, /github\.com\/acme\/widgets\/issues/u);
+    assert.match(r.stderr, /gh issue list/u);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("npm run backlog still generates the tracker for a file-backed backlog", async () => {
+  const dir = await scratchBacklog({
+    "ST-01": "id: ST-01\ntype: story\ntitle: Open\nparent: FE-01\nstatus: IN_PROGRESS\nopened: 2026-08-25",
+  });
+  try {
+    const r = runWrite(dir);
+    assert.equal(r.status, 0, r.stdout + r.stderr);
+    assert.match(TRACKER(dir), /ST-01/u);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
