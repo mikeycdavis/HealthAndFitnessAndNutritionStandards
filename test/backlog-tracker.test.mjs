@@ -107,6 +107,42 @@ test("the committed tracker is what the generator derives from the items", { ski
   assert.equal(r.status, 0, r.stdout + r.stderr);
 });
 
+// What replaces the check above once the backlog lives in GitHub: the record of where it lives has to
+// be valid, and the local tooling must not quietly bring a second, empty backlog back.
+test("the GitHub-authority mapping is valid, and no item files or generated items directory exist", { skip: !MOVED && "this repository's backlog is still in files" }, () => {
+  const mapping = JSON.parse(readFileSync(MAPPING, "utf8"));
+  assert.equal(mapping.authority, "github");
+  assert.match(mapping.switchedAt, /^\d{4}-\d{2}-\d{2}$/);
+  assert.equal(mapping.source, mapping.target, "the backlog is in this repository's own issues");
+  assert.ok(mapping.verifiedBy, "the switch records what verified it");
+  const entries = Object.entries(mapping.items);
+  assert.ok(entries.length > 0, "an empty mapping would make every id unresolvable");
+  for (const [id, entry] of entries) {
+    assert.match(id, /^(TH|IN|EP|FE|ST|TA)-\d+$/, id);
+    assert.ok(Number.isInteger(entry.number) && Number.isInteger(entry.id), `${id} needs an issue number and id`);
+  }
+  assert.equal(existsSync(path.join(REPO, "artifacts", "backlog", "items")), false, "item files would be a second source of truth");
+});
+
+test("the local generator refuses on a GitHub-backed backlog and does not recreate an items directory", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "moved-"));
+  try {
+    await writeFile(path.join(dir, "package.json"), JSON.stringify({ name: "scratch" }));
+    await mkdir(path.join(dir, "artifacts", "backlog"), { recursive: true });
+    await writeFile(path.join(dir, "artifacts", "backlog", "github-mapping.json"), JSON.stringify({
+      source: "acme/widgets", target: "acme/widgets", authority: "github", switchedAt: "2026-09-19", items: { "ST-01": { number: 1, id: 1 } },
+    }));
+    for (const args of [[], ["--check"], ["--json"]]) {
+      const r = run(dir, ...args);
+      assert.notEqual(r.status, 0, `${args.join(" ") || "(write mode)"} must refuse: ${r.stdout}`);
+      assert.match(r.stdout + r.stderr, /GitHub Issues/);
+    }
+    assert.equal(existsSync(path.join(dir, "artifacts", "backlog", "items")), false, "the generator must not create one");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("the legacy DONE alias is counted and rendered as Complete, not dropped", async () => {
   const dir = await scratchBacklog({
     "ST-01": "id: ST-01\ntype: story\ntitle: Legacy spelling\nparent: FE-01\nstatus: DONE\nclosed: 2026-08-25\nopened: 2026-08-25\nevidence:\n  - deadbee",

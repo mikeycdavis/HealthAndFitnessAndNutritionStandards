@@ -238,7 +238,73 @@ function parseFrontmatter(raw, file) {
 
 const unquote = (v) => v.trim().replace(/^["']|["']$/g, "");
 
+// A repository that has moved its backlog to GitHub Issues records that in its mapping. Without
+// this check the next two failures are silent and opposite: a writing run CREATES an empty items
+// directory and invites files back into a repository that has just been consolidated onto one
+// store, and a reading run then reports an empty backlog — which is indistinguishable from a
+// project with no work, and wrong for a repository with open issues.
+//
+// Deliberately self-contained rather than importing github/lib/authority.mjs: this file is copied
+// into projects for CI (see SKILL.md), where that directory does not exist.
+function readMapping() {
+  const mappingPath = path.join(BACKLOG_DIR, "github-mapping.json");
+  if (!existsSync(mappingPath)) return null;
+  try {
+    return JSON.parse(readFileSync(mappingPath, "utf8"));
+  } catch {
+    return null;   // An unreadable mapping is not an authority claim.
+  }
+}
+
+// Where the GitHub commands are, as a path that exists — or null when this copy of the script has
+// been separated from them. A guard that tells someone to run a script that is not there is worse
+// than one that says nothing, because it reads as a fix.
+function githubCommand() {
+  const gh = path.join(path.dirname(fileURLToPath(import.meta.url)), "github", "backlog-gh.mjs");
+  return existsSync(gh) ? gh : null;
+}
+
+// `kind` is "github" when GitHub is the recorded authority and reading it is the answer, and
+// "conflict" or "unswitched" when the two stores disagree, where reading GitHub would itself be
+// refused. For those the way out is the `authority` command, which reports the evidence and the
+// recovery and changes nothing.
+function refuseMoved(mapping, why, kind = "github") {
+  const repo = mapping.target ?? mapping.source ?? "<owner/name>";
+  const gh = githubCommand();
+  console.error(`  ! ${why}`);
+  if (gh && kind !== "github") {
+    console.error(`    Diagnose and recover:   node "${gh}" authority --repo=${repo}`);
+    console.error(`    It reports what is on disk and in the mapping, and how to resolve it. It changes nothing.`);
+  } else if (gh) {
+    console.error(`    Read it with:   node "${gh}" list --repo=${repo}`);
+    console.error(`    As JSON:        node "${gh}" json --repo=${repo}   (schemaVersion 2.0.0, not this script's 1.0.0)`);
+  } else {
+    console.error(`    The GitHub commands are not next to this script. Install the backlog-validate skill,`);
+    console.error(`    which carries them in scripts/github/, and run: backlog-gh.mjs list --repo=${repo}`);
+  }
+  console.error(`    This script will not create item files here; that would restore a second source of truth.`);
+  process.exit(1);
+}
+
 async function loadItems() {
+  const mapping = readMapping();
+  if (mapping) {
+    const authority = mapping.authority ?? "files";
+    const count = Object.keys(mapping.items ?? {}).length;
+    if (authority === "github" && existsSync(ITEMS_DIR)) {
+      refuseMoved(mapping, `CONFLICT: the mapping says GitHub is authoritative (${count} item(s), switched ${mapping.switchedAt ?? "at an unrecorded time"}), but item files are present too. Neither store is being trusted.`, "conflict");
+    }
+    if (authority === "github") {
+      refuseMoved(mapping, `This backlog is in GitHub Issues, not in files — ${count} item(s), switched ${mapping.switchedAt ?? "at an unrecorded time"}.`);
+    }
+    // Migrated and mapped, but the files are gone and the switch was never recorded. Reading the
+    // (missing) files would report an empty backlog, and creating the directory would invite files
+    // back. Neither store can be trusted until the cutover is finished.
+    if (!existsSync(ITEMS_DIR)) {
+      refuseMoved(mapping, `This backlog was migrated (${count} item(s) mapped) and its item files are gone, but the switch to GitHub was never recorded. Record it, or restore the files.`, "unswitched");
+    }
+  }
+
   if (!existsSync(ITEMS_DIR)) {
     // A read-only mode must never write. A missing backlog is a reportable state, not
     // something to silently create underneath someone — and it is deliberately not the same
