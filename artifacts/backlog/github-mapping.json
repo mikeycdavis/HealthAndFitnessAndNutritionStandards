@@ -1,0 +1,291 @@
+{
+  "schemaVersion": "1.0.0",
+  "source": "mikeycdavis/HealthAndFitnessAndNutritionStandards",
+  "target": "mikeycdavis/HealthAndFitnessAndNutritionStandards",
+  "migratedAt": "2026-09-19",
+  "items": {
+    "EP-01": {
+      "number": 12,
+      "id": 5508009476,
+      "state": "closed",
+      "parent": "IN-01",
+      "linked": true
+    },
+    "EP-02": {
+      "number": 13,
+      "id": 5508009602,
+      "state": "closed",
+      "parent": "IN-01",
+      "linked": true
+    },
+    "EP-03": {
+      "number": 14,
+      "id": 5508009905,
+      "state": "open",
+      "parent": "IN-02",
+      "linked": true
+    },
+    "EP-04": {
+      "number": 15,
+      "id": 5508010111,
+      "state": "open",
+      "parent": "IN-03",
+      "linked": true
+    },
+    "FE-01": {
+      "number": 16,
+      "id": 5508010180,
+      "state": "closed",
+      "parent": "EP-01",
+      "linked": true
+    },
+    "FE-02": {
+      "number": 17,
+      "id": 5508010294,
+      "state": "closed",
+      "parent": "EP-01",
+      "linked": true
+    },
+    "FE-03": {
+      "number": 18,
+      "id": 5508010454,
+      "state": "closed",
+      "parent": "EP-01",
+      "linked": true
+    },
+    "FE-04": {
+      "number": 19,
+      "id": 5508010682,
+      "state": "closed",
+      "parent": "EP-01",
+      "linked": true
+    },
+    "FE-05": {
+      "number": 20,
+      "id": 5508010982,
+      "state": "closed",
+      "parent": "EP-01",
+      "linked": true
+    },
+    "FE-06": {
+      "number": 21,
+      "id": 5508011149,
+      "state": "closed",
+      "parent": "EP-02",
+      "linked": true
+    },
+    "FE-07": {
+      "number": 22,
+      "id": 5508011289,
+      "state": "closed",
+      "parent": "EP-02",
+      "linked": true
+    },
+    "FE-08": {
+      "number": 23,
+      "id": 5508011557,
+      "state": "open",
+      "parent": "EP-03",
+      "linked": true
+    },
+    "FE-09": {
+      "number": 24,
+      "id": 5508011633,
+      "state": "open",
+      "parent": "EP-03",
+      "linked": true
+    },
+    "FE-10": {
+      "number": 25,
+      "id": 5508011708,
+      "state": "open",
+      "parent": "EP-03",
+      "linked": true
+    },
+    "FE-11": {
+      "number": 26,
+      "id": 5508011776,
+      "state": "open",
+      "parent": "EP-03",
+      "linked": true
+    },
+    "FE-12": {
+      "number": 27,
+      "id": 5508011842,
+      "state": "open",
+      "parent": "EP-03",
+      "linked": true
+    },
+    "FE-13": {
+      "number": 28,
+      "id": 5508011908,
+      "state": "closed",
+      "parent": "EP-03",
+      "linked": true
+    },
+    "FE-14": {
+      "number": 29,
+      "id": 5508012175,
+      "state": "open",
+      "parent": "EP-03",
+      "linked": true
+    },
+    "FE-15": {
+      "number": 30,
+      "id": 5508012264,
+      "state": "open",
+      "parent": "EP-03",
+      "linked": true
+    },
+    "FE-16": {
+      "number": 31,
+      "id": 5508012325,
+      "state": "open",
+      "parent": "EP-04",
+      "linked": true
+    },
+    "FE-17": {
+      "number": 32,
+      "id": 5508012392,
+      "state": "open",
+      "parent": "EP-04",
+      "linked": true
+    },
+    "IN-01": {
+      "number": 33,
+      "id": 5508012473,
+      "state": "closed",
+      "parent": "TH-01",
+      "linked": true
+    },
+    "IN-02": {
+      "number": 34,
+      "id": 5508012761,
+      "state": "open",
+      "parent": "TH-01",
+      "linked": true
+    },
+    "IN-03": {
+      "number": 35,
+      "id": 5508012804,
+      "state": "open",
+      "parent": "TH-01",
+      "linked": true
+    },
+    "ST-01": {
+      "number": 36,
+      "id": 5508012873,
+      "state": "closed",
+      "parent": "FE-06",
+      "linked": true
+    },
+    "ST-02": {
+      "number": 37,
+      "id": 5508012987,
+      "state": "closed",
+      "parent": "FE-06",
+      "linked": true
+    },
+    "ST-03": {
+      "number": 38,
+      "id": 5508013113,
+      "state": "closed",
+      "parent": "FE-06",
+      "linked": true
+    },
+    "ST-04": {
+      "number": 39,
+      "id": 5508013389,
+      "state": "closed",
+      "parent": "FE-06",
+      "linked": true
+    },
+    "ST-05": {
+      "number": 40,
+      "id": 5508013544,
+      "state": "closed",
+      "parent": "FE-07",
+      "linked": true
+    },
+    "ST-06": {
+      "number": 41,
+      "id": 5508013655,
+      "state": "closed",
+      "parent": "FE-07",
+      "linked": true
+    },
+    "ST-07": {
+      "number": 42,
+      "id": 5508013938,
+      "state": "open",
+      "parent": "FE-16",
+      "linked": true
+    },
+    "ST-08": {
+      "number": 43,
+      "id": 5508013999,
+      "state": "open",
+      "parent": "FE-16",
+      "linked": true
+    },
+    "ST-09": {
+      "number": 44,
+      "id": 5508014062,
+      "state": "open",
+      "parent": "FE-17",
+      "linked": true
+    },
+    "ST-10": {
+      "number": 45,
+      "id": 5508014139,
+      "state": "open",
+      "parent": "FE-17",
+      "linked": true
+    },
+    "ST-11": {
+      "number": 46,
+      "id": 5508014210,
+      "state": "closed",
+      "parent": "FE-17",
+      "linked": true
+    },
+    "ST-12": {
+      "number": 47,
+      "id": 5508014440,
+      "state": "closed",
+      "parent": "FE-13",
+      "linked": true
+    },
+    "ST-13": {
+      "number": 48,
+      "id": 5508014607,
+      "state": "closed",
+      "parent": "FE-17",
+      "linked": true
+    },
+    "ST-14": {
+      "number": 49,
+      "id": 5508014771,
+      "state": "closed",
+      "parent": "FE-13",
+      "linked": true
+    },
+    "ST-15": {
+      "number": 50,
+      "id": 5508014962,
+      "state": "closed",
+      "parent": "FE-17",
+      "linked": true
+    },
+    "TH-01": {
+      "number": 51,
+      "id": 5508015191,
+      "state": "open",
+      "parent": null
+    }
+  },
+  "authority": "github",
+  "switchedAt": "2026-09-19",
+  "verifiedBy": "scripts/verify-migration.mjs: 40 items checked against 40 issues, 0 problems",
+  "recovery": "The issues are the record. This file maps every legacy id to its issue number and id. To recover the file backlog, restore the item files from this repository's git history at the commit that removed them, then set authority back to \"files\"."
+}

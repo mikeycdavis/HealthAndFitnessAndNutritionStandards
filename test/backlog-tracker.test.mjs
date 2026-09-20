@@ -52,7 +52,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -95,7 +95,12 @@ async function scratchBacklog(items) {
 
 const TRACKER = (dir) => readFileSync(path.join(dir, "artifacts", "backlog", "README.md"), "utf8");
 
-test("the committed tracker is what the generator derives from the items", () => {
+// This repository's backlog moved to GitHub Issues, so there are no item files to derive a tracker
+// from. The generator and its other tests still run; only this check has nothing to check.
+const MAPPING = path.join(REPO, "artifacts", "backlog", "github-mapping.json");
+const MOVED = existsSync(MAPPING) && JSON.parse(readFileSync(MAPPING, "utf8")).authority === "github";
+
+test("the committed tracker is what the generator derives from the items", { skip: MOVED && "the backlog is in GitHub Issues; there are no item files" }, () => {
   // The whole point. If this goes red the tracker was committed stale, or somebody edited it by
   // hand — the two failure modes are the same failure and the remedy is the same: `npm run backlog`.
   const r = run(REPO, "--check");
