@@ -24,6 +24,6 @@ The full contract is in the ClaudeSkills repository, as `GITHUB-SCHEMA.md`.
 
 ## Entry points, and one to avoid
 
-- **Supported:** `npm run backlog` and `npm run backlog:check`. `backlog` refuses and says where the issues are; `backlog:check` exits non-zero ("No backlog found") and creates nothing.
-- **Do not run `node scripts/backlog.mjs` directly.** That file is certified release material and still predates the GitHub-authority guard, so run bare it would create an empty `artifacts/backlog/items/` and restore a second source of truth. The `npm` entry points route around it. Closing this properly needs a scoped release that re-certifies a guarded copy of the script.
+- **All four entry points are guarded from v1.1.1**: `npm run backlog`, `npm run backlog:check`, and `node scripts/backlog.mjs` run bare, with `--check` or with `--json`. In a repository whose `github-mapping.json` says `authority: "github"` each exits 1, says where the issues are, and creates nothing. File-backed repositories are unchanged.
+- **A copy older than v1.1.1 is not guarded** when run directly: `scripts/backlog.mjs` is certified release material and only the v1.1.1 release carries the guard. `npm run backlog` is guarded by `ci/backlog-write.mjs` on either. Check `VERSION` before running the script by hand from an older checkout.
 - To read or change work items, use the issues, or the `backlog-validate` skill's `backlog-gh.mjs` commands.
