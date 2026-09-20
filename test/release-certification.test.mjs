@@ -43,6 +43,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { cp, mkdir, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -51,6 +52,14 @@ import { fileURLToPath } from "node:url";
 import { MATERIAL } from "../scripts/release-material.mjs";
 
 const REPO = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+/**
+ * The tag the fixture is signed under, DERIVED from the VERSION the fixture copies. It was the literal
+ * "v1.1.0" while the fixture copied this repository's real VERSION, so the two agreed only until the
+ * first release bump: R2 checks that VERSION matches the tag, and it was right to refuse. A coupling
+ * that holds by coincidence fails exactly when a release is being prepared, which is the worst time.
+ */
+const TAG = `v${readFileSync(path.join(REPO, "VERSION"), "utf8").trim()}`;
 
 /**
  * A pack with a real annotated tag and an `origin` the caller chooses. Self-contained for the same
@@ -91,7 +100,7 @@ async function packWithOrigin(originUrl) {
   assert.equal(spawnSync("ssh-keygen", ["-q", "-t", "ed25519", "-N", "", "-C", "fixture", "-f", key]).status, 0);
   git("config", "gpg.format", "ssh");
   git("config", "user.signingkey", key);
-  git("tag", "-s", "-a", "v1.1.0", "-m", "candidate v1.1.0");
+  git("tag", "-s", "-a", TAG, "-m", `candidate ${TAG}`);
   git("remote", "add", "origin", originUrl);
   const publicKey = (await readFile(key + ".pub", "utf8")).trim();
   return { dir, publicKey, key };
@@ -110,7 +119,7 @@ test("an origin that cannot be queried makes R2 incomplete, never passed", async
   // thing standing between this run and exit 0 is the unreachable remote.
   const { dir, publicKey } = await packWithOrigin(path.join(tmpdir(), "hfn-no-such-remote-ever.git"));
   try {
-    const r = certify(dir, publicKey, ["v1.1.0"]);
+    const r = certify(dir, publicKey, [TAG]);
     assert.notEqual(r.status, 0, "a run that could not establish the precondition must not authorise a push");
     assert.ok(!r.stdout.includes("R2 PASSED"), "and must not print PASSED");
     assert.match(r.stdout, /R2 INCOMPLETE/u);
@@ -131,8 +140,8 @@ test("a tag already published on origin is refused outright", async () => {
   spawnSync("git", ["init", "--quiet", "--bare", bare], { encoding: "utf8" });
   const { dir, publicKey } = await packWithOrigin(bare);
   try {
-    assert.equal(spawnSync("git", ["-C", dir, "push", "--quiet", "origin", "v1.1.0"], { encoding: "utf8" }).status, 0);
-    const r = certify(dir, publicKey, ["v1.1.0"]);
+    assert.equal(spawnSync("git", ["-C", dir, "push", "--quiet", "origin", TAG], { encoding: "utf8" }).status, 0);
+    const r = certify(dir, publicKey, [TAG]);
     assert.equal(r.status, 1, "an established violation is a failure, not an incompleteness");
     assert.match(r.stdout, /R2 FAILED/u);
     assert.match(r.stdout, /already published/u);
@@ -149,7 +158,7 @@ test("POSITIVE CONTROL: reachable, unpublished, signed and anchored certifies", 
   spawnSync("git", ["init", "--quiet", "--bare", bare], { encoding: "utf8" });
   const { dir, publicKey } = await packWithOrigin(bare);
   try {
-    const r = certify(dir, publicKey, ["v1.1.0"]);
+    const r = certify(dir, publicKey, [TAG]);
     assert.equal(r.status, 0, r.stdout + r.stderr);
     assert.match(r.stdout, /R2 PASSED/u);
     assert.match(r.stdout, /tag pushed at time of R2 +no/u);
@@ -173,7 +182,7 @@ test("a signature by a key the anchor does not name is refused", async () => {
     const key = path.join(other, "attacker");
     spawnSync("ssh-keygen", ["-q", "-t", "ed25519", "-N", "", "-C", "attacker", "-f", key]);
     const attacker = (await readFile(key + ".pub", "utf8")).trim();
-    const r = certify(dir, attacker, ["v1.1.0"]);
+    const r = certify(dir, attacker, [TAG]);
     assert.equal(r.status, 1);
     assert.match(r.stdout, /did not verify under the supplied trust anchor/u);
   } finally {
