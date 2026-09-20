@@ -13,12 +13,14 @@ because it can make a compliant project non-compliant — that is the intended b
 regression. A new recommendation is **minor**. Documentation, detector fixes, and clarifications that
 do not change what a rule means are **patch**.
 
-## Unreleased
+## 1.1.1 — release candidate, pending the custodian's signature
 
 **No standard, rule, or prohibition changed**, and nothing an adopter is evaluated on moved. The
-corpus is still 42 standards, 59 rules, 34 prohibitions and the integrity invariant. `VERSION` and
-the output `schemaVersion` are untouched, because neither what a rule means nor what the tooling
-emits has changed.
+corpus is still 42 standards, 59 rules, 34 prohibitions and the integrity invariant, byte-identical
+to 1.1.0. `VERSION` and `package.json` move to 1.1.1 because `scripts/` is release material and one
+script changed; the output `schemaVersion` is untouched, because neither what a rule means nor what
+the tooling emits has changed. A **patch** under the policy above. The release date is recorded when
+the signed tag exists, not before.
 
 ### Fixed
 
@@ -27,8 +29,8 @@ emits has changed.
   (write, `--check`, `--json`), before reading or writing anything, checking every conventional
   backlog location unless `--dir` names one. File-backed and unmigrated repositories are unchanged.
   `scripts/` is certified release material, so this change ships with the next release; `npm run backlog`
-  was already guarded by `ci/backlog-write.mjs`. **Not yet released:** `VERSION` and the signed tag are
-  the release custodian's act (docs/release-signing.md).
+  was already guarded by `ci/backlog-write.mjs`. The signed tag is the release custodian's act
+  (docs/release-signing.md).
 
 ### Changed
 
