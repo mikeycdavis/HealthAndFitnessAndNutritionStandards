@@ -13,14 +13,16 @@ because it can make a compliant project non-compliant — that is the intended b
 regression. A new recommendation is **minor**. Documentation, detector fixes, and clarifications that
 do not change what a rule means are **patch**.
 
-## 1.1.1 — release candidate, pending the custodian's signature
+## 1.1.1 — released 2026-09-19
 
 **No standard, rule, or prohibition changed**, and nothing an adopter is evaluated on moved. The
 corpus is still 42 standards, 59 rules, 34 prohibitions and the integrity invariant, byte-identical
 to 1.1.0. `VERSION` and `package.json` move to 1.1.1 because `scripts/` is release material and one
 script changed; the output `schemaVersion` is untouched, because neither what a rule means nor what
-the tooling emits has changed. A **patch** under the policy above. The release date is recorded when
-the signed tag exists, not before.
+the tooling emits has changed. A **patch** under the policy above. Signed tag `v1.1.1` (object
+`d85d8cf`, commit `0ca5707`); the signing key was rotated for this release — see
+`artifacts/evidence/2026-09-19-v1.1.1-release-ceremony.md`, including what the rotation does to
+verifying `v1.1.0`.
 
 ### Fixed
 
