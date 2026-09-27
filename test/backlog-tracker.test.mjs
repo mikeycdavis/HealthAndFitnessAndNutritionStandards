@@ -173,16 +173,126 @@ test("npm run backlog on a GitHub-authority backlog refuses, creates nothing, an
   }
 });
 
+// ci/backlog-write.mjs runs its own pre-check before spawning scripts/backlog.mjs, so the entry
+// point's copy of the guard is exercised separately here — the two conflict/unswitched cases are
+// not merely delegated to the subprocess, and a regression in the wrapper's own check would
+// otherwise only be caught after it had already refused for the (correct) reason further down.
+test("npm run backlog refuses an unswitched backlog without creating anything", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "unswitched-write-"));
+  try {
+    await writeFile(path.join(dir, "package.json"), "{}");
+    await mkdir(path.join(dir, "artifacts", "backlog"), { recursive: true });
+    await writeFile(
+      path.join(dir, "artifacts", "backlog", "github-mapping.json"),
+      JSON.stringify({ target: "acme/widgets", items: { "ST-01": { number: 1, id: 1 } } }),
+    );
+    const r = runWrite(dir);
+    assert.notEqual(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stderr, /switch was not finished/u);
+    assert.equal(existsSync(path.join(dir, "artifacts", "backlog", "items")), false);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("npm run backlog refuses a GitHub-authority backlog whose item files came back", async () => {
+  const dir = await movedScratch();
+  try {
+    await mkdir(path.join(dir, "artifacts", "backlog", "items"), { recursive: true });
+    await writeFile(
+      path.join(dir, "artifacts", "backlog", "items", "ST-01.md"),
+      "---\nid: ST-01\ntype: story\ntitle: Back from the dead\nparent: FE-01\nstatus: IN_PROGRESS\nopened: 2026-08-25\n---\n",
+    );
+    const r = runWrite(dir);
+    assert.notEqual(r.status, 0, r.stdout + r.stderr);
+    assert.match(r.stderr, /CONFLICT/u);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("running scripts/backlog.mjs directly refuses in every mode on a GitHub-authority backlog and creates nothing", async () => {
   const dir = await movedScratch();
   try {
     for (const args of [[], ["--check"], ["--json"]]) {
       const r = run(dir, ...args);
       assert.equal(r.status, 1, `${args.join(" ") || "(write)"}: ${r.stdout}${r.stderr}`);
-      assert.match(r.stderr, /github\.com\/acme\/widgets\/issues/u);
+      assert.match(r.stderr, /GitHub Issues, not in files/u);
+      // No github/backlog-gh.mjs sibling exists in this bare fixture, so the script must say so
+      // honestly rather than print a URL it has no way to have constructed correctly.
+      assert.match(r.stderr, /GitHub commands are not next to this script/u);
+      assert.match(r.stderr, /repo=acme\/widgets/u);
     }
     assert.equal(existsSync(path.join(dir, "artifacts", "backlog", "items")), false);
     assert.equal(existsSync(path.join(dir, "artifacts", "backlog", "README.md")), false);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+// The real regression this file's guard exists to prevent: a mapping filed under a candidate other
+// than the default must still be found, rather than silently ignored while BACKLOG_DIR falls back
+// to artifacts/backlog (empty) and the script proceeds to create a second backlog there.
+test("the direct guard finds a GitHub-authority mapping filed under a non-default candidate directory", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "moved-docs-"));
+  try {
+    await writeFile(path.join(dir, "package.json"), "{}");
+    await mkdir(path.join(dir, "docs", "backlog"), { recursive: true });
+    await writeFile(
+      path.join(dir, "docs", "backlog", "github-mapping.json"),
+      JSON.stringify({ target: "acme/widgets", authority: "github", switchedAt: "2026-09-19", items: { "ST-01": { number: 1, id: 1 } } }),
+    );
+    const r = run(dir);
+    assert.equal(r.status, 1, `expected a refusal naming the docs/backlog mapping; got ${r.stdout}${r.stderr}`);
+    assert.match(r.stderr, /GitHub Issues, not in files/u);
+    assert.equal(existsSync(path.join(dir, "artifacts")), false, "nothing was scaffolded beside the mapping the script failed to find before the fix");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+// The dangerous case named in the guard's own comment: a migration is recorded (non-empty `items`)
+// but authority never says "github", and the item files are already gone. Treating this as an empty,
+// unmigrated backlog would create a fresh items/ directory and silently discard the migration record.
+test("the direct guard refuses an unswitched backlog rather than treating it as empty", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "unswitched-"));
+  try {
+    await writeFile(path.join(dir, "package.json"), "{}");
+    await mkdir(path.join(dir, "artifacts", "backlog"), { recursive: true });
+    await writeFile(
+      path.join(dir, "artifacts", "backlog", "github-mapping.json"),
+      JSON.stringify({ target: "acme/widgets", source: "acme/widgets", items: { "ST-01": { number: 1, id: 1 } } }),
+    );
+    for (const args of [[], ["--check"], ["--json"]]) {
+      const r = run(dir, ...args);
+      assert.equal(r.status, 1, `${args.join(" ") || "(write)"}: expected a refusal; got ${r.stdout}${r.stderr}`);
+      assert.match(r.stderr, /migrated.*switch to GitHub was never recorded/su);
+    }
+    assert.equal(existsSync(path.join(dir, "artifacts", "backlog", "items")), false, "an unswitched backlog must not be treated as an empty one");
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+// The other half of the same defect: authority already says "github" AND item files are still
+// present. Neither store may be preferred silently.
+test("the direct guard refuses a GitHub-authority backlog whose item files came back", async () => {
+  const dir = await mkdtemp(path.join(tmpdir(), "conflict-"));
+  try {
+    await writeFile(path.join(dir, "package.json"), "{}");
+    await mkdir(path.join(dir, "artifacts", "backlog", "items"), { recursive: true });
+    await writeFile(
+      path.join(dir, "artifacts", "backlog", "items", "ST-01.md"),
+      "---\nid: ST-01\ntype: story\ntitle: Back from the dead\nparent: FE-01\nstatus: IN_PROGRESS\nopened: 2026-08-25\n---\n",
+    );
+    await writeFile(
+      path.join(dir, "artifacts", "backlog", "github-mapping.json"),
+      JSON.stringify({ target: "acme/widgets", authority: "github", switchedAt: "2026-09-19", items: { "ST-01": { number: 1, id: 1 } } }),
+    );
+    const r = run(dir, "--check");
+    assert.equal(r.status, 1, r.stdout + r.stderr);
+    assert.match(r.stderr, /CONFLICT/u);
+    assert.match(r.stderr, /item files are present too/u);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

@@ -13,6 +13,37 @@ because it can make a compliant project non-compliant — that is the intended b
 regression. A new recommendation is **minor**. Documentation, detector fixes, and clarifications that
 do not change what a rule means are **patch**.
 
+## Unreleased
+
+**No standard, rule, or prohibition changed**, and nothing an adopter is evaluated on moved. The
+corpus is still 42 standards, 59 rules, 34 prohibitions and the integrity invariant, byte-identical
+to 1.1.0. `VERSION` and `package.json` are untouched. `scripts/` is release material, so a future
+release moves the version to record this; nothing is released here.
+
+### Fixed
+
+- **The backlog authority guard missed two dangerous states.** `scripts/backlog.mjs` and
+  `ci/backlog-write.mjs` refused to recreate a file backlog when the mapping said `authority:
+  "github"`, but stopped there. Two other states were silently mishandled: a mapping that says
+  GitHub is authoritative *while item files are also present* was not flagged as a conflict, and —
+  the more dangerous of the two — a mapping recording a migration (non-empty `items`) whose
+  `authority` never says `"github"` and whose item files are already gone reads exactly like a
+  brand-new, empty project. The generator would create `artifacts/backlog/items/` and start writing
+  into it, silently discarding the migration record's claim that this backlog exists somewhere else.
+  Both scripts now check all three states — `github`, `conflict`, `unswitched` — matching the
+  `backlog-validate` skill's own authority model, and `scripts/backlog.mjs` is now byte-identical to
+  that skill's canonical copy (the two had drifted; the running script's own divergence check had
+  been silently warning about it).
+
+  Fixing this surfaced the same defect one level up: the shared `backlog.mjs` and `reconcile.mjs`
+  scripts (installed as Claude Code skills, not part of this repository) located a repository's
+  `github-mapping.json` by checking only the single resolved backlog directory, rather than every
+  conventional candidate location. A mapping filed under `docs/backlog` while `artifacts/backlog`
+  happened to have an (empty) items directory was silently missed, and the tooling proceeded as if
+  the backlog were empty rather than refusing. Fixed at the source for every repository using those
+  skills, verified against this repository's real GitHub Issues backlog (40 issues, 0 conflicts) and
+  against `backlog-reconcile` (0 findings).
+
 ## 1.1.1 — released 2026-09-19
 
 **No standard, rule, or prohibition changed**, and nothing an adopter is evaluated on moved. The
