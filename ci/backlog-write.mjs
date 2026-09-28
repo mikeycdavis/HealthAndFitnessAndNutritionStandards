@@ -32,17 +32,40 @@ const ROOT = findRoot(process.cwd());
 const dirArg = args.find((a) => a.startsWith("--dir="))?.slice("--dir=".length);
 const dirs = dirArg ? [path.resolve(ROOT, dirArg)] : ["artifacts/backlog", "docs/backlog", "backlog"].map((c) => path.resolve(ROOT, c));
 
+// Three cases, not one — kept identical to the check scripts/backlog.mjs runs itself, so this
+// pre-check and that later one can never disagree about what "identical" means. See the longer
+// comment there for why "unswitched" (a migration recorded, authority not yet "github", items gone)
+// is dangerous rather than merely stale: it reads exactly like an empty new project.
+function refuseMoved(file, why) {
+  const mapping = JSON.parse(readFileSync(file, "utf8"));
+  const repo = mapping.target ?? mapping.source ?? "<owner/name>";
+  console.error(`  ! ${why}`);
+  console.error(`    Read it at https://github.com/${repo}/issues, or with: gh issue list --repo ${repo}`);
+  console.error("    Refusing to run the file generator: it would restore a second source of truth.");
+  process.exit(1);
+}
+
 for (const dir of dirs) {
   const file = path.join(dir, "github-mapping.json");
   if (!existsSync(file)) continue;
   let mapping;
   try { mapping = JSON.parse(readFileSync(file, "utf8")); } catch { continue; } // unreadable is not an authority claim
-  if (mapping.authority === "github") {
-    const repo = mapping.target ?? mapping.source ?? "<owner/name>";
-    console.error(`  ! This backlog is in GitHub Issues (${path.relative(ROOT, file)} says authority "github"), not in files.`);
-    console.error(`    Read it at https://github.com/${repo}/issues, or with: gh issue list --repo ${repo}`);
-    console.error(`    Refusing to run the file generator: it would create artifacts/backlog/items/ and restore a second source of truth.`);
-    process.exit(1);
+  const hasItems = existsSync(path.join(dir, "items"));
+  const authority = mapping.authority ?? "files";
+  const migrated = Object.keys(mapping.items ?? {}).length > 0;
+
+  if (authority === "github" && hasItems) {
+    refuseMoved(file, `CONFLICT: ${path.relative(ROOT, file)} says GitHub is authoritative, but item files are present too.`);
+  }
+  if (authority === "github") {
+    refuseMoved(file, `This backlog is in GitHub Issues (${path.relative(ROOT, file)} says authority "github"), not in files.`);
+  }
+  if (migrated && !hasItems) {
+    refuseMoved(
+      file,
+      `${path.relative(ROOT, file)} records a migration (${Object.keys(mapping.items).length} item(s)) ` +
+        'but never recorded authority "github", and the item files are gone. The switch was not finished.',
+    );
   }
 }
 

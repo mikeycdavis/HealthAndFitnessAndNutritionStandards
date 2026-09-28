@@ -69,28 +69,6 @@ const ITEMS_DIR = path.join(BACKLOG_DIR, "items");
 const TRACKER = path.join(BACKLOG_DIR, "README.md");
 
 /**
- * A backlog that lives in GitHub Issues must not be recreated as files. The mapping's `authority` is
- * the record of where the backlog lives; when it says "github" this generator refuses in every mode,
- * before anything is read or written. Without an explicit --dir every conventional location is
- * checked, because the default above falls back to artifacts/backlog when no items directory exists,
- * which is exactly the state of a repository that has moved. An unreadable mapping is not an
- * authority claim and is ignored.
- */
-for (const dir of dirArg ? [BACKLOG_DIR] : CANDIDATES.map((c) => path.resolve(ROOT, c))) {
-  const file = path.join(dir, "github-mapping.json");
-  if (!existsSync(file)) continue;
-  let mapping;
-  try { mapping = JSON.parse(readFileSync(file, "utf8")); } catch { continue; }
-  if (mapping.authority === "github") {
-    const repo = mapping.target ?? mapping.source ?? "<owner/name>";
-    console.error(`  ! This backlog is in GitHub Issues (${path.relative(ROOT, file)} says authority "github"), not in files.`);
-    console.error(`    Read it at https://github.com/${repo}/issues, or with: gh issue list --repo ${repo}`);
-    console.error("    This script will not run: it would create item files and restore a second source of truth.");
-    process.exit(1);
-  }
-}
-
-/**
  * This script exists twice: once inside the `backlog-validate` skill, so it runs
  * in any repository, and once inside a project that wants CI to fail on a stale
  * tracker — CI has no access to a developer's skills directory, so the copy is
@@ -260,7 +238,88 @@ function parseFrontmatter(raw, file) {
 
 const unquote = (v) => v.trim().replace(/^["']|["']$/g, "");
 
+// A repository that has moved its backlog to GitHub Issues records that in its mapping. Without
+// this check the next two failures are silent and opposite: a writing run CREATES an empty items
+// directory and invites files back into a repository that has just been consolidated onto one
+// store, and a reading run then reports an empty backlog — which is indistinguishable from a
+// project with no work, and wrong for a repository with open issues.
+//
+// Checked in every conventional location, matching how BACKLOG_DIR itself is chosen — not only
+// BACKLOG_DIR — because BACKLOG_DIR resolves to CANDIDATES[0] whenever no candidate has an items
+// directory, which is exactly the state of a repository that has moved its backlog elsewhere in
+// the candidate list (e.g. docs/backlog) or that moved to GitHub and has no items directory
+// anywhere. A version of this check that read only BACKLOG_DIR would silently miss that mapping and
+// proceed to create an empty one at the default location instead. Respects an explicit --dir.
+//
+// Deliberately self-contained rather than importing github/lib/authority.mjs: this file is copied
+// into projects for CI (see SKILL.md), where that directory does not exist.
+function readMapping() {
+  for (const dir of dirArg ? [BACKLOG_DIR] : CANDIDATES.map((c) => path.resolve(ROOT, c))) {
+    const mappingPath = path.join(dir, "github-mapping.json");
+    if (!existsSync(mappingPath)) continue;
+    try {
+      return { dir, mapping: JSON.parse(readFileSync(mappingPath, "utf8")) };
+    } catch {
+      continue;   // An unreadable mapping is not an authority claim.
+    }
+  }
+  return null;
+}
+
+// Where the GitHub commands are, as a path that exists — or null when this copy of the script has
+// been separated from them. A guard that tells someone to run a script that is not there is worse
+// than one that says nothing, because it reads as a fix.
+function githubCommand() {
+  const gh = path.join(path.dirname(fileURLToPath(import.meta.url)), "github", "backlog-gh.mjs");
+  return existsSync(gh) ? gh : null;
+}
+
+// `kind` is "github" when GitHub is the recorded authority and reading it is the answer, and
+// "conflict" or "unswitched" when the two stores disagree, where reading GitHub would itself be
+// refused. For those the way out is the `authority` command, which reports the evidence and the
+// recovery and changes nothing.
+function refuseMoved(mapping, why, kind = "github") {
+  const repo = mapping.target ?? mapping.source ?? "<owner/name>";
+  const gh = githubCommand();
+  console.error(`  ! ${why}`);
+  if (gh && kind !== "github") {
+    console.error(`    Diagnose and recover:   node "${gh}" authority --repo=${repo}`);
+    console.error(`    It reports what is on disk and in the mapping, and how to resolve it. It changes nothing.`);
+  } else if (gh) {
+    console.error(`    Read it with:   node "${gh}" list --repo=${repo}`);
+    console.error(`    As JSON:        node "${gh}" json --repo=${repo}   (schemaVersion 2.0.0, not this script's 1.0.0)`);
+  } else {
+    console.error(`    The GitHub commands are not next to this script. Install the backlog-validate skill,`);
+    console.error(`    which carries them in scripts/github/, and run: backlog-gh.mjs list --repo=${repo}`);
+  }
+  console.error(`    This script will not create item files here; that would restore a second source of truth.`);
+  process.exit(1);
+}
+
 async function loadItems() {
+  const found = readMapping();
+  if (found) {
+    const { dir, mapping } = found;
+    // Checked against the SAME directory the mapping was found in, not the globally-resolved
+    // BACKLOG_DIR — a mapping at docs/backlog says nothing about whether artifacts/backlog/items
+    // exists, and the two must not be crossed.
+    const hasItemsHere = existsSync(path.join(dir, "items"));
+    const authority = mapping.authority ?? "files";
+    const count = Object.keys(mapping.items ?? {}).length;
+    if (authority === "github" && hasItemsHere) {
+      refuseMoved(mapping, `CONFLICT: the mapping says GitHub is authoritative (${count} item(s), switched ${mapping.switchedAt ?? "at an unrecorded time"}), but item files are present too. Neither store is being trusted.`, "conflict");
+    }
+    if (authority === "github") {
+      refuseMoved(mapping, `This backlog is in GitHub Issues, not in files — ${count} item(s), switched ${mapping.switchedAt ?? "at an unrecorded time"}.`);
+    }
+    // Migrated and mapped, but the files are gone and the switch was never recorded. Reading the
+    // (missing) files would report an empty backlog, and creating the directory would invite files
+    // back. Neither store can be trusted until the cutover is finished.
+    if (!hasItemsHere) {
+      refuseMoved(mapping, `This backlog was migrated (${count} item(s) mapped) and its item files are gone, but the switch to GitHub was never recorded. Record it, or restore the files.`, "unswitched");
+    }
+  }
+
   if (!existsSync(ITEMS_DIR)) {
     // A read-only mode must never write. A missing backlog is a reportable state, not
     // something to silently create underneath someone — and it is deliberately not the same
