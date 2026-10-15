@@ -27,6 +27,12 @@
 # verification is the gate, and ci/submit-pr.* refuses to push a commit that has not passed it. This
 # workflow is a second opinion, and it is deliberately kept able to run on its own.
 
+# FE-09 (Requirement 2 of EP-03). The status contexts this workflow reports are the job name below
+# expanded over the matrix, one per Node major: `verify (Node 18)`, `verify (Node 20)`,
+# `verify (Node 22)`, `verify (Node 24)`, `verify (Node 26)`. Those strings are the names a branch
+# protection rule would require, so renaming the job, changing `name:` or editing the matrix list
+# changes the contexts and must be done together with the protection rule, never alone.
+
 name: CI
 
 on:
