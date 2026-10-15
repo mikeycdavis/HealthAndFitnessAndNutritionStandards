@@ -1,0 +1,6 @@
+# CODEOWNERS (FE-09, Requirement 2 of EP-03).
+# This file only documents an expectation until branch protection enables
+# "Require review from Code Owners"; that setting is the owner's to apply.
+/.github/CODEOWNERS      @mikeycdavis
+/project-policy.yml      @mikeycdavis
+/.github/workflows/      @mikeycdavis
