@@ -59,6 +59,9 @@ very different spans:
 Where the available data is too short to support a trend, the honest statement is that it is too
 short — not a trend qualified with hedging.
 
+Collecting more observations does not mean reading each one as it arrives: observation cadence and
+decision cadence are separate choices ([Standard 2](02-trend-over-event.md) R4).
+
 ### R4 — Gaps, changes of method, and selection are part of the trend
 
 Three things quietly invalidate a trend:
