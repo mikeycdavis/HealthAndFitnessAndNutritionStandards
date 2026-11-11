@@ -38,8 +38,10 @@ point has no direction, and a direction inferred from one point is invented.
 
 Note the exception in the left column, and note that it is narrow. A red flag is actionable on a
 single observation precisely because the cost of waiting for a trend is asymmetric. That is not a
-loophole in this standard — it is the one case where a single observation genuinely establishes that
-something needs attention, and [Standard 12](12-red-flags.md) defines its boundaries.
+loophole in this standard — it is the one case where a single observation is sufficient to require
+attention, and [Standard 12](12-red-flags.md) defines its boundaries. What a red flag makes one
+observation sufficient for is a decision obligation, not a conclusion about the underlying medical
+pattern.
 
 ### R3 — Noise usually exceeds the effect being tracked
 
@@ -64,6 +66,11 @@ progress, and the response to the reading does more damage than the reading desc
 
 Stability is a feature. Where a change is warranted, name the trend that warrants it rather than the
 reading that prompted the question.
+
+Observation cadence and decision cadence are separate choices. More frequent measurement does not
+imply more frequent interpretation or intervention. Measuring often can be what makes a trend
+readable; it does not make each reading a prompt to act. [Standard 32](32-energy-balance.md) R5 and
+[Standard 8](08-trends.md) R3 apply this to body weight and to how many observations are enough.
 
 ### R5 — Say which one is being relied on
 
