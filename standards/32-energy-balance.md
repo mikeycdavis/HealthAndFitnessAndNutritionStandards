@@ -75,7 +75,8 @@ compared against the person's own history ([Standard 7](07-individual-baseline.m
 
 Weighing frequently and averaging is generally better than weighing rarely, provided what is read is
 the average — more data reduces the noise, but only if the individual readings are not each treated
-as a verdict.
+as a verdict. This is the separation of observation cadence from decision cadence stated in
+[Standard 2](02-trend-over-event.md) R4.
 
 ### R6 — Energy balance is not the whole of a plan
 
