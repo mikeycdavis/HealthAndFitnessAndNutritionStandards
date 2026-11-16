@@ -78,7 +78,7 @@ particular, it does not mean every prohibition in this series needs a worked neg
 | --- | --- |
 | "Dietary patterns are associated with cardiovascular risk." | Acceptable. It describes an association between a pattern and a risk, not a single food causing or curing a disease. |
 | "Regular consumption of X is associated with Y outcome." | Potentially acceptable, and only where the evidence supports that association and the statement says it is an association. |
-| "X prevents heart disease." | Prohibited. It makes a causal claim about a single food and a complex disease that the evidence does not carry. |
+| "X causes heart disease." | Prohibited. It makes a causal claim about a single food and a complex disease that the evidence does not carry. |
 | "X cures diabetes." | Prohibited, and the more dangerous form, because a cure claim can displace treatment that works. |
 
 Here X stands for any single food. What decides the reading is the strength of the claim set
