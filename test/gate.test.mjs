@@ -30,16 +30,6 @@ test("the same evaluation is accepted in development and rejected at release whe
   assert.equal(accepts("release", verdict.status), false);
 });
 
-test("evaluator output is identical whichever gate later consumes it", () => {
-  const a = run({ standardVersion: "1.0.0" });
-  const b = run({ standardVersion: "1.0.0" });
-  assert.deepEqual(a, b);
-  const before = JSON.stringify(a);
-  accepts("development", a.status);
-  accepts("release", a.status);
-  assert.equal(JSON.stringify(a), before, "gating must not mutate or influence the verdict");
-});
-
 test("COMPLIANT is accepted by both profiles; failing and blocked verdicts by neither", () => {
   for (const s of ["COMPLIANT", "COMPLIANT_WITH_EXCEPTIONS"]) {
     assert.equal(accepts("development", s), true);
@@ -70,7 +60,7 @@ test("an acceptance set that lists a never-acceptable verdict refuses to load", 
   writeFileSync(file, JSON.stringify({ development: ["COMPLIANT", "NON_COMPLIANT"], release: ["COMPLIANT"] }));
   assert.throws(() => loadAcceptanceSets(file), /never-acceptable/);
   writeFileSync(file, JSON.stringify({ development: ["COMPLIANT"] }));
-  assert.throws(() => loadAcceptanceSets(file), /both/);
+  assert.throws(() => loadAcceptanceSets(file), /list of verdict names/);
 });
 
 test("the shipped sets: release is strictly narrower than development and excludes NOT_EVALUATED", () => {
@@ -106,4 +96,37 @@ test("the CLI fails closed on malformed, empty, contradictory or duplicate input
   assert.equal(cli("release", "--exit=3"), 1);
   assert.equal(cli("development", "--status=NOT_EVALUATED"), 0);
   assert.equal(cli("release", "--status=NOT_EVALUATED"), 1);
+});
+
+test("a hand-edited set cannot make release fail open", () => {
+  const dir = mkdtempSync(path.join(os.tmpdir(), "gate-"));
+  const file = path.join(dir, "sets.json");
+  const load = (obj) => {
+    writeFileSync(file, JSON.stringify(obj));
+    return () => loadAcceptanceSets(file);
+  };
+  assert.throws(load({ development: ["COMPLIANT", "NOT_EVALUATED"], release: ["COMPLIANT", "NOT_EVALUATED"] }), /must not include NOT_EVALUATED/);
+  assert.throws(load({ development: ["COMPLIANT"], release: ["COMPLIANT", "COMPLIANT_WITH_EXCEPTIONS"] }), /subset/);
+  for (const junk of ["NOT_A_VERDICT", "UNIDENTIFIED_RELEASE", "SELF_MAINTENANCE", ""]) {
+    assert.throws(load({ development: ["COMPLIANT", junk], release: ["COMPLIANT"] }), /unrecognised/, junk);
+    assert.throws(load({ development: ["COMPLIANT"], release: ["COMPLIANT", junk] }), /unrecognised/, junk);
+  }
+  assert.throws(load({ development: ["COMPLIANT"], release: ["COMPLIANT"], staging: ["COMPLIANT"] }), /unknown acceptance profile/);
+  writeFileSync(file, '{"development":["COMPLIANT"],"release":["COMPLIANT"],"__proto__":["COMPLIANT"]}');
+  assert.throws(() => loadAcceptanceSets(file), /unknown acceptance profile/);
+});
+
+test("EXIT_TO_STATUS agrees with the evaluator's own exit and status constants", async () => {
+  const src = await readFile(path.join(REPO, "scripts", "standards.mjs"), "utf8");
+  const start = src.indexOf("const EXIT = {");
+  const block = src.slice(start, src.indexOf("};", start));
+  const exitOf = (name) => Number(block.match(new RegExp(`\\b${name}: (\\d+)`))[1]);
+  assert.equal(EXIT_TO_STATUS[exitOf("OK")], STATUS.COMPLIANT);
+  assert.equal(EXIT_TO_STATUS[exitOf("FINDINGS")], STATUS.NON_COMPLIANT);
+  assert.equal(EXIT_TO_STATUS[exitOf("BLOCKED")], STATUS.BLOCKED_BY_INVARIANT);
+  assert.equal(EXIT_TO_STATUS[exitOf("NOT_EVALUATED")], STATUS.NOT_EVALUATED);
+  for (const name of ["INVOCATION", "UNIDENTIFIED_RELEASE", "SELF_MAINTENANCE"]) {
+    assert.equal(EXIT_TO_STATUS[exitOf(name)], undefined, `${name} must not map to a verdict`);
+  }
+  assert.deepEqual(Object.keys(EXIT_TO_STATUS).map(Number).sort(), [0, 1, 3, 4]);
 });

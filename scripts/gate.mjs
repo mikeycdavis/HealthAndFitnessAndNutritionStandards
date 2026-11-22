@@ -33,19 +33,32 @@ export const EXIT_TO_STATUS = {
   4: "NOT_EVALUATED",
 };
 
+/** Verdicts a gate set may list at all. Anything else (non-verdict exits, unknown names) is refused. */
+export const ACCEPTABLE_VERDICTS = ["COMPLIANT", "COMPLIANT_WITH_EXCEPTIONS", "NOT_EVALUATED"];
+const PROFILES = ["development", "release"];
+
 export function loadAcceptanceSets(file = ACCEPTANCE_FILE) {
   const raw = JSON.parse(readFileSync(file, "utf8"));
   const sets = {};
-  for (const [name, list] of Object.entries(raw)) {
-    if (name.startsWith("_")) continue;
+  for (const name of Object.keys(raw)) {
+    if (name === "_comment") continue;
+    if (!PROFILES.includes(name)) throw new Error(`unknown acceptance profile '${name}'`);
+  }
+  for (const name of PROFILES) {
+    const list = raw[name];
     if (!Array.isArray(list) || list.some((s) => typeof s !== "string")) {
-      throw new Error(`acceptance set '${name}' must be a list of verdict names`);
+      throw new Error(`acceptance set '${name}' must be a list of verdict names (both 'development' and 'release' are required)`);
     }
     const bad = list.filter((s) => NEVER_ACCEPTABLE.includes(s));
     if (bad.length) throw new Error(`acceptance set '${name}' lists never-acceptable verdict(s): ${bad.join(", ")}`);
-    sets[name] = list;
+    const unknown = list.filter((s) => !ACCEPTABLE_VERDICTS.includes(s));
+    if (unknown.length) throw new Error(`acceptance set '${name}' lists unrecognised verdict(s): ${unknown.map((s) => JSON.stringify(s)).join(", ")}`);
+    sets[name] = [...list];
   }
-  if (!sets.development || !sets.release) throw new Error("both 'development' and 'release' acceptance sets are required");
+  // The point of FE-12, enforced in code rather than only in a test: a release gate never tolerates
+  // NOT_EVALUATED, and never accepts anything development would refuse.
+  if (sets.release.includes("NOT_EVALUATED")) throw new Error("the release acceptance set must not include NOT_EVALUATED");
+  if (!sets.release.every((s) => sets.development.includes(s))) throw new Error("the release acceptance set must be a subset of development's");
   return sets;
 }
 
