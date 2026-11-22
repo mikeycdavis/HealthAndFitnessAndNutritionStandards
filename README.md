@@ -38,7 +38,7 @@ a section *exists*. The other 38 — including all 34 prohibitions and the integ
 evaluated by human review, and until a review is recorded they report **not evaluated**, never
 passed.
 
-That is why a well-formed project's first result is `NOT_EVALUATED` (exit code 4) rather than
+That is why a well-formed project (one whose documents exist) gets `NOT_EVALUATED` (exit code 4) rather than
 `COMPLIANT`. Nothing failed, but nothing failing is not evidence that anything passed. A detector can
 establish that a document contains a section called `## Measurement Quality`; it cannot establish that
 the analysis inside it is sound, and a system that reported the first as though it were the second

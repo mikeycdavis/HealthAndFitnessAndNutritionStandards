@@ -49,7 +49,7 @@ different question, with deliberately different exit-code contracts.
 - `check` — `0` compliant · `1` non-compliant · `2` configuration or schema error · `3`
   `BLOCKED_BY_INVARIANT` · `4` `NOT_EVALUATED`
 - `audit` — `0` completed · `1` `--strict` with non-`info` findings · `2` invocation error
-- `init` — `0` completed · `1` conflicts, nothing written · `2` could not run
+- `init` — `0` completed · `1` completed, existing files that differ left untouched · `2` could not run
 
 `1` means the tool worked and the repository has problems; `2` means it could not reach a conclusion
 at all. `4` is not a worse `0`: mapping it to `0` would let a project that evaluated nothing pass a

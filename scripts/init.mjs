@@ -176,7 +176,12 @@ export async function briefing({ dir, catalog, policyText }) {
   }
   const has = (section, id) => Object.hasOwn(policy[section] ?? {}, id);
   const excepted = (id) => Array.isArray(policy.exceptions) && policy.exceptions.some((e) => e?.rule === id);
-  const unreviewed = prohibitions.filter((r) => policy.attestations?.[r.id]?.status !== "approved" && !has("applicability", r.id));
+  // A review counts only as far as it is visibly live here: approved and not past its own expiry, or a
+  // not-applicable declaration. Digest staleness and applicability reasons are judged by `check`, so
+  // "recorded" below never means "accepted".
+  const today = new Date().toISOString().slice(0, 10);
+  const live = (a) => a?.status === "approved" && (a.expires === undefined || String(a.expires) >= today);
+  const unreviewed = prohibitions.filter((r) => !live(policy.attestations?.[r.id]) && policy.applicability?.[r.id]?.status !== "not-applicable");
   const undeclared = [...catalog.rules.keys()].filter((id) => !["rules", "applicability", "attestations"].some((s) => has(s, id)) && !excepted(id));
   const categories = [...catalog.byCategory.entries()].map(([name, rules]) => [name, rules.length]).sort((a, b) => a[0].localeCompare(b[0]));
   return { total: catalog.rules.size, categories, prohibitions, unreviewed, undeclared, unreadable };
@@ -265,7 +270,7 @@ export function render({ mode, actions, conflicts, dryRun, pin, briefing: brief 
       out.push("  - the documents and records the evaluator looks for (plans, interpretation records, the escalation tier model): run `standards audit .` for the exact findings, and `standards status .` as reviews accumulate.");
       out.push("  That is the honest answer: nothing failing is not evidence that anything passed.");
     } else {
-      out.push("Every prohibition has a recorded review or declaration. Run `standards check .` for the verdict; init does not compute it.");
+      out.push("Every prohibition has a recorded review or declaration (check judges whether each is current and sufficient). Run `standards check .` for the verdict; init does not compute it.");
     }
   }
 

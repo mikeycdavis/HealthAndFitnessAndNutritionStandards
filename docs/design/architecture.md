@@ -344,7 +344,7 @@ Three separate contracts, deliberately not merged.
   recorded review of them.
 - `audit`: `0` survey completed · `1` `--strict` and something non-`info` was found · `2` invocation
   error.
-- `init`: `0` completed · `1` conflicts, nothing written · `2` could not run.
+- `init`: `0` completed · `1` completed, existing files that differ left untouched · `2` could not run.
 - Guards (`inventory`, `rules`, `fidelity`, `policy`, `diagrams`): `0` clean · `1` violation · `2`
   could not evaluate.
 

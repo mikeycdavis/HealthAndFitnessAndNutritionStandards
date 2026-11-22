@@ -16,10 +16,11 @@
 #   * lower any rule's strength
 #   * attest, or declare not-applicable, the integrity invariant
 #
-# EXPECT NOT_EVALUATED AT FIRST. 34 of the 59 rules are prohibitions no machine evaluates. Until a
-# human has reviewed them and that review is recorded below, `standards check` reports
-# NOT_EVALUATED and exits 4. That is the system working: nothing failing is not evidence that
-# anything passed.
+# EXPECT NOT COMPLIANT AT FIRST. 34 of the 59 rules are prohibitions no machine evaluates. Until a
+# human has reviewed them and that review is recorded below, `standards check` cannot report
+# COMPLIANT. A fresh project first gets NON_COMPLIANT (exit 1) for the documents the rules look for
+# that do not exist yet; once those exist it reports NOT_EVALUATED (exit 4) until the reviews are
+# recorded. Both are the system working: nothing failing is not evidence that anything passed.
 #
 # Shape: schemas/project-policy.schema.json.  Adoption guide: INSTRUCTIONS.md.
 

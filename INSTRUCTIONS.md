@@ -14,7 +14,7 @@ projects disagree about what a rule means.
 standards init . --dry-run    # see the action list; nothing is written
 standards init .              # write it
 # edit project-policy.yml — declare what applies to your project and why
-standards check .             # expect NOT_EVALUATED, exit 4. That is correct. See §4.
+standards check .             # fresh project: NON_COMPLIANT (exit 1) until the documents exist, then NOT_EVALUATED (exit 4). See §4.
 ```
 
 ## 1. The two commands, and why they are two
