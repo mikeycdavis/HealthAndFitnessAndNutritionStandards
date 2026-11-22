@@ -40,7 +40,10 @@ export function packVersion() {
  * template carries a {{STANDARD_VERSION}} token for the tag it fetches. Nothing else is substituted.
  */
 export function pinTemplate(text, version) {
-  return text.replace(/^standardVersion: ".*"$/m, () => `standardVersion: "${version}"`).replaceAll("{{STANDARD_VERSION}}", version);
+  const pinned = text.replace(/^standardVersion: ".*"$/m, () => `standardVersion: "${version}"`).replaceAll("{{STANDARD_VERSION}}", version);
+  // A policy template whose pin line was reformatted would otherwise ship a stale pin silently.
+  if (/^# Project policy/.test(text) && !pinned.includes(`standardVersion: "${version}"`)) throw new Error("templates/project-policy.yml has no standardVersion line to pin");
+  return pinned;
 }
 
 /**
@@ -159,14 +162,14 @@ async function pinStatus(dir, version) {
  * policy say; it does not decide which standards apply (that is the adopter's declaration, with a
  * reason, in project-policy.yml) and it does not compute the verdict (`standards check` does).
  */
-export async function briefing({ dir, catalog }) {
+export async function briefing({ dir, catalog, policyText }) {
   const prohibitions = [...(catalog.byKind.get("prohibition") ?? [])].sort((a, b) => a.id.localeCompare(b.id));
   let policy = {};
   let unreadable = false;
   const file = path.join(dir, "project-policy.yml");
-  if (existsSync(file)) {
+  if (policyText !== undefined || existsSync(file)) {
     try {
-      policy = parseYaml(await readFile(file, "utf8")) ?? {};
+      policy = parseYaml(policyText ?? (await readFile(file, "utf8"))) ?? {};
     } catch {
       unreadable = true;
     }
@@ -255,11 +258,12 @@ export function render({ mode, actions, conflicts, dryRun, pin, briefing: brief 
     if (brief.unreadable) {
       out.push("Initial status not established: project-policy.yml could not be parsed, so what is missing could not be counted.");
     } else if (brief.unreviewed.length > 0) {
-      out.push("Initial status: expect NOT_EVALUATED (exit 4) from `standards check .`. init does not compute it. Missing:");
+      out.push("Initial status: NOT compliant yet. init does not compute the verdict; `standards check .` does. Expect NON_COMPLIANT (exit 1) while documents the rules look for do not exist yet, and NOT_EVALUATED (exit 4) once none are missing but reviews are. Missing:");
       out.push(`  - ${brief.unreviewed.length} of ${brief.prohibitions.length} prohibitions have no recorded human review and no not-applicable declaration;`);
       out.push("    review each, then record an attestation (or a not-applicable reason that the behavior cannot occur).");
       out.push(`  - ${brief.undeclared.length} of ${brief.total} rules are not mentioned in the policy at all.`);
-      out.push("  That is the honest answer, not a failure: nothing failing is not evidence that anything passed.");
+      out.push("  - the documents and records the evaluator looks for (plans, interpretation records, the escalation tier model): run `standards audit .` for the exact findings, and `standards status .` as reviews accumulate.");
+      out.push("  That is the honest answer: nothing failing is not evidence that anything passed.");
     } else {
       out.push("Every prohibition has a recorded review or declaration. Run `standards check .` for the verdict; init does not compute it.");
     }

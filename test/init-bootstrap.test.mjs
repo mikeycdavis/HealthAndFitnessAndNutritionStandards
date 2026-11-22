@@ -115,9 +115,11 @@ test("(8) the initial NOT_EVALUATED says exactly what is missing, follows the po
   const fresh = await briefing({ dir, catalog });
   assert.equal(fresh.unreviewed.length, 34);
   const out = await output(dir);
-  assert.match(out, /expect NOT_EVALUATED/);
+  assert.match(out, /NOT compliant yet/);
+  assert.match(out, /NON_COMPLIANT \(exit 1\)/, "a fresh project lands on findings first, and init must say so");
+  assert.ok(!/expect NOT_EVALUATED \(exit 4\)/.test(out));
   assert.match(out, /34 of 34 prohibitions have no recorded human review/);
-  assert.match(out, /init does not compute it/);
+  assert.match(out, /init does not compute the verdict/);
 
   await writeFile(
     path.join(dir, "project-policy.yml"),
@@ -164,4 +166,37 @@ test("the CLI dry run writes nothing and prints the briefing", async () => {
   assert.deepEqual(await readdir(dir), []);
   assert.match(result.stdout, /Prohibitions that bind before any implementation \(34/);
   await rm(dir, { recursive: true, force: true });
+});
+
+test("a dry run and the real run print the same briefing", async () => {
+  const dry = await temp();
+  const real = await temp();
+  const strip = (s) => s.split("\n").filter((l) => l.trim() !== "" && !/would|created|Dry run|Mode:|Evidence:/.test(l)).join("\n");
+  const a = cli(dry, "--dry-run").stdout;
+  const b = cli(real).stdout;
+  assert.match(a, /58 of 59 rules are not mentioned/);
+  assert.match(b, /58 of 59 rules are not mentioned/);
+  assert.equal(strip(a), strip(b));
+  await rm(dry, { recursive: true, force: true });
+  await rm(real, { recursive: true, force: true });
+});
+
+test("--force-overwrite replaces exactly the named path and no other", async () => {
+  const dir = await temp();
+  await writeFile(path.join(dir, "PROJECT.md"), "# mine\n");
+  await writeFile(path.join(dir, "AGENTS.md"), "# also mine\n");
+  const result = cli(dir, "--force-overwrite=PROJECT.md");
+  assert.equal(result.status, 1, "AGENTS.md is still a conflict");
+  assert.notEqual(await readFile(path.join(dir, "PROJECT.md"), "utf8"), "# mine\n");
+  assert.equal(await readFile(path.join(dir, "AGENTS.md"), "utf8"), "# also mine\n");
+  await rm(dir, { recursive: true, force: true });
+});
+
+test("a policy template with no pin line is refused rather than shipping a stale pin", async () => {
+  const dir = await temp();
+  const templates = await temp();
+  await writeFile(path.join(templates, "project-policy.yml"), "# Project policy\nproject: x\n");
+  await assert.rejects(plan({ dir, templatesDir: templates }), /no standardVersion line/);
+  await rm(dir, { recursive: true, force: true });
+  await rm(templates, { recursive: true, force: true });
 });

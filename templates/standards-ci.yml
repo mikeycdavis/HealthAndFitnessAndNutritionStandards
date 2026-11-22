@@ -6,11 +6,12 @@
 # release the policy names, so a drifting pin is loud rather than quiet.
 #
 # What a red run means:
-#   exit 1  findings: something the evaluator checked failed.
+#   exit 1  findings: something the evaluator checked failed. A freshly bootstrapped project lands
+#           here first, because the documents and records the rules look for do not exist yet.
 #   exit 3  an integrity invariant or prohibition was bypassed in the policy.
-#   exit 4  NOT_EVALUATED: not enough evidence or recorded human review yet. This is the expected
-#           state of a freshly bootstrapped project, and it is deliberately NOT a pass: absence of a
-#           detected problem is not evidence of compliance. Record the reviews, do not mute the job.
+#   exit 4  NOT_EVALUATED: nothing failed, but there is not enough evidence or recorded human review
+#           yet. It is deliberately NOT a pass: absence of a detected problem is not evidence of
+#           compliance. Record the reviews, do not mute the job.
 #   exit 5  the fetched pack is not the pinned release.
 #
 # If the standards repository is private, add a read-only token as the STANDARDS_PACK_TOKEN secret.

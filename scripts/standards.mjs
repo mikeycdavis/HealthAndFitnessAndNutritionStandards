@@ -1398,7 +1398,10 @@ async function commandInit(root, { dryRun, forceOverwrite, mode: statedMode }) {
   // so a hand-edited file is left alone and no longer blocks adding what is missing.
   if (!dryRun) await initApply({ dir: root, actions });
 
-  const brief = await briefing({ dir: root, catalog });
+  // A dry run has not written the policy yet, so brief from the policy it WOULD write: the briefing
+  // must describe the same end state apply produces.
+  const planned = actions.find((a) => a.path === "project-policy.yml" && (a.kind === "create" || a.kind === "overwrite"));
+  const brief = await briefing({ dir: root, catalog, policyText: dryRun ? planned?.content : undefined });
   process.stdout.write(initRender({ mode, actions, conflicts, dryRun, pin, briefing: brief }));
   return conflicts.length > 0 ? EXIT.FINDINGS : EXIT.OK;
 }
