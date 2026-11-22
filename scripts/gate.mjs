@@ -94,9 +94,22 @@ function main(argv) {
       process.stderr.write(usage);
       return 2;
     }
-    // Note: exit 0 means COMPLIANT from `check`; `maintain` exits 0 under a non-compliance status.
-    // Both are accepted by both profiles, so the distinction does not change any gate outcome.
+    // Exit 0 is ambiguous: `check` returns it for both COMPLIANT and COMPLIANT_WITH_EXCEPTIONS.
+    // It may stand in for the verdict only when the profile treats the two identically; if a set
+    // distinguishes them, the actual verdict must be supplied with --status (exit 2 otherwise).
     status = EXIT_TO_STATUS[Number(code)] ?? "NOT_A_VERDICT";
+    if (status === "COMPLIANT") {
+      try {
+        const sets = loadAcceptanceSets();
+        if (Object.hasOwn(sets, profile) && sets[profile].includes("COMPLIANT") !== sets[profile].includes("COMPLIANT_WITH_EXCEPTIONS")) {
+          process.stderr.write(`gate: exit 0 is ambiguous for profile '${profile}' (its set distinguishes COMPLIANT from COMPLIANT_WITH_EXCEPTIONS); pass --status=<VERDICT>\n`);
+          return 2;
+        }
+      } catch (error) {
+        process.stderr.write(`gate: ${error.message}\n`);
+        return 2;
+      }
+    }
   }
   try {
     const ok = accepts(profile, status);

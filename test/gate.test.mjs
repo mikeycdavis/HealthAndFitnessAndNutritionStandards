@@ -6,7 +6,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { writeFileSync, mkdtempSync } from "node:fs";
+import { writeFileSync, mkdtempSync, mkdirSync, copyFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
@@ -129,4 +129,25 @@ test("EXIT_TO_STATUS agrees with the evaluator's own exit and status constants",
     assert.equal(EXIT_TO_STATUS[exitOf(name)], undefined, `${name} must not map to a verdict`);
   }
   assert.deepEqual(Object.keys(EXIT_TO_STATUS).map(Number).sort(), [0, 1, 3, 4]);
+});
+
+test("exit 0 is ambiguous when a set distinguishes COMPLIANT from COMPLIANT_WITH_EXCEPTIONS (Codex P2)", () => {
+  // Library level: the verdict itself is always exact.
+  const sets = { development: ["COMPLIANT", "COMPLIANT_WITH_EXCEPTIONS"], release: ["COMPLIANT"] };
+  assert.equal(accepts("release", "COMPLIANT", sets), true);
+  assert.equal(accepts("release", "COMPLIANT_WITH_EXCEPTIONS", sets), false);
+  // CLI level: with the shipped sets exit 0 is unambiguous in both profiles and still accepted;
+  // --status stays exact. The shipped sets treat the two verdicts identically, so the ambiguous
+  // branch is exercised through a temporary copy of the gate pointed at a distinguishing set.
+  const dir = mkdtempSync(path.join(os.tmpdir(), "gate-"));
+  mkdirSync(path.join(dir, "scripts"));
+  mkdirSync(path.join(dir, "ci"));
+  copyFileSync(path.join(REPO, "scripts", "gate.mjs"), path.join(dir, "scripts", "gate.mjs"));
+  writeFileSync(path.join(dir, "ci", "acceptance-sets.json"), JSON.stringify(sets));
+  const cli = (...args) => spawnSync(process.execPath, [path.join(dir, "scripts", "gate.mjs"), ...args], { encoding: "utf8" }).status;
+  assert.equal(cli("release", "--exit=0"), 2, "ambiguous exit 0 must not be accepted");
+  assert.equal(cli("release", "--status=COMPLIANT"), 0);
+  assert.equal(cli("release", "--status=COMPLIANT_WITH_EXCEPTIONS"), 1);
+  assert.equal(cli("development", "--exit=0"), 0, "development treats both identically");
+  assert.equal(cli("release", "--exit=4"), 1);
 });
