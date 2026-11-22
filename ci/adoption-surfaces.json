@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "purpose": "FE-15 (#30): the surfaces a person or agent ACTS on, and the tests that cover each, listed before the surfaces that merely describe. test/adoption-surfaces.test.mjs holds this file to what exists on disk and in the test files.",
+  "actionable": [
+    {
+      "id": "policy-files",
+      "criterion": 1,
+      "files": ["project-policy.yml", "templates/project-policy.yml", "schemas/project-policy.schema.json"],
+      "tests": [
+        { "file": "policy.test.mjs", "title": "this repository's own policy is valid" },
+        { "file": "policy.test.mjs", "title": "the adopter template policy is valid" }
+      ]
+    },
+    {
+      "id": "ci-workflow",
+      "criterion": 2,
+      "files": [".github/workflows/ci.yml", "templates/standards-ci.yml", "ci/run-checks.sh"],
+      "tests": [
+        { "file": "instructions.test.mjs", "title": "CI runs the guards before the tests, and gates on maintain" },
+        { "file": "instructions.test.mjs", "title": "the GitHub workflow invokes the pipeline rather than restating it" },
+        { "file": "init-bootstrap.test.mjs", "title": "(3) a CI workflow is installed that runs check at the pinned release and does not mute the verdict" }
+      ]
+    },
+    {
+      "id": "branch-protection-assumptions",
+      "criterion": 3,
+      "files": [".github/CODEOWNERS"],
+      "tests": [
+        { "file": "adoption-surfaces.test.mjs", "title": "no actionable file claims branch protection or Code Owner review is in force" }
+      ]
+    },
+    {
+      "id": "codeowners",
+      "criterion": 4,
+      "files": [".github/CODEOWNERS"],
+      "tests": [
+        { "file": "adoption-surfaces.test.mjs", "title": "CODEOWNERS is well formed and covers the files that change what is enforced" }
+      ]
+    },
+    {
+      "id": "attestation-instructions",
+      "criterion": 5,
+      "files": ["PROHIBITIONS.md", "INSTRUCTIONS.md"],
+      "tests": [
+        { "file": "templates.test.mjs", "title": "PROHIBITIONS.md states the not-applicable semantics, since that is the only door left open" },
+        { "file": "instructions.test.mjs", "title": "the guide spells out the not-applicable semantics with the worked example" },
+        { "file": "instructions.test.mjs", "title": "project-policy.yml names exactly the rules the tool is waiting on" }
+      ]
+    },
+    {
+      "id": "version-and-migration-metadata",
+      "criterion": 6,
+      "files": ["VERSION", "standards-adapter.json"],
+      "tests": [
+        { "file": "instructions.test.mjs", "title": "the version in package.json matches VERSION" },
+        { "file": "init-bootstrap.test.mjs", "title": "(5) the version pin is the pack's own VERSION in the policy and the workflow alike" },
+        { "file": "adoption-surfaces.test.mjs", "title": "the adapter manifest and the shipped templates agree with VERSION and with the evaluator" }
+      ]
+    },
+    {
+      "id": "agent-instructions",
+      "criterion": 7,
+      "files": ["templates/AGENTS.md", "templates/CLAUDE.md", "templates/copilot-instructions.md"],
+      "tests": [
+        { "file": "templates.test.mjs", "title": "AGENTS.md carries the stop rule, in full, as something an agent can act on" },
+        { "file": "templates.test.mjs", "title": "CLAUDE.md defers to AGENTS.md rather than restating it" },
+        { "file": "templates.test.mjs", "title": "the copilot template carries the stop rule, because it is the one most likely to be skimmed" },
+        { "file": "init-bootstrap.test.mjs", "title": "(2) agent instructions for each supported agent are installed and carry the stop rule" }
+      ]
+    },
+    {
+      "id": "adopter-document-templates",
+      "criterion": null,
+      "files": ["templates/PROJECT.md", "templates/fitness-plan.md", "templates/nutrition-plan.md", "templates/interpretation-record.md"],
+      "tests": [
+        { "file": "templates.test.mjs", "title": "every domain template carries the headings its detector looks for" }
+      ]
+    }
+  ],
+  "descriptive": [
+    { "files": ["PROJECT.md", "CHANGELOG.md", "README.md", "BACKLOG.md"], "note": "describe the repository; covered by test/instructions.test.mjs and backlog-tracker.test.mjs" }
+  ],
+  "claimedLocations": {
+    "files": ["project-policy.yml", "VERSION", "standards-adapter.json"],
+    "directories": [".github", "templates"]
+  }
+}
