@@ -57,15 +57,33 @@ export function accepts(profile, status, sets = loadAcceptanceSets()) {
 
 function main(argv) {
   const [profile, ...rest] = argv.slice(2);
-  const statusArg = rest.find((a) => a.startsWith("--status="));
-  const exitArg = rest.find((a) => a.startsWith("--exit="));
-  if (!profile || (!statusArg && !exitArg)) {
-    process.stderr.write("usage: gate.mjs <development|release> --status=<VERDICT> | --exit=<N>\n");
+  const usage = "usage: gate.mjs <development|release> --status=<VERDICT> | --exit=<N>\n";
+  // Exactly one selector, exactly once, with a canonical value. Contradictory, duplicated, empty or
+  // unrecognised input is an invocation error (2), never a guess: an unset shell variable in
+  // --exit=$CODE must not be able to pass a release gate.
+  const statuses = rest.filter((a) => a.startsWith("--status="));
+  const exits = rest.filter((a) => a.startsWith("--exit="));
+  const unknown = rest.filter((a) => !a.startsWith("--status=") && !a.startsWith("--exit="));
+  if (!profile || unknown.length || statuses.length + exits.length !== 1) {
+    process.stderr.write(usage);
     return 2;
   }
-  let status = statusArg?.slice("--status=".length);
-  if (!status) {
-    status = EXIT_TO_STATUS[Number(exitArg.slice("--exit=".length))] ?? "NOT_A_VERDICT";
+  let status;
+  if (statuses.length) {
+    status = statuses[0].slice("--status=".length);
+    if (!/^[A-Z_]+$/.test(status)) {
+      process.stderr.write(usage);
+      return 2;
+    }
+  } else {
+    const code = exits[0].slice("--exit=".length);
+    if (!/^(0|[1-9][0-9]*)$/.test(code)) {
+      process.stderr.write(usage);
+      return 2;
+    }
+    // Note: exit 0 means COMPLIANT from `check`; `maintain` exits 0 under a non-compliance status.
+    // Both are accepted by both profiles, so the distinction does not change any gate outcome.
+    status = EXIT_TO_STATUS[Number(code)] ?? "NOT_A_VERDICT";
   }
   try {
     const ok = accepts(profile, status);

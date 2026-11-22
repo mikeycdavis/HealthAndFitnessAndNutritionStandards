@@ -89,3 +89,21 @@ test("no second evaluation path: no check-dev/check-release command, and the gat
   const pkg = JSON.parse(await readFile(path.join(REPO, "package.json"), "utf8"));
   for (const name of Object.keys(pkg.scripts)) assert.ok(!/check[-:](dev|release)/.test(name), name);
 });
+
+test("the CLI fails closed on malformed, empty, contradictory or duplicate input (exit 2)", () => {
+  const cli = (...args) =>
+    spawnSync(process.execPath, [path.join(REPO, "scripts", "gate.mjs"), ...args], { encoding: "utf8" }).status;
+  for (const bad of ["--exit=", "--exit=00", "--exit=0x0", "--exit=0.0", "--exit=-0", "--exit=abc", "--status=", "--status=compliant"]) {
+    assert.equal(cli("release", bad), 2, bad);
+  }
+  assert.equal(cli("release", "--status=COMPLIANT", "--exit=4"), 2, "contradictory selectors");
+  assert.equal(cli("release", "--exit=0", "--exit=4"), 2, "duplicate selectors");
+  assert.equal(cli("release", "--exit=0", "--bogus"), 2, "unknown argument");
+  assert.equal(cli("release"), 2);
+  assert.equal(cli("__proto__", "--exit=0"), 2);
+  assert.equal(cli("release", "--exit=0"), 0);
+  assert.equal(cli("release", "--exit=1"), 1);
+  assert.equal(cli("release", "--exit=3"), 1);
+  assert.equal(cli("development", "--status=NOT_EVALUATED"), 0);
+  assert.equal(cli("release", "--status=NOT_EVALUATED"), 1);
+});
