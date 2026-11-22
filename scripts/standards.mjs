@@ -1438,7 +1438,7 @@ Exit codes
   init    0 completed · 1 completed, differing files left untouched · 2 could not run
 
   4 is not a worse 0. It means the evaluation could not establish compliance, which in this
-  domain is the expected first result: most rules are prohibitions only a human can evaluate.
+  domain is the expected result once the documents exist (a fresh project gets 1 first): most rules are prohibitions only a human can evaluate.
 
   0 from 'check' means one thing and only one thing: this project complies with a release of
   these standards that the evaluator proved it was running. 0 from 'maintain' is a different

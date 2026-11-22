@@ -129,6 +129,13 @@ test("(8) the initial NOT_EVALUATED says exactly what is missing, follows the po
   assert.equal(partial.unreviewed.length, 32);
   assert.ok(!partial.unreviewed.some((r) => r.id === "health.no-catastrophizing" || r.id === "nutrition.no-crash-dieting"));
 
+  await writeFile(
+    path.join(dir, "project-policy.yml"),
+    'standardVersion: "1.1.1"\nattestations:\n  health.no-catastrophizing:\n    status: approved\n    expires: "2000-01-01"\n  nutrition.no-crash-dieting:\n    status: rejected\n',
+  );
+  const lapsed = await briefing({ dir, catalog });
+  assert.equal(lapsed.unreviewed.length, 34, "an expired approval and a rejected one are not reviews");
+
   await writeFile(path.join(dir, "project-policy.yml"), "standardVersion: [unclosed\n");
   const bad = await briefing({ dir, catalog });
   assert.equal(bad.unreadable, true);

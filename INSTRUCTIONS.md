@@ -144,7 +144,9 @@ rules. See [ADR 0007](artifacts/adr/0007-screened-as-a-distinct-invariant-state.
 
 ## 4. Why your first result is NOT_EVALUATED
 
-Because 34 of the 59 rules are prohibitions that no machine evaluates.
+Because 34 of the 59 rules are prohibitions that no machine evaluates. (A brand-new project first gets
+`NON_COMPLIANT`, exit 1, naming the documents the rules look for that do not exist yet; once they
+exist, this is the result.)
 
 Nothing failed. But nothing failing is not evidence that anything passed, and this system will not
 report `COMPLIANT` while rules that apply to you have been established by nobody. Reaching compliance
