@@ -38,7 +38,8 @@ const walk = async (dir) => {
 };
 
 const CRITERIA = [1, 2, 3, 4, 5, 6, 7];
-const hasTest = (text, title) => text.includes(`test(${JSON.stringify(title)}`);
+// A real test declaration: at the start of a line, so a commented-out test does not count.
+const hasTest = (text, title) => text.split(/\r?\n/).some((line) => line.startsWith(`test(${JSON.stringify(title)}`));
 
 // ---------------------------------------------------------------------------------------------
 // The inventory is true
@@ -77,6 +78,8 @@ test("MUTATION: a covering test renamed away is caught, and an unrelated edit is
   assert.ok(hasTest(text, title), "precondition: the real test is found");
   assert.ok(!hasTest(text.replace(title, "something else"), title), "renaming the test must be noticed");
   assert.ok(hasTest(`${text}\n// comment\n`, title), "an unrelated edit must not be");
+  assert.ok(!hasTest(text.replace(`test(${JSON.stringify(title)}`, `// test(${JSON.stringify(title)}`), title), "a commented-out test must be noticed");
+  assert.ok(!hasTest(text.replace(`test(${JSON.stringify(title)}`, `test.skip(${JSON.stringify(title)}`), title), "a skipped test must be noticed");
 });
 
 test("every file in an actionable location is claimed by a surface, so a new one cannot slip in untested", async () => {
@@ -127,14 +130,33 @@ test("CODEOWNERS is well formed and covers the files that change what is enforce
 
 test("no actionable file claims branch protection or Code Owner review is in force", async () => {
   const mention = /branch[- ]protection|require review from code owners|code owner review/i;
-  const hedge = /expectation|assum|owner's to apply|your .* to (apply|enable)|until /i;
+  // Hedging has to sit next to the mention, and the only hedges accepted are the two this repository uses.
+  const hedge = /expectation|owner's to apply/i;
+  const inForce = /\b(is|are|was|were|has been|have been)( now| currently)? (on|active|enabled|enforced|configured|in force|required|applied)\b|\brequires?\b/i;
+
+  // The caveat must exist where the assumption lives; deleting it is a failure, not a pass.
+  const codeowners = await read(".github/CODEOWNERS");
+  assert.match(codeowners, /only documents an expectation until branch protection/i, "CODEOWNERS must say it is an expectation until branch protection enforces it");
+  assert.match(codeowners, /owner's to apply/i, "CODEOWNERS must say applying the setting is the owner's");
+
   const files = [".github/CODEOWNERS", "INSTRUCTIONS.md", "README.md", ...(await walk("templates")), ...(await walk(".github/workflows"))];
   for (const file of files) {
-    const text = await read(file);
-    if (!mention.test(text)) continue;
-    assert.match(text, hedge, `${file} mentions branch protection or Code Owner review but does not say it is an expectation the owner applies`);
-    assert.ok(!/(is|are|has been|have been) (now )?(enabled|enforced|configured|in force)/i.test(text.split(/\n/).filter((l) => mention.test(l)).join("\n")), `${file} states protection is in force; this repository cannot read that setting`);
+    const lines = (await read(file)).split(/\r?\n/);
+    lines.forEach((line, i) => {
+      if (!mention.test(line)) return;
+      const window = lines.slice(Math.max(0, i - 1), i + 2).join("\n");
+      assert.match(window, hedge, `${file}:${i + 1} mentions branch protection or Code Owner review without saying it is an expectation the owner applies`);
+      assert.ok(!inForce.test(line.replace(/"Require review from Code Owners"/i, "")), `${file}:${i + 1} states protection is in force; this repository cannot read that setting`);
+    });
   }
+});
+
+test("MUTATION: a protection claim in force is caught even when it carries hedge-like words", async () => {
+  const inForceLine = "# Branch protection is on and Code Owner review is required until further notice, as an assumption.";
+  const mention = /branch[- ]protection/i;
+  const inForce = /\b(is|are|was|were|has been|have been)( now| currently)? (on|active|enabled|enforced|configured|in force|required|applied)\b|\brequires?\b/i;
+  assert.ok(mention.test(inForceLine) && inForce.test(inForceLine));
+  assert.ok(!inForce.test("# that setting is the owner's to apply."));
 });
 
 // ---------------------------------------------------------------------------------------------

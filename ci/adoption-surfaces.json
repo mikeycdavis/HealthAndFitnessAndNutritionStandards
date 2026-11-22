@@ -23,6 +23,7 @@
     },
     {
       "id": "branch-protection-assumptions",
+      "limits": "A wording guard: it requires the CODEOWNERS caveat to exist and rejects an in-force claim near any mention. It cannot read the repository setting itself (FE-09 is owner-held).",
       "criterion": 3,
       "files": [".github/CODEOWNERS"],
       "tests": [
@@ -49,6 +50,7 @@
     },
     {
       "id": "version-and-migration-metadata",
+      "limits": "Version identity only. No migration metadata exists in 1.1.1; that is #26 (deferred).",
       "criterion": 6,
       "files": ["VERSION", "standards-adapter.json"],
       "tests": [
@@ -81,7 +83,7 @@
     { "files": ["PROJECT.md", "CHANGELOG.md", "README.md", "BACKLOG.md"], "note": "describe the repository; covered by test/instructions.test.mjs and backlog-tracker.test.mjs" }
   ],
   "claimedLocations": {
-    "files": ["project-policy.yml", "VERSION", "standards-adapter.json"],
+    "files": ["project-policy.yml", "VERSION", "standards-adapter.json", "ci/run-checks.sh"],
     "directories": [".github", "templates"]
   }
 }
