@@ -1,0 +1,5 @@
+{
+  "_comment": "FE-12. External acceptance sets: which evaluator verdicts a gate tolerates. The evaluator (standards check / maintain) never reads this file and never changes behaviour by profile; only the gate does. Two profiles, one evaluation. NON_COMPLIANT and BLOCKED_BY_INVARIANT are never acceptable in any profile, and scripts/gate.mjs refuses to load a set that lists them.",
+  "development": ["COMPLIANT", "COMPLIANT_WITH_EXCEPTIONS", "NOT_EVALUATED"],
+  "release": ["COMPLIANT", "COMPLIANT_WITH_EXCEPTIONS"]
+}
