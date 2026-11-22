@@ -31,7 +31,7 @@
  *   check:  0 compliant · 1 non-compliant · 2 config error · 3 blocked by invariant · 4 not evaluated
  *           · 5 release identity not established
  *   audit:  0 completed · 1 --strict and something non-info found · 2 invocation error
- *   init:   0 completed · 1 conflicts, nothing written · 2 could not run
+ *   init:   0 completed · 1 completed, existing files that differ left untouched · 2 could not run
  *   others: 0 fine · 2 invocation error
  *
  * 5 IS ITS OWN CODE RATHER THAN A CONFIG ERROR (FE-13). "You invoked this wrongly" and "the pack
@@ -51,7 +51,7 @@ import { loadCatalog, resolve as resolveRule, assertBindings, coverage } from ".
 import { evaluate, envelope, SCHEMA_VERSION, STATUS, baselineStrength, INVARIANT_SCREENS, SCREENED_MEANING } from "./compliance.mjs";
 import { parseYaml, YamlError } from "./yaml.mjs";
 import { validate, assertSchemaSupported, SchemaError } from "./jsonschema.mjs";
-import { plan as initPlan, apply as initApply, detectMode, render as initRender } from "./init.mjs";
+import { plan as initPlan, apply as initApply, detectMode, render as initRender, briefing } from "./init.mjs";
 import { resolveRelease, gitIn } from "./release-identity.mjs";
 import { materialise } from "./release-material.mjs";
 import { verifyRelease } from "./release-verify.mjs";
@@ -1391,11 +1391,18 @@ async function commandStatus(root, { json }) {
 
 async function commandInit(root, { dryRun, forceOverwrite, mode: statedMode }) {
   const mode = await detectMode(root, statedMode);
-  const { actions, conflicts } = await initPlan({ dir: root, forceOverwrite });
+  const { actions, conflicts, pin } = await initPlan({ dir: root, forceOverwrite });
+  const catalog = await loadCatalog(path.join(ROOT, "rules"));
 
-  if (!dryRun && conflicts.length === 0) await initApply({ dir: root, actions });
+  // Reconcile, never overwrite: apply writes only create / mkdir / explicitly-named overwrite actions,
+  // so a hand-edited file is left alone and no longer blocks adding what is missing.
+  if (!dryRun) await initApply({ dir: root, actions });
 
-  process.stdout.write(initRender({ mode, actions, conflicts, dryRun }));
+  // A dry run has not written the policy yet, so brief from the policy it WOULD write: the briefing
+  // must describe the same end state apply produces.
+  const planned = actions.find((a) => a.path === "project-policy.yml" && (a.kind === "create" || a.kind === "overwrite"));
+  const brief = await briefing({ dir: root, catalog, policyText: dryRun ? planned?.content : undefined });
+  process.stdout.write(initRender({ mode, actions, conflicts, dryRun, pin, briefing: brief }));
   return conflicts.length > 0 ? EXIT.FINDINGS : EXIT.OK;
 }
 
@@ -1428,10 +1435,10 @@ Exit codes
           2 not the pack, or no declaration · 3 blocked by invariant · 4 insufficient evidence
           5 eligibility could not be established
   audit   0 completed · 1 --strict with findings · 2 invocation error
-  init    0 completed · 1 conflicts, nothing written · 2 could not run
+  init    0 completed · 1 completed, differing files left untouched · 2 could not run
 
   4 is not a worse 0. It means the evaluation could not establish compliance, which in this
-  domain is the expected first result: most rules are prohibitions only a human can evaluate.
+  domain is the expected result once the documents exist (a fresh project gets 1 first): most rules are prohibitions only a human can evaluate.
 
   0 from 'check' means one thing and only one thing: this project complies with a release of
   these standards that the evaluator proved it was running. 0 from 'maintain' is a different

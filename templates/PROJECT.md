@@ -36,8 +36,8 @@ This project is evaluated against the health, fitness, and nutrition standards, 
 standards check .
 ```
 
-Expect `NOT_EVALUATED` until a human has reviewed the prohibitions and that review is recorded as an
-attestation. Nothing failing is not evidence that anything passed.
+Expect `NON_COMPLIANT` while the documents the rules look for are missing, then `NOT_EVALUATED` until a
+human has reviewed the prohibitions and that review is recorded as an attestation. Nothing failing is not evidence that anything passed.
 
 ## Domains
 

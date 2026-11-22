@@ -14,7 +14,7 @@ projects disagree about what a rule means.
 standards init . --dry-run    # see the action list; nothing is written
 standards init .              # write it
 # edit project-policy.yml — declare what applies to your project and why
-standards check .             # expect NOT_EVALUATED, exit 4. That is correct. See §4.
+standards check .             # fresh project: NON_COMPLIANT (exit 1) until the documents exist, then NOT_EVALUATED (exit 4). See §4.
 ```
 
 ## 1. The two commands, and why they are two
@@ -144,7 +144,9 @@ rules. See [ADR 0007](artifacts/adr/0007-screened-as-a-distinct-invariant-state.
 
 ## 4. Why your first result is NOT_EVALUATED
 
-Because 34 of the 59 rules are prohibitions that no machine evaluates.
+Because 34 of the 59 rules are prohibitions that no machine evaluates. (A brand-new project first gets
+`NON_COMPLIANT`, exit 1, naming the documents the rules look for that do not exist yet; once they
+exist, this is the result.)
 
 Nothing failed. But nothing failing is not evidence that anything passed, and this system will not
 report `COMPLIANT` while rules that apply to you have been established by nobody. Reaching compliance

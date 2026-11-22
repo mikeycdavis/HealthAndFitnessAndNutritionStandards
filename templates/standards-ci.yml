@@ -1,0 +1,48 @@
+# Installed by `standards init` as .github/workflows/standards.yml.
+#
+# This runs the standards pack's own evaluator against YOUR project, at the release your
+# project-policy.yml pins (standardVersion). The pin appears twice -- here, as the tag fetched, and in
+# the policy -- and `standards check` fails closed (exit 5) if the pack it runs cannot prove it is the
+# release the policy names, so a drifting pin is loud rather than quiet.
+#
+# What a red run means:
+#   exit 1  findings: something the evaluator checked failed. A freshly bootstrapped project lands
+#           here first, because the documents and records the rules look for do not exist yet.
+#   exit 3  an integrity invariant or prohibition was bypassed in the policy.
+#   exit 4  NOT_EVALUATED: nothing failed, but there is not enough evidence or recorded human review
+#           yet. It is deliberately NOT a pass: absence of a detected problem is not evidence of
+#           compliance. Record the reviews, do not mute the job.
+#   exit 5  the fetched pack is not the pinned release.
+#
+# If the standards repository is private, add a read-only token as the STANDARDS_PACK_TOKEN secret.
+
+name: Standards
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  standards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Fetch the pinned standards release
+        env:
+          GH_TOKEN: ${{ secrets.STANDARDS_PACK_TOKEN || github.token }}
+        run: |
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/mikeycdavis/HealthAndFitnessAndNutritionStandards.git" "$RUNNER_TEMP/standards-pack"
+          git -C "$RUNNER_TEMP/standards-pack" remote remove origin
+          git -C "$RUNNER_TEMP/standards-pack" checkout --detach "refs/tags/v{{STANDARD_VERSION}}"
+
+      - name: Check this project against the pinned release
+        run: node "$RUNNER_TEMP/standards-pack/scripts/standards.mjs" check .

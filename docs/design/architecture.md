@@ -339,12 +339,12 @@ Three separate contracts, deliberately not merged.
   `0` would let a project that has evaluated nothing pass a gate — the false green in its purest
   form. Mapping it to `1` would report a project as non-compliant when nothing has been found wrong
   with it. The honest statement is "we cannot establish this", and it deserves its own code so CI
-  can act on it distinctly. In this domain it is also the *expected* first result: 34 of 59 rules
+  can act on it distinctly. In this domain it is also the expected result once the documents the rules look for exist (before then a fresh project gets `1`, findings): 34 of 59 rules
   are prohibitions no machine evaluates, so a project reaches compliance only once a human has
   recorded review of them.
 - `audit`: `0` survey completed · `1` `--strict` and something non-`info` was found · `2` invocation
   error.
-- `init`: `0` completed · `1` conflicts, nothing written · `2` could not run.
+- `init`: `0` completed · `1` completed, existing files that differ left untouched · `2` could not run.
 - Guards (`inventory`, `rules`, `fidelity`, `policy`, `diagrams`): `0` clean · `1` violation · `2`
   could not evaluate.
 

@@ -20,12 +20,31 @@
  */
 
 import { readFile, writeFile, mkdir, readdir } from "node:fs/promises";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { parseYaml } from "./yaml.mjs";
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const TEMPLATES = path.join(ROOT, "templates");
+
+/** The release this pack is. `init` pins an adopter to it; there is no second copy to drift. */
+export function packVersion() {
+  return readFileSync(path.join(ROOT, "VERSION"), "utf8").trim();
+}
+
+/**
+ * Templates are static text except for the version pin. The policy template keeps a schema-valid
+ * placeholder value (so it validates as shipped) and `init` rewrites that one line; the CI workflow
+ * template carries a {{STANDARD_VERSION}} token for the tag it fetches. Nothing else is substituted.
+ */
+export function pinTemplate(text, version) {
+  const pinned = text.replace(/^standardVersion: ".*"$/m, () => `standardVersion: "${version}"`).replaceAll("{{STANDARD_VERSION}}", version);
+  // A policy template whose pin line was reformatted would otherwise ship a stale pin silently.
+  if (/^# Project policy/.test(text) && !pinned.includes(`standardVersion: "${version}"`)) throw new Error("templates/project-policy.yml has no standardVersion line to pin");
+  return pinned;
+}
 
 /**
  * What `init` creates. Each entry names a template and where it lands in the target project.
@@ -39,9 +58,23 @@ export const ARTIFACTS = [
   { template: "AGENTS.md", target: "AGENTS.md" },
   { template: "CLAUDE.md", target: "CLAUDE.md" },
   { template: "copilot-instructions.md", target: ".github/copilot-instructions.md" },
+  { template: "standards-ci.yml", target: ".github/workflows/standards.yml" },
 ];
 
-export const DIRECTORIES = ["artifacts/interpretations", "artifacts/adr", "docs"];
+/**
+ * Attestations are not a directory: they are entries in project-policy.yml, next to the rule they
+ * review. Evidence a review or attestation cites lands in artifacts/evidence.
+ */
+export const DIRECTORIES = ["artifacts/interpretations", "artifacts/evidence", "artifacts/adr", "docs"];
+
+/** Where things live once installed; init reports this so the adopter does not have to infer it. */
+export const LOCATIONS = [
+  ["policy, applicability, exceptions, attestations", "project-policy.yml"],
+  ["health interpretation records", "artifacts/interpretations/"],
+  ["evidence cited by a review or attestation", "artifacts/evidence/"],
+  ["agent instructions", "AGENTS.md, CLAUDE.md, .github/copilot-instructions.md"],
+  ["CI check at the pinned release", ".github/workflows/standards.yml"],
+];
 
 /** Domain templates an adopter copies per artifact, rather than having init place them. */
 export const DOMAIN_TEMPLATES = ["interpretation-record.md", "fitness-plan.md", "nutrition-plan.md"];
@@ -76,7 +109,7 @@ export async function detectMode(dir, stated) {
  *   overwrite — the target exists, differs, and the exact path was named in forceOverwrite
  *   mkdir     — a directory the standards expect
  */
-export async function plan({ dir, forceOverwrite = [], templatesDir = TEMPLATES }) {
+export async function plan({ dir, forceOverwrite = [], templatesDir = TEMPLATES, version = packVersion() }) {
   const actions = [];
 
   for (const rel of DIRECTORIES) {
@@ -90,7 +123,7 @@ export async function plan({ dir, forceOverwrite = [], templatesDir = TEMPLATES 
       actions.push({ kind: "missing-template", path: artifact.target, template: artifact.template });
       continue;
     }
-    const content = await readFile(templatePath, "utf8");
+    const content = pinTemplate(await readFile(templatePath, "utf8"), version);
     const target = path.join(dir, artifact.target);
 
     if (!existsSync(target)) {
@@ -108,7 +141,50 @@ export async function plan({ dir, forceOverwrite = [], templatesDir = TEMPLATES 
   }
 
   const conflicts = actions.filter((a) => a.kind === "conflict");
-  return { actions, conflicts };
+  return { actions, conflicts, pin: await pinStatus(dir, version) };
+}
+
+/** The release this project declares versus the one this pack would pin. Never edits the policy. */
+async function pinStatus(dir, version) {
+  const file = path.join(dir, "project-policy.yml");
+  if (!existsSync(file)) return { expected: version, declared: null };
+  try {
+    const declared = parseYaml(await readFile(file, "utf8"))?.standardVersion;
+    return { expected: version, declared: typeof declared === "string" ? declared : null };
+  } catch {
+    return { expected: version, declared: null, unreadable: true };
+  }
+}
+
+/**
+ * Pure read. What the adopter must still do before a verdict can be anything but NOT_EVALUATED, and
+ * which prohibitions bind before implementation. It reports what the catalog and the project's own
+ * policy say; it does not decide which standards apply (that is the adopter's declaration, with a
+ * reason, in project-policy.yml) and it does not compute the verdict (`standards check` does).
+ */
+export async function briefing({ dir, catalog, policyText }) {
+  const prohibitions = [...(catalog.byKind.get("prohibition") ?? [])].sort((a, b) => a.id.localeCompare(b.id));
+  let policy = {};
+  let unreadable = false;
+  const file = path.join(dir, "project-policy.yml");
+  if (policyText !== undefined || existsSync(file)) {
+    try {
+      policy = parseYaml(policyText ?? (await readFile(file, "utf8"))) ?? {};
+    } catch {
+      unreadable = true;
+    }
+  }
+  const has = (section, id) => Object.hasOwn(policy[section] ?? {}, id);
+  const excepted = (id) => Array.isArray(policy.exceptions) && policy.exceptions.some((e) => e?.rule === id);
+  // A review counts only as far as it is visibly live here: approved and not past its own expiry, or a
+  // not-applicable declaration. Digest staleness and applicability reasons are judged by `check`, so
+  // "recorded" below never means "accepted".
+  const today = new Date().toISOString().slice(0, 10);
+  const live = (a) => a?.status === "approved" && (a.expires === undefined || String(a.expires) >= today);
+  const unreviewed = prohibitions.filter((r) => !live(policy.attestations?.[r.id]) && policy.applicability?.[r.id]?.status !== "not-applicable");
+  const undeclared = [...catalog.rules.keys()].filter((id) => !["rules", "applicability", "attestations"].some((s) => has(s, id)) && !excepted(id));
+  const categories = [...catalog.byCategory.entries()].map(([name, rules]) => [name, rules.length]).sort((a, b) => a[0].localeCompare(b[0]));
+  return { total: catalog.rules.size, categories, prohibitions, unreviewed, undeclared, unreadable };
 }
 
 /** The only writer. Executes exactly the actions `plan()` produced. */
@@ -131,7 +207,7 @@ export async function apply({ dir, actions }) {
   return done;
 }
 
-export function render({ mode, actions, conflicts, dryRun }) {
+export function render({ mode, actions, conflicts, dryRun, pin, briefing: brief }) {
   const out = [];
   out.push(`Mode: ${mode.mode} (${mode.confidence})`);
   if (mode.evidence.length > 0) out.push(`  Evidence: ${mode.evidence.join("; ")}`);
@@ -151,17 +227,51 @@ export function render({ mode, actions, conflicts, dryRun }) {
   out.push("");
 
   if (conflicts.length > 0) {
-    out.push("Nothing was written, because these files exist and differ from the templates:");
+    out.push("These files exist and differ from the templates. They were left exactly as they are:");
     for (const c of conflicts) out.push(`  ${c.path}`);
-    out.push("");
-    out.push("Review each, then re-run naming the exact path to replace it:");
+    out.push("Everything else above was reconciled; nothing you wrote was touched.");
+    out.push("To replace one, review it, then re-run naming the exact path:");
     out.push(`  standards init --force-overwrite=${conflicts[0].path}`);
     out.push("Approving one path does not approve another.");
-  } else if (dryRun) {
+    out.push("");
+  }
+  if (pin?.declared && pin.declared !== pin.expected) {
+    out.push(`Version pin: project-policy.yml declares ${pin.declared}; this pack is ${pin.expected}. Not changed.`);
+    out.push("  Re-pin deliberately, and re-review what changed: init never edits an existing policy.");
+    out.push("");
+  } else if (pin?.unreadable) {
+    out.push("Version pin: project-policy.yml could not be parsed, so its pin was not compared.");
+    out.push("");
+  }
+  if (dryRun) {
     out.push("Dry run: nothing was written. This is the same action list apply would execute.");
-  } else {
-    out.push("Next: edit project-policy.yml to declare what applies to this project, then run");
-    out.push("`standards check .` — expect NOT_EVALUATED until a human has reviewed the prohibitions.");
+    out.push("");
+  }
+
+  if (brief) {
+    out.push("Where things live:");
+    for (const [what, where] of LOCATIONS) out.push(`  ${what.padEnd(44)} ${where}`);
+    out.push("");
+    out.push(`Standards in this release (${pin?.expected ?? "?"}): ${brief.total} rules — ${brief.categories.map(([n, c]) => `${n} ${c}`).join(", ")}.`);
+    out.push("Which of them apply to YOUR project is your declaration, with a reason, in project-policy.yml.");
+    out.push("init does not decide that; the detection above is evidence about the repository, not a judgement.");
+    out.push("");
+    out.push(`Prohibitions that bind before any implementation (${brief.prohibitions.length}; none may be waived):`);
+    for (const r of brief.prohibitions) out.push(`  ${r.id}`);
+    out.push("  Read one with: standards explain <rule-id> .   The full list: PROHIBITIONS.md.");
+    out.push("");
+    if (brief.unreadable) {
+      out.push("Initial status not established: project-policy.yml could not be parsed, so what is missing could not be counted.");
+    } else if (brief.unreviewed.length > 0) {
+      out.push("Initial status: NOT compliant yet. init does not compute the verdict; `standards check .` does. Expect NON_COMPLIANT (exit 1) while documents the rules look for do not exist yet, and NOT_EVALUATED (exit 4) once none are missing but reviews are. Missing:");
+      out.push(`  - ${brief.unreviewed.length} of ${brief.prohibitions.length} prohibitions have no recorded human review and no not-applicable declaration;`);
+      out.push("    review each, then record an attestation (or a not-applicable reason that the behavior cannot occur).");
+      out.push(`  - ${brief.undeclared.length} of ${brief.total} rules are not mentioned in the policy at all.`);
+      out.push("  - the documents and records the evaluator looks for (plans, interpretation records, the escalation tier model): run `standards audit .` for the exact findings, and `standards status .` as reviews accumulate.");
+      out.push("  That is the honest answer: nothing failing is not evidence that anything passed.");
+    } else {
+      out.push("Every prohibition has a recorded review or declaration (check judges whether each is current and sufficient). Run `standards check .` for the verdict; init does not compute it.");
+    }
   }
 
   return out.join("\n") + "\n";
